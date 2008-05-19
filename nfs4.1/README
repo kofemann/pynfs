@@ -1,0 +1,82 @@
+Server testing
+==============
+
+
+   USING:
+   =====
+   ./testserver.py SERVER:PATH <options> <tests>
+   ./testserver.py SERVER:PATH <--rundeps | --force> <--maketree> -v all
+   --maketree Needs to be run the first time testserver is used, creates
+              directory/file structure most tests expect
+   --force    Run exactly the tests listed on command-line, ignoring 
+              dependencies. NOTE that the default is to try to run exactly 
+	      the tests listed, but if a test's dependencies are not run the 
+	      test will be skipped
+   --rundeps  In addition to tests listed on command-line, run tests that
+              are listed as dependencies.
+   -v         Show tests as they are being run
+   --noinit   Skip initial cleanup/testing of directory tree.  This is useful
+              for quickly running tests that do not need it, such as most
+              of the exchangeid tests.
+  Tests are indicated by either a CODE (unique to a test) or a FLAG (which
+     is a way of grouping similar tests).  The list of flags can be seen
+     using the --showflags option.  Each code/flag can be preceeded by "no"
+     to prevent running of that test.  code/flags are read from left to
+     right, and effects are cumulative.  Thus:
+         ./testserver SERVER:PATH --force -v all noopen OPEN1
+     will run all tests, except for the open tests, but will run the test OPEN1
+
+  All tests are located in nfs4/server41tests/st_*.py
+  Generic test configuration is done in nfs4/server41tests/environment.py
+      init/finish - routines run at start/end of program
+      startUp/shutDown - routines run at start/end of each test
+      In particular, tests use two principals, they are hardcoded currently 
+          nfs4/server41tests/environment.py:Environment.__init__()
+
+  MISC:
+  =====
+  Current tests are fairly minimal, as spec has been changing fairly rapidly.
+  Good for correctness testing, handling of error/unlikely paths, any test
+     where it is the order of RPCs that matter
+  Not good for performance testing, tests where timing of RPC's matter.
+  Checking state of returned RPC's can be tedious, so tests work best
+     if need only check return stat or a few flags.
+   It is possible to send individual commands by hand using 
+       nfs4/nfs4client.py:NFS4Client(), but requires a bit of familiarity with code.
+
+
+Server
+======
+
+  nfs4/nfs4server --help
+  nfs4/nfs4server --reset
+
+  Passed all the (non-locking) cthon tests with draft-10 
+     (except for large file test), with both auth_sys and krb5
+  
+  Limitations:
+      So far focused on session/pnfs ops, so:
+          other ops (in particular locking) haven't been implemented yet
+	  ACCESS control is a huge stub
+      Unused structures are never cleaned up...so will eventually run out
+          of memory
+      SLOW
+      Multi-user access has never been tested, and is likely buggy
+
+  PNFS-block:
+      Has some very basic facilities for handling block layouts
+      Currently functions, as long as client behaves
+
+  Client-testing:
+      More difficult, since control over what RPCs are sent is so indirect.
+      Write to /config/ files, changes server behavior
+      	    PRO - nothing special needed on client side
+	    CON - need enough functionality to write to file
+      Communicate via side-channel.
+      	    PRO - allows full control of server, even if client is 
+	              completely non-functional
+		  Is easier to control more complex behavior.
+	    CON - Have to use python test framework on client
+      Possibilities - simulate server reboot, cause error return on given ops,
+      		      give client userland-access to the (unencrypted)
+		      RPCs it sent.

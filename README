@@ -1,0 +1,3 @@
+For nfs4 testing, see the nfs4/README.
+For automatic code generation frmo an XDR file, see xdr/README.
+

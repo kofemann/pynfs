@@ -1,0 +1,1611 @@
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/nfs4client.py draft10-070910/nfs4/nfs4client.py
+--- server070724/nfs4/nfs4client.py	2007-06-26 11:03:06.000000000 -0400
++++ draft10-070910/nfs4/nfs4client.py	2007-07-24 12:18:42.000000000 -0400
+@@ -9,1 +9,1 @@ from sctrl_pack import SCTRLPacker, SCTR
+ import nfs4_ops as op
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/nfs4server.py draft10-070910/nfs4/nfs4server.py
+--- server070724/nfs4/nfs4server.py	2007-06-26 15:23:54.000000000 -0400
++++ draft10-070910/nfs4/nfs4server.py	2007-08-08 14:48:37.000000000 -0400
+@@ -117,8 +110,12 @@ def check_size_fixed(env, size):
+     """Same as check_size, but are given size of XDR-ed nfs4_resop4"""
+     # STUB - does no size checking
+ 
+-def check_session(env):
++def check_session(env, server=None):
+     if BYPASS_SESSION:
++        if env.session is None and server:
++            class XXX(object):
++                client = server.clients[0]
++            env.session = XXX()
+         return
+     if env.session is None:
+         raise NFS4Error(NFS4ERR_OP_NOT_IN_SESSION)
+@@ -200,110 +197,33 @@ class Recording(object):
+         self.on = False
+         self.queues = {}
+         self.queue = None
+-
+-class StateProtection(object):
+-    ssv = property(lambda s: s.ssvs[0])
+-    def __init__(self, arg):
+-        self.type = arg.spa_how
+-        if self.type != SP4_NONE:
+-            self.must_enforce = arg.spo_must_enforce
+-            self.must_allow = arg.spo_must_allow
+-        if self.type == SP4_SSV:
+-            # Choose hash algorithm
+-            hash_funct = None # Needed if list is empty
+-            for i, oid in enumerate(arg.ssp_hash_algs):
+-                hash_funct = hash_algs.get(oid, None)
+-                if hash_funct is not None:
+-                    break
+-            if hash_funct is None:
+-                raise NFS4Error(NFS4ERR_HASH_ALG_UNSUPP)
+-            self.ssv_len = hash_funct().digest_size # BUG - should be based on encryption key size
+-            self.hash_funct = hash_funct
+-            self.hash_index = i
+-            # Choose encryption algorithm
+-            self.encrypt_funct = self.deny # STUB
+-            self.encrypt_index = 0
+-
+-            self.window = min(16, arg.ssp_window)
+-            self.ssvs = collections.deque()
+-            self.ssvs.append('\0' * self.ssv_len)
+-            self.lock = Lock("ssv")
+-            
+-        # STUB - etc
+-
+-    def set_ssv(self, ssv):
+-        self.lock.acquire()
+-        try:
+-            self.ssvs.appendleft(ssv)
+-            while len(self.ssvs) > self.window:
+-                self.ssvs.pop()
+-        finally:
+-            self.lock.release()
+-
+-    def deny(self, env, op, bypass_ssv=False):
+-        """Raise error if op in must_enforce and MECH/SSV checks fail"""
+-        # STUB
+-        err_code = NFS4ERR_ACCESS # XXX what error to use?
+-        if self.type == SP4_NONE or (1<<op) & self.must_enforce:
+-            return
+-        check_secure(env)
+-        if self.type == SP4_MACH_CRED:
+-            if env.principal != self.principal or \
+-               env.mech != self.mech:
+-                raise NFS4Error(err_code, tag="Failed machine_cred check")
+-        elif self.type == SP4_SSV:
+-            if env.mech != nfs4lib.ssv_mech_oid:
+-                if bypass_ssv:
+-                    if env.principal == self.principal and \
+-                       env.mech == self.mech:
+-                        return
+-                raise NFS4Error(err_code, tag="Did not use ssv gss_mech")
+-
+-    def rv(self):
+-        rv = state_protect4_r(self.type)
+-        if self.type == SP4_MACH_CRED:
+-            rv.spr_mach_ops = state_protect_ops4(self.must_enforce,
+-                                                 self.must_allow)
+-        elif self.type == SP4_SSV:
+-            info = ssv_prot_info4(state_protect_ops4(self.must_enforce,
+-                                                     self.must_allow),
+-                                  self.hash_index,
+-                                  self.encrypt_index,
+-                                  self.ssv_len,
+-                                  self.window,
+-                                  ["handle_stub"])
+-            rv.spr_ssv_info = info
+-        return rv
+-            
+-        
+         
+ class ClientList(object):
+     def __init__(self):
+         self._data = {}
+         self.lock = Lock("ClientList")
+         self._nextid = 0L
++        if BYPASS_SESSION:
++            self.add("BYPASS CLIENT", "BYPASS verf", "BYPASS princ", None)
++            c = self[0]
++            c.confirmed = True
+         
+     def __getitem__(self, key):
+         return self._data.get(key, None)
+ 
+-    def __delitem__(self, clientid):
+-        # Assumes lock is held
+-        ownerid = self._data[clientid].ownerid
+-        del self._data[clientid]
+-        del self._data[ownerid]
+-        
+-    def add(self, arg, principal):
++    def add(self, ownerid, verifier, principal, impl_id):
+         """Add a new client"""
+         # Assumes lock is held
+-        c = ClientRecord(self._nextid, arg, principal)
+-        if c.ownerid in self._data:
++        c = ClientRecord(ownerid, verifier, principal, impl_id)
++        if ownerid in self._data:
+             raise
++        c.clientid = self._nextid
+         # STUB - want to limit size of _nextid to < 2**32, to
+         # accomodate ConfigFS, which embeds clientid into fileid.
+         # BUG - clientid is supposed to be unique, even across
+-        # server reboots (2.4 of draft 11, line 1365)
++        # server reboots (2.4 of draft 10)
+         self._nextid += 1
+-        self._data[c.ownerid] = c
++        self._data[ownerid] = c
+         self._data[c.clientid] = c
+         return c
+ 
+@@ -331,34 +251,25 @@ class VerboseDict(dict):
+         
+ class ClientRecord(object):
+     """The server's representation of a client and its state"""
+-    def __init__(s, id, arg, principal, mech=None):
++    def __init__(s, ownerid, verifier, principal, impl_id):
+         s.config = ServerPerClientConfig()
+         s.opsconfig = OpsConfigClient()
+-        s.clientid = id
+-        s.mech = mech
+-        s.confirmed = False
+-        s.update(arg, principal)
++        s.ownerid = ownerid # Client provided name
++        s.verifier = verifier # Client provided verifier
++        s.impl_id = impl_id # Client provided implementation identifier
++        s.principal = principal # from RPC header
++        s.clientid = None # generated, used as key to find this entry
++        #s.sequenceid = 1 # generated, used to confirm clientid
++        s.confirmed = False # set True when do successful CREATE_SESSION
++        #s.v4_replay_cache = None # v4.0 seqid based replay cache
+         s.session_replay = Slot(0, default=default_replay_client) # v4.1 cache for just CREATE_SESSION
+         s.sessions = [] # sessions associated with this clientid
+         s.lastused = time.time() # time of last "RENEW" equivalant
++        #s.state = StateTable() # all types - Note not tied to sessions
++        #                includes shares, byte locks, delegations, and layouts
+         s.state = VerboseDict(s.config) # {other_id : StateTableEntry}
+         s._next = 1 # counter for generating unique stateid 'other'
+         s.lock = Lock("Client")
+-        
+-    def update(s, arg, principal):
+-        """Update properties of client based on EXCHANGE_ID arg"""
+-        if s.confirmed:
+-            # STUB
+-            return
+-        s.principal = principal
+-        s.ownerid = arg.eia_clientowner.co_ownerid
+-        s.verifier = arg.eia_clientowner.co_verifier
+-        if arg.eia_client_impl_id:
+-            s.impl_id = arg.eia_client_impl_id[0]
+-        else:
+-            s.impl_id = None
+-        s.use_profile = arg.eia_flags & EXCHGID4_FLAG_MASK_PNFS
+-        s.protection = StateProtection(arg.eia_state_protect)
+ 
+     def get_new_other(self):
+         self.lock.acquire()
+@@ -412,10 +323,10 @@ class SessionRecord(object):
+         s.channel_back = Channel(csa.csa_back_chan_attrs, client.config) # Callback communication
+         s.persist = False # see 2.10.4.5 STUB - currently no way to set True
+         s.headerpadsize = 0 # STUB - ignored
+-        #s.binding = None # hashing function used for connection binding,
++        s.binding = None # hashing function used for connection binding,
+         #                  use None for no binding
+         s.nonce = {} # Store nonce while waiting for challange response
+-        #s.ssv = None # crypto hash for securing channel binding
++        s.ssv = None # crypto hash for securing channel binding
+         #            short for "Secret Session Verifier"
+         s.cb_prog = None # callback rpc program number
+         # NOTE 2.10.6.3 implies multiple principals can use a session
+@@ -459,7 +370,7 @@ class Channel(object):
+         s.maxrequests = min(s.maxrequests, config.maxrequests)
+ 
+     def get_attrs(s):
+-        return channel_attrs4(0, s.maxrequestsize,
++        return channel_attrs4(s.maxrequestsize,
+                               s.maxresponsesize, s.maxresponsesize_cached,
+                               s.maxoperations, s.maxrequests, [])
+ 
+@@ -655,14 +566,12 @@ class NFS4Server(rpc.Server):
+             e.cache.valid.wait()
+             log_41.info("Replay...sending data")
+             reply = e.cache.data
+-            unpacker.reset(reply)
+-            show = unpacker.unpack_COMPOUND4res()
+-            unpacker.done()
+-            log_41.info(repr(show))
+         self.recording.add(data, reply)
+         return rpc.SUCCESS, reply
+ 
+     def check_opsconfig(self, env, opname):
++        if BYPASS_SESSION:
++            return
+         log_cfg.debug("FRED - in opsconfig")
+         if env.session is None:
+             log_cfg.debug("Using server")
+@@ -796,7 +705,7 @@ class NFS4Server(rpc.Server):
+         return encode_status(NFS4_OK, res)
+         
+                
+-    def op_create_session_draft10(self, arg, env):
++    def op_create_session(self, arg, env):
+         if arg.csa_flags & ~nfs4lib.create_session_mask:
+             return encode_status(NFS4ERR_INVAL,
+                                  msg="Unknown bits set in flag")
+@@ -852,48 +761,6 @@ class NFS4Server(rpc.Server):
+                                    flags, 0, binding, fore_attrs, back_attrs)
+         return encode_status(NFS4_OK, res)
+ 
+-    def op_create_session(self, arg, env):
+-        check_size_fixed(env, 104)
+-        if arg.csa_flags & ~nfs4lib.create_session_mask:
+-            return encode_status(NFS4ERR_INVAL,
+-                                 msg="Unknown bits set in flag")
+-        # Client record lookup - see draft11 line 23678
+-        c = self.clients[arg.csa_clientid]
+-        if c is None:
+-            return encode_status(NFS4ERR_STALE_CLIENTID)
+-        # bypass set due to draft11 line 22806
+-        c.protection.deny(env, OP_CREATE_SESSION, bypass_ssv=(not c.confirmed))
+-        # Sequence id processing - see draft11 line 23694
+-        env.cache = c.session_replay.check_seqid(arg.csa_sequence)
+-        # Client ID confirmation - see draft11 line 23707
+-        if not c.confirmed:
+-            if env.principal != c.principal:
+-                return encode_status(NFS4ERR_CLID_INUSE)
+-            else:
+-                c.confirmed = True
+-        # Go through args and use/adjust them
+-        session = SessionRecord(c, arg)
+-        connection = env.connection
+-        channel = session.channel_fore
+-        cb_channel = session.channel_back
+-        # Set channel attrs
+-        fore_attrs = channel.get_attrs()
+-        back_attrs = cb_channel.get_attrs()
+-        # Bind connection
+-        channel.connections.append(connection)
+-        if arg.csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN:
+-            cb_channel.connections.append(connection)
+-        session.cb_prog = arg.csa_cb_program
+-        # STUB - setting flags
+-        flags = arg.csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN
+-        # Attach to global lists
+-        c.sessions.append(session) # XXX Is this needed?
+-        self.sessions[session.sessionid] = session
+-        # Return
+-        res = CREATE_SESSION4resok(session.sessionid, arg.csa_sequence,
+-                                   flags, fore_attrs, back_attrs)
+-        return encode_status(NFS4_OK, res)
+-
+     def op_set_ssv(self, arg, env):
+         if env.session is None:
+             # QUESTION XXX Allowed error returns for set_ssv in draft9
+@@ -901,14 +768,13 @@ class NFS4Server(rpc.Server):
+             return encode_status(NFS4ERR_OP_NOT_IN_SESSION)
+         # QUESTION Spec says MUST be called on connection bound to session
+         #          doesn't SEQUENCE getting OK enforce this already?
+-        protect = env.session.client.protection
+-        if protect.type != SP4_SSV:
+-            return encode_status(NFS4ERR_CONN_BINDING_NOT_ENFORCED,
+-                                 msg="Did not request SP4_SSV protection")
+-        hash_funct = protect.hash_funct
++        hash_funct = env.session.binding
++        if hash_funct is None:
++            # QUESTION XXX note this is typo-ed in spec
++            return encode_status(NFS4ERR_CONN_BINDING_NOT_ENFORCED)
+         # Do some argument checking
+         # QUESTION note _INVAL not a legit return
+-        size = protect.ssv_len
++        size = len(env.session.ssv)
+         if len(arg.ssa_ssv) != size:
+             # Per 17.36.5 (CREATE_SESSION)
+             return encode_status(NFS4ERR_INVAL, msg="SSV size != %i" % size)
+@@ -918,20 +784,20 @@ class NFS4Server(rpc.Server):
+         # Now we need to compute and check digest, using SEQUENCE args
+         p = nfs4lib.FancyNFS4Packer()
+         p.pack_SEQUENCE4args(env.argarray[0].opsequence)
+-        digest = hmac.new(protect.ssv, p.get_buffer(), hash_funct).digest()
++        digest = hmac.new(env.session.ssv, p.get_buffer(), hash_funct).digest()
+         if digest != arg.ssa_digest:
+             return encode_status(NFS4ERR_BAD_SESSION_DIGEST)
+         check_size(env, digest)
+         # OK, it checks, so set new ssv
+-        protect.set_ssv(str_xor(protect.ssv, arg.ssa_ssv))
++        env.session.ssv = str_xor(env.session.ssv, arg.ssa_ssv)
+         # Now create new digest using SEQUENCE result
+         p.reset()
+         p.pack_SEQUENCE4res(env.results[0].switch)
+-        digest = hmac.new(protect.ssv, p.get_buffer(), hash_funct).digest()
++        digest = hmac.new(env.session.ssv, p.get_buffer(), hash_funct).digest()
+         res = SET_SSV4resok(digest)
+         return encode_status(NFS4_OK, res)
+             
+-    def op_exchange_id_draft10(self, arg, env):
++    def op_exchange_id(self, arg, env):
+         if arg.eia_flags & ~nfs4lib.exchgid_mask:
+             return encode_status(NFS4ERR_INVAL, msg="Unknown flag")
+         if arg.eia_client_impl_id:
+@@ -980,82 +846,8 @@ class NFS4Server(rpc.Server):
+         finally:
+             self.clients.lock.release()
+         # STUB - we are ignoring arg.eia_flags for the moment
+-        pass
+-        res = EXCHANGE_ID4resok(id, seq, EXCHGID4_FLAG_USE_NON_PNFS,
+-                                self.config._owner, self.config.scope,
+-                                [self.config.impl_id])
+-        return encode_status(NFS4_OK, res)
+-
+-    def op_exchange_id(self, arg, env):
+-        # We need to check size, since it may be called from a session
+-        check_size(env)
+-        # Check arguments for blatent errors
+-        if arg.eia_flags & ~nfs4lib.exchgid_mask:
+-            return encode_status(NFS4ERR_INVAL, msg="Unknown flag")
+-        if arg.eia_flags & EXCHGID4_FLAG_CONFIRMED_R:
+-            return encode_status(NFS4ERR_INVAL,
+-                                 msg="Client used server-only flag")
+-        if arg.eia_client_impl_id:
+-            impl_id = arg.eia_client_impl_id[0]
+-            self.check_utf8str_cis(impl_id.nii_domain)
+-            self.check_utf8str_cs(impl_id.nii_name)
+-            nfs4lib.verify_time(impl_id.nii_date)
+-        else:
+-            impl_id = None
+-        if arg.eia_state_protect.spa_how != SP4_NONE:
+-            check_secure(env)
+-        # Does the client believe it is updating a confirmed record?
+-        update = arg.eia_flags & EXCHGID4_FLAG_UPDATE_A
+-        verf = arg.eia_clientowner.co_verifier
+-        ownerid = arg.eia_clientowner.co_ownerid
+-        self.clients.lock.acquire()
+-        try:
+-            c = self.clients[ownerid]
+-            if c is None:
+-                if update:
+-                    return encode_status(NFS4ERR_NOENT, msg="No such client")
+-                else:
+-                    # The simple, common case: a new client
+-                    c = self.clients.add(arg, env.principal)
+-            elif not c.confirmed:
+-                if update:
+-                    # draft11 line 22662
+-                    return encode_status(NFS4ERR_NOENT,
+-                                         msg="Client not confirmed")
+-                elif c.verifier == verf and c.principal == env.principal:
+-                    # Replay - draft11 case 5
+-                    del self.clients[c.clientid]
+-                    c = self.clients.add(arg, env.principal)
+-                else:
+-                    # draft11 cases 6 and 8
+-                    c.update(arg)
+-            else: # c.confirmed == True
+-                # We need to do state protection tests
+-                # QUESTION - what if put E_ID in must_allow list?
+-                # Note bypass_ssv is set due to draft11 2.4.2 line 1469
+-                c.protection.deny(env, OP_EXCHANGE_ID, bypass_ssv=True)
+-                if c.principal != env.principal:
+-                    # Client collsion draft11 case 4
+-                    return encode_status(NFS4ERR_CLID_INUSE,
+-                                         msg="principal mismatch")
+-                elif  c.verifier != verf:
+-                    # draft11 case 7
+-                    # Confirmed client reboot: this is the hard case
+-                    # STUB need to retain and pass state around
+-                    del self.clients[c.clientid]
+-                    c = self.clients.add(arg, env.principal)
+-                elif update:
+-                    # draft11 case 3
+-                    c.update(arg)
+-            seq = inc_u32(c.session_replay.seqid) # XXX BUG this isn't right in replay case - just return 1?
+-        finally:
+-            self.clients.lock.release()
+-        # STUB - we are ignoring arg.eia_flags for the moment
+-        flags = EXCHGID4_FLAG_USE_NON_PNFS
+-        if c.confirmed:
+-            flags |= EXCHGID4_FLAG_CONFIRMED_R
+-        protect = state_protect4_r(SP4_NONE) # STUB
+-        res = EXCHANGE_ID4resok(c.clientid, seq, flags, c.protection.rv(),
++        flags = EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_USE_PNFS_MDS
++        res = EXCHANGE_ID4resok(id, seq, flags,
+                                 self.config._owner, self.config.scope,
+                                 [self.config.impl_id])
+         return encode_status(NFS4_OK, res)
+@@ -1162,7 +954,7 @@ class NFS4Server(rpc.Server):
+         return encode_status(NFS4_OK)
+ 
+     def op_lookup(self, arg, env):
+-        check_session(env)
++        check_session(env, self)
+         check_size(env)
+         check_cfh(env)
+         env.cfh.check_dir()
+@@ -1255,7 +1047,7 @@ class NFS4Server(rpc.Server):
+ 
+ ###################################################
+     def op_write(self, arg, env):
+-        check_session(env)
++        check_session(env, self)
+         check_size(env)
+         check_cfh(env)
+         env.cfh.verify_file()
+@@ -1279,7 +1071,7 @@ class NFS4Server(rpc.Server):
+         return encode_status(NFS4_OK, res)
+ 
+     def op_read(self, arg, env):
+-        check_session(env)
++        check_session(env, self)
+         check_size(env)
+         check_cfh(env)
+         env.cfh.verify_file()
+@@ -1308,14 +1100,15 @@ class NFS4Server(rpc.Server):
+ 
+     def op_open(self, arg, env):
+         self.check_opsconfig(env, "open")
+-        check_session(env)
++        check_session(env, self)
+         check_size(env)
+         check_cfh(env)
+         check_seqid(arg.seqid)
+-        if arg.owner.clientid != 0 and not BYPASS_SESSION:
+-            return encode_status(NFS4ERR_INVAL,
+-                                 msg="owner.clientid must be zero in 4.1")
+-        arg.owner.clientid = env.session.client.clientid
++        if not BYPASS_SESSION:
++            if arg.owner.clientid != 0:
++                return encode_status(NFS4ERR_INVAL,
++                                     msg="owner.clientid must be zero in 4.1")
++            arg.owner.clientid = env.session.client.clientid
+         claim_type = arg.claim.claim
+         if claim_type != CLAIM_NULL and arg.openhow.opentype == OPEN4_CREATE:
+             return encode_status(NFS4ERR_INVAL,
+@@ -1449,13 +1242,14 @@ class NFS4Server(rpc.Server):
+                 continue
+             # Attributes hide in different places, call the place 'base'
+             if info[attr].from_fs:
+-                base = obj.fs
++                base = obj.vfs
++                print "(from fs %r)" % (base.fsid,) ,
+             elif info[attr].from_serv:
+                 base = self
+             else:
+                 base = obj
+             name = "fattr4_%s" % nfs4lib.attr_name(attr)
+-            if hasattr(base, name) and (obj.fs.fattr4_supported_attrs & 1<<attr): # STUB we should be able to remove hasattr
++            if hasattr(base, name) and (obj.vfs.fattr4_supported_attrs & 1<<attr): # STUB we should be able to remove hasattr
+                 ret_dict[attr] = getattr(base, name)
+                 print ret_dict[attr]
+             else:
+@@ -1487,7 +1281,7 @@ class NFS4Server(rpc.Server):
+             return len(p.get_buffer())
+             
+         offset = 3 # index offset used to avoid reserved cookies
+-        check_session(env)
++        check_session(env, self)
+         check_cfh(env)
+         env.cfh.check_dir()
+         if arg.cookie in (1, 2) or \
+@@ -1592,7 +1386,7 @@ class NFS4Server(rpc.Server):
+         return encode_status(NFS4_OK, res)
+ 
+     def op_close(self, arg, env):
+-        check_session(env)
++        check_session(env, self)
+         check_size(env)
+         check_cfh(env)
+         check_seqid(arg.seqid)
+@@ -1725,37 +1519,56 @@ class NFS4Server(rpc.Server):
+         return encode_status(NFS4_OK)
+     
+     def op_getdevicelist(self, arg, env): # STUB
+-        # STUB
+-        # Deal with cfh
+-        fs = env.cfh.fs
+-        # Deal with whole cookie thing
++        check_session(env)
++        check_size(env)
++        check_cfh(env)
++        fs = env.cfh.vfs
++        # STUB Deal with whole cookie thing
+         kind = arg.gdla_layout_type
+-        if kind != LAYOUT4_BLOCK_VOLUME:
++        if kind != LAYOUT4_BLOCK_VOLUME or not hasattr(fs, "block_list"):
+             res = GETDEVICELIST4resok(0, "", [], True)
+             return encode_status(NFS4_OK, res)
+         # get devices associated with fs
+-        list = [block.build()]
+         list = [devlist_item4(d.id, device_addr4(LAYOUT4_BLOCK_VOLUME,
+                                                  d.get_addr()))
+-                for d in list]
++                for d in fs.block_list.dump()]
+         res = GETDEVICELIST4resok(0, "", list, True)
+         return encode_status(NFS4_OK, res)
+ 
+     def op_getdeviceinfo(self, arg, env): # STUB
+-        # STUB
+-        # Deal with cfh
+-        fs = env.cfh.fs
+-        # Deal with count
++        check_session(env)
++        check_size(env)
++        check_cfh(env)
++        fs = env.cfh.vfs
++        # STUB - only deals with block volumes
+         kind = arg.gdia_layout_type
+         if kind != LAYOUT4_BLOCK_VOLUME:
+             return encode_status(NFS4ERR_INVAL)
++        # STUB - want to pull this from fs, not block module
+         d = block.devices.get(arg.gdia_device_id, None)
+         if d is None:
+             return encode_status(NFS4ERR_INVAL)
+-        res = GETDEVICEINFO4resok(device_addr4(LAYOUT4_BLOCK_VOLUME,
+-                                               d.get_addr()))
++        address = device_addr4(LAYOUT4_BLOCK_VOLUME, d.get_addr())
++        # Check that we don't exceed count
++        p = nfs4lib.FancyNFS4Packer()
++        p.pack_device_addr4(address)
++        if len(p.get_buffer()) > arg.gdia_maxcount:
++            return encode_status(NFS4ERR_TOOSMALL)
++        res = GETDEVICEINFO4resok(address)
+         return encode_status(NFS4_OK, res)
+ 
++    def op_layoutget(self, arg, env): # STUB
++        check_session(env)
++        check_size(env)
++        check_cfh(env)
++        # STUB do state locking and check on iomode,offset,length triple
++        pass
++        layout = env.cfh.get_layout(arg)
++        # STUB revise state management based on returned iomode,offset,length
++        pass
++        res = LAYOUTGET4resok(False, layout)
++        return encode_status(NFS4_OK, res)
++    
+     def op_illegal(self, arg, env):
+         return encode_status(NFS4ERR_OP_ILLEGAL)
+ 
+@@ -1797,19 +1610,38 @@ class NFS4Server(rpc.Server):
+     def ctrl_illegal(self, arg):
+         print "ILLEGAL"
+         return sctrl_const.CTRLSTAT_ILLEGAL, sctrl_type.resdata_t(arg.ctrlop)
+-        
++
++    def op_setclientid(self, arg, env):
++        if not BYPASS_SESSION:
++            return encode_status(NFS4ERR_NOTSUPP)
++        # UGLY *BAD* HACK STUB
++        return encode_status(NFS4_OK, SETCLIENTID4resok(0, ""))
++
++    def op_setclientid_confirm(self, arg, env):
++        if not BYPASS_SESSION:
++            return encode_status(NFS4ERR_NOTSUPP)
++        # UGLY *BAD* HACK STUB
++        return encode_status(NFS4_OK)
++
++    
++                             
+     def fh2obj(self, fh):
+         """Given a fh, find the appropriate FSObject"""
+         log_41.log(5, "fh2obj(%r)" % fh)
+         major, minor, flag, id = struct.unpack("!QQbQ", fh)
+         log_41.log(5, "fh2obj - %i, %i, %i, %i = " % (major, minor, flag, id ))
+-        fs = self.root.fs._fsids[(major, minor)].mounted_fs
++        fs = self.fsid2fs((major, minor))
++        log_41.log(5, "fh2obj - chooses fsid %r" % (fs.fsid,))
++        return fs.find(id)
++
++    def fsid2fs(self, fsid):
++        fs = self.root.fs._fsids[fsid].mounted_fs
+         if fs is None:
+             # XXX This is ugly
+             # The root
+-            fs = self.root.fs._fsids[(major, minor)].fs
+-        log_41.log(5, "fh2obj - chooses fsid %r" % (fs.fsid,))
+-        return fs.find(id)
++            fs = self.root.fs._fsids[fsid].fs
++        return fs
++        
+ 
+     def cb_compound(self, args, prog, credinfo=None, pipe=None, tag=None):
+         if tag is None:
+@@ -1833,7 +1665,7 @@ class NFS4Server(rpc.Server):
+     
+             
+ #####################################################
+-from fs import StubFS_Mem, StubFS_Disk
++from fs import StubFS_Mem, StubFS_Disk, LayoutFS
+ 
+ 
+ def mount_stuff(server, opts):
+@@ -1843,9 +1675,11 @@ def mount_stuff(server, opts):
+     B = StubFS_Mem(2)
+     C = StubFS_Mem(3)
+     D = StubFS_Mem(4)
++    E = LayoutFS(5)
+     server.mount(A, path="/a")
+     # S.mount(B, path="/a/gen/b") # BUG - causes problems with mounted_on_fsid
+     server.mount(C, path="/foo/bar/c")
++    server.mount(E, path="/block")
+ 
+ def scan_options():
+     from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/nfs4state.py draft10-070910/nfs4/nfs4state.py
+--- server070724/nfs4/nfs4state.py	2007-05-30 14:00:28.000000000 -0400
++++ draft10-070910/nfs4/nfs4state.py	2007-07-25 17:28:31.000000000 -0400
+@@ -215,6 +215,9 @@ class DelegState(FileStateTyped):
+         if self.waiting > 0 or self.outstanding > 0:
+             # Don't grant delegations while anyone is waiting for a recall
+             return None
++        if access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == \
++           OPEN4_SHARE_ACCESS_WANT_NO_DELEG:
++            return None
+         # Need to query file (or fs?).  For example, ConfigFS should
+         # never grant delegation.
+         possible = self.file.delegation_options()
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/pnfs_block-01.x draft10-070910/nfs4/pnfs_block-01.x
+--- server070724/nfs4/pnfs_block-01.x	1969-12-31 19:00:00.000000000 -0500
++++ draft10-070910/nfs4/pnfs_block-01.x	2007-08-03 16:37:42.000000000 -0400
+@@ -0,0 +1,141 @@
++/* This is draft-01 */
++
++/* From NFS4.1 */
++typedef unsigned int		uint32_t;
++typedef hyper		int64_t;
++typedef unsigned hyper	uint64_t;
++
++typedef uint32_t pnfs_deviceid4;
++typedef uint64_t	length4;
++typedef uint64_t	offset4;
++/* End from NFS4.1 */
++
++const MAX_SIG_COMP = 8;
++
++  enum extentState4 {
++
++     READ_WRITE_DATA  = 0, /* the data located by this extent is valid
++                              for reading and writing. */
++
++     READ_DATA = 1,        /* the data located by this extent is valid
++                              for reading only; it may not be written.
++                              */
++
++     INVALID_DATA = 2,     /* the location is valid; the data is
++                              invalid. It is a newly (pre-) allocated
++                              extent. There is physical space on the
++                              volume. */
++
++     NONE_DATA = 3        /* the location is invalid. It is a hole in
++                              the file. There is no physical space on
++                              the volume. */
++
++   };
++
++   struct pnfs_block_extent {
++
++     offset4         offset;          /* the starting offset in the
++                                         file */
++
++     length4         length;          /* the size of the extent */
++
++     offset4         storage_offset;  /* the starting offset in the
++                                         volume */
++
++     extentState4    es;              /* the state of this extent */
++
++   };
++
++
++
++   struct pnfs_block_layout {
++
++      pnfs_deviceid4    volume;        /* logical volume on which file
++                                         is stored. */
++
++      pnfs_block_extent extents<>;     /* extents which make up this
++                                         layout. */
++
++   };
++
++  struct sigComponent {         /*  disk signature component */
++
++      offset4  sig_offset;       /* byte offset of component */
++
++      length4  sig_length;       /* byte length of component */
++
++      opaque contents<>;      /* contents of this component of the
++                                 signature (this is opaque) */
++
++   };
++
++
++
++   enum pnfs_block_volume_type {
++
++      VOLUME_SIMPLE = 0,      /* volume maps to a single LU */
++
++      VOLUME_SLICE = 1,       /* volume is a slice of another volume */
++
++      VOLUME_CONCAT = 2,      /* volume is a concatenation of multiple
++                                 volumes */
++
++      VOLUME_STRIPE = 3      /* volume is striped across multiple
++                                 volumes */
++
++   };
++
++
++   struct pnfs_block_slice_volume_info {
++
++      offset4          start;   /* block-offset of the start of the
++                                    slice */
++
++      length4          length;  /* length of slice in blocks */
++
++      pnfs_deviceid4   volume;  /* volume which is sliced */
++
++   };
++
++
++
++   struct pnfs_block_concat_volume_info {
++
++      pnfs_deviceid4    volumes<>;  /* volumes which are concatenated */
++
++   };
++
++
++
++   struct pnfs_block_stripe_volume_info {
++
++      length4           stripe_unit;   /* size of stripe */
++
++      pnfs_deviceid4    volumes<>;     /* volumes which are striped
++                                         across*/
++
++   };
++
++   union pnfs_block_deviceaddr4 switch (pnfs_block_volume_type type) {
++
++         case VOLUME_SIMPLE:
++
++               sigComponent ds<MAX_SIG_COMP>;   /* disk signature */
++
++         case VOLUME_SLICE:
++
++               pnfs_block_slice_volume_info slice_info;
++
++         case VOLUME_CONCAT:
++
++               pnfs_block_concat_volume_info concat_info;
++
++         case VOLUME_STRIPE:
++
++               pnfs_block_stripe_volume_info stripe_info;
++
++         default:
++
++               void;
++
++   };
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/pnfs_block.x draft10-070910/nfs4/pnfs_block.x
+--- server070724/nfs4/pnfs_block.x	2007-04-09 12:22:32.000000000 -0400
++++ draft10-070910/nfs4/pnfs_block.x	2007-08-03 16:09:57.000000000 -0400
+@@ -1,3 +1,5 @@
++/* This is draft-03 */
++
+ /* From NFS4.1 */
+ typedef unsigned int		uint32_t;
+ typedef hyper		int64_t;
+@@ -6,7 +8,7 @@ typedef unsigned hyper	uint64_t;
+ typedef uint32_t deviceid4;
+ typedef uint64_t	length4;
+ typedef uint64_t	offset4;
+-
++/* End from NFS4.1 */
+ 
+ const MAX_SIG_COMP = 8;
+ 
+@@ -124,3 +126,51 @@ struct pnfs_block_sig_component4 {  /*  
+ 
+    }; 
+ 
++   enum pnfs_block_extent_state4 { 
++
++     READ_WRITE_DATA  = 0, /* the data located by this extent is valid 
++                              for reading and writing. */ 
++
++     READ_DATA = 1,        /* the data located by this extent is valid 
++                              for reading only; it may not be written. 
++                              */ 
++
++     INVALID_DATA = 2,     /* the location is valid; the data is 
++                              invalid. It is a newly (pre-) allocated 
++                              extent. There is physical space on the 
++                              volume. */ 
++
++     NONE_DATA = 3        /* the location is invalid. It is a hole in 
++                              the file. There is no physical space on 
++                              the volume. */ 
++
++   }; 
++
++   struct pnfs_block_extent4 { 
++
++     offset4         file_offset;        /* the starting offset in the 
++                                         file */ 
++
++     length4         extent_length;       
++                                          /* the size of the extent */ 
++
++     offset4         storage_offset;  /* the starting offset in the 
++                                         volume */ 
++
++     pnfs_block_extent_state4 es;     /* the state of this extent */ 
++
++   }; 
++
++    
++
++   struct pnfs_block_layout4 { 
++
++      deviceid4          volume;       /* logical volume on which file 
++                                         is stored. */ 
++
++      pnfs_block_extent4 extents<>;    /* extents which make up this 
++                                         layout. */ 
++
++   }; 
++
++
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/pnfs_block01.x draft10-070910/nfs4/pnfs_block01.x
+--- server070724/nfs4/pnfs_block01.x	1969-12-31 19:00:00.000000000 -0500
++++ draft10-070910/nfs4/pnfs_block01.x	2007-08-03 16:27:41.000000000 -0400
+@@ -0,0 +1,141 @@
++/* This is draft-03 */
++
++/* From NFS4.1 */
++typedef unsigned int		uint32_t;
++typedef hyper		int64_t;
++typedef unsigned hyper	uint64_t;
++
++typedef uint32_t pnfs_deviceid4;
++typedef uint64_t	length4;
++typedef uint64_t	offset4;
++/* End from NFS4.1 */
++
++const MAX_SIG_COMP = 8;
++
++  enum extentState4 {
++
++     READ_WRITE_DATA  = 0, /* the data located by this extent is valid
++                              for reading and writing. */
++
++     READ_DATA = 1,        /* the data located by this extent is valid
++                              for reading only; it may not be written.
++                              */
++
++     INVALID_DATA = 2,     /* the location is valid; the data is
++                              invalid. It is a newly (pre-) allocated
++                              extent. There is physical space on the
++                              volume. */
++
++     NONE_DATA = 3        /* the location is invalid. It is a hole in
++                              the file. There is no physical space on
++                              the volume. */
++
++   };
++
++   struct pnfs_block_extent {
++
++     offset4         offset;          /* the starting offset in the
++                                         file */
++
++     length4         length;          /* the size of the extent */
++
++     offset4         storage_offset;  /* the starting offset in the
++                                         volume */
++
++     extentState4    es;              /* the state of this extent */
++
++   };
++
++
++
++   struct pnfs_block_layout {
++
++      pnfs_deviceid4    volume;        /* logical volume on which file
++                                         is stored. */
++
++      pnfs_block_extent extents<>;     /* extents which make up this
++                                         layout. */
++
++   };
++
++  struct sigComponent {         /*  disk signature component */
++
++      offset4  sig_offset;       /* byte offset of component */
++
++      length4  sig_length;       /* byte length of component */
++
++      opaque contents<>;      /* contents of this component of the
++                                 signature (this is opaque) */
++
++   };
++
++
++
++   enum pnfs_block_volume_type {
++
++      VOLUME_SIMPLE = 0,      /* volume maps to a single LU */
++
++      VOLUME_SLICE = 1,       /* volume is a slice of another volume */
++
++      VOLUME_CONCAT = 2,      /* volume is a concatenation of multiple
++                                 volumes */
++
++      VOLUME_STRIPE = 3      /* volume is striped across multiple
++                                 volumes */
++
++   };
++
++
++   struct pnfs_block_slice_volume_info {
++
++      offset4          start;   /* block-offset of the start of the
++                                    slice */
++
++      length4          length;  /* length of slice in blocks */
++
++      pnfs_deviceid4   volume;  /* volume which is sliced */
++
++   };
++
++
++
++   struct pnfs_block_concat_volume_info {
++
++      pnfs_deviceid4    volumes<>;  /* volumes which are concatenated */
++
++   };
++
++
++
++   struct pnfs_block_stripe_volume_info {
++
++      length4           stripe_unit;   /* size of stripe */
++
++      pnfs_deviceid4    volumes<>;     /* volumes which are striped
++                                         across*/
++
++   };
++
++   union pnfs_block_deviceaddr4 switch (pnfs_block_volume_type type) {
++
++         case VOLUME_SIMPLE:
++
++               sigComponent ds<MAX_SIG_COMP>;   /* disk signature */
++
++         case VOLUME_SLICE:
++
++               pnfs_block_slice_volume_info slice_info;
++
++         case VOLUME_CONCAT:
++
++               pnfs_block_concat_volume_info concat_info;
++
++         case VOLUME_STRIPE:
++
++               pnfs_block_stripe_volume_info stripe_info;
++
++         default:
++
++               void;
++
++   };
+Binary files server070724/nfs4/profile_data and draft10-070910/nfs4/profile_data differ
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/server41tests/__init__.py draft10-070910/nfs4/server41tests/__init__.py
+--- server070724/nfs4/server41tests/__init__.py	2007-06-22 12:59:32.000000000 -0400
++++ draft10-070910/nfs4/server41tests/__init__.py	2007-07-24 11:21:14.000000000 -0400
+@@ -1,6 +1,8 @@
+ __all__ = ["st_exchange_id.py",
+            "st_create_session.py",
+-##            "st_sequence.py",
+-##            "st_open.py",
+-##            "st_lookup.py",
++           "st_sequence.py",
++           "st_open.py",
++           "st_lookup.py",
++           ###############
++           "st_debug.py",
+            ]
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/server41tests/st_create_session.py draft10-070910/nfs4/server41tests/st_create_session.py
+--- server070724/nfs4/server41tests/st_create_session.py	2007-06-22 16:15:48.000000000 -0400
++++ draft10-070910/nfs4/server41tests/st_create_session.py	2007-05-24 16:04:22.000000000 -0400
+@@ -1,34 +1,40 @@
+ from nfs4_const import *
+ import nfs4_ops as op
+ from environment import check, fail
+-from nfs4_type import *
++from nfs4_type import conn_binding4args, channel_attrs4, callback_sec_parms4,\
++     client_owner4, authsys_parms, gss_cb_handles4
+ import random
+ import nfs4lib
+ from rpc import RPCAcceptError, GARBAGE_ARGS
+ 
+-## hash_algs = {"sha1" : '+\x0e\x03\x02\x1a',
+-##              "sha256" : '`\x86H\x01e\x03\x04\x02\x01',
+-##              "sha384" : '`\x86H\x01e\x03\x04\x02\x02',
+-##              "sha512" : '`\x86H\x01e\x03\x04\x02\x03',
+-##              "sha224" : '`\x86H\x01e\x03\x04\x02\x04'
+-##              }
++hash_algs = {"sha1" : '+\x0e\x03\x02\x1a',
++             "sha256" : '`\x86H\x01e\x03\x04\x02\x01',
++             "sha384" : '`\x86H\x01e\x03\x04\x02\x02',
++             "sha512" : '`\x86H\x01e\x03\x04\x02\x03',
++             "sha224" : '`\x86H\x01e\x03\x04\x02\x04'
++             }
+ 
+ 
+ def exchange_id(c, name, cred=None):
+     """Do a simple exchange id"""
+     owner = client_owner4(c.verifier, name)
+-    protect = state_protect4_a(SP4_NONE)
+-    res = c.compound([op.exchange_id(owner, 0, protect, [c.impl_id])], cred)
++    res = c.compound([op.exchange_id(owner, 0, [c.impl_id])], cred)
+     check(res)
+     return res.resarray[0]
+ 
+-def create_session(c, clientid, sequenceid, cred=None, flags=0):
++def create_session(c, clientid, sequenceid, cred=None, hashlist=None,
++                   flags=0):
+     """Send a simple CREATE_SESSION"""
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
++    if hashlist is None:
++        binding_opts = conn_binding4args(False)
++    else:
++        binding_opts = conn_binding4args(True, hashlist)
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[])
+     cb_sec= callback_sec_parms4(0)
+-    res = c.compound([op.create_session(clientid, sequenceid, flags,
+-                                        chan_attrs, chan_attrs,
+-                                        123, [cb_sec])], cred)
++    res = c.compound([op.create_session(clientid, sequenceid,
++                                          flags, 0, binding_opts,
++                                          chan_attrs, chan_attrs,
++                                          123, [cb_sec])], cred)
+     return res
+ 
+ ###############################################
+@@ -39,8 +45,12 @@ def testSupported1(t, env):
+     FLAGS: create_session all
+     CODE: CSESS1
+     """
+-    c = env.c1.new_client(env.testname(t))
+-    sess = c.create_session()
++    c = env.c1
++    # EXCHANGE_ID
++    eir = exchange_id(c, env.testname(t))
++    # CREATE_SESSION
++    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid)
++    check(res)
+ 
+ def testSupported2(t, env):
+     """Do a CREATE_SESSION after a SEQUENCE (for same client)
+@@ -51,8 +61,9 @@ def testSupported2(t, env):
+     c1 = env.c1.new_client(env.testname(t))
+     sess1 = c1.create_session()
+     # Create second session
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+-    cs_op = op.create_session(c1.clientid, c1.seqid, 0,
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[])
++    cs_op = op.create_session(c1.clientid, c1.seqid, 0, 0,
++                              conn_binding4args(False),
+                               chan_attrs, chan_attrs, c1.c.prog, [])
+     res = sess1.compound([cs_op])
+     check(res)
+@@ -71,8 +82,9 @@ def testSupported2b(t, env):
+     c2 = env.c1.new_client("%s_2" % env.testname(t))
+     sess1 = c1.create_session()
+     # Create second session
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+-    cs_op = op.create_session(c2.clientid, c2.seqid, 0,
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[])
++    cs_op = op.create_session(c2.clientid, c2.seqid, 0, 0,
++                              conn_binding4args(False),
+                               chan_attrs, chan_attrs, c2.c.prog, [])
+     res = sess1.compound([cs_op])
+     check(res)
+@@ -214,6 +226,65 @@ def testPrincipalCollision2(t, env):
+                           cred=env.cred2)
+     check(res2)
+ 
++def testRequiredHashes(t, env):
++    """Test server supports all required hash algorithms
++
++    FLAGS: create_session all
++    CODE: CSESS11
++    """
++    c = env.c1
++    # EXCHANGE_ID
++    csr = exchange_id(c, env.testname(t), cred=env.cred1)
++    clientid = csr.eir_clientid
++    csr.csr_sequence = csr.eir_sequenceid
++    for name, oid in hash_algs.items():
++        res = create_session(c, clientid, csr.csr_sequence,
++                             hashlist = [oid])
++        check(res, msg="Trying %s hash alg" % name)
++        csr = res.resarray[0]
++
++def testEmptyHashList(t, env):
++    """Test server response to empty hash list
++
++    FLAGS: create_session all
++    CODE: CSESS12
++    """
++    c = env.c1
++    eir = exchange_id(c, env.testname(t), cred=env.cred1)
++    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid,
++                         hashlist = [])
++    check(res, NFS4ERR_HASH_ALG_UNSUPP, "Trying empty hash list")
++
++def testUnknownHash(t, env):
++    """Test server response to empty hash list
++
++    FLAGS: create_session all
++    CODE: CSESS13
++    """
++    c = env.c1
++    eir = exchange_id(c, env.testname(t), cred=env.cred1)
++    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid,
++                         hashlist = ["gibberish_oid"])
++    check(res, NFS4ERR_HASH_ALG_UNSUPP)
++
++def testMixedHashList(t, env):
++    """Test server response to hash list that contains both known and unknown
++
++    FLAGS: create_session all
++    CODE: CSESS14
++    """
++    c = env.c1
++    eir = exchange_id(c, env.testname(t), cred=env.cred1)
++    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid,
++                         hashlist = ["gibberish_oid1",
++                                     hash_algs["sha1"],
++                                     "more_oid_gibberish2"])
++    check(res)
++    # Make sure response points to valid oid
++    index = res.resarray[0].csr_conn_binding_opts.hai_hash_alg
++    if index != 1:
++        fail("Expected response to choose alg 1, instead got %i" % index)
++    
+ def testBadFlag(t, env):
+     """Use invalid flag bits
+ 
+@@ -251,7 +322,7 @@ def testRdmaArray0(t, env):
+     CODE: CSESS17
+     """
+     c1 = env.c1.new_client(env.testname(t))
+-    chan_attrs = channel_attrs4(0, 8192,8192,8192,128,8,[])
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[])
+     sess1 = c1.create_session(fore_attrs=chan_attrs,
+                               back_attrs=chan_attrs)
+ 
+@@ -262,7 +333,7 @@ def testRdmaArray1(t, env):
+     CODE: CSESS18
+     """
+     c1 = env.c1.new_client(env.testname(t))
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[57])
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[57])
+     sess1 = c1.create_session(fore_attrs=chan_attrs,
+                               back_attrs=chan_attrs)
+ 
+@@ -274,9 +345,10 @@ def testRdmaArray2(t, env):
+     """
+     c = env.c1
+     eir = exchange_id(c, env.testname(t), cred=env.cred1)
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[13, 57])
+-    ops = [op.create_session(eir.eir_clientid, eir.eir_sequenceid, 0,
+-                             chan_attrs, chan_attrs,
++    chan_attrs = channel_attrs4(8192,8192,8192,128,8,[13, 57])
++    binding_opts = conn_binding4args(False)
++    ops = [op.create_session(eir.eir_clientid, eir.eir_sequenceid, 0, 0,
++                             binding_opts, chan_attrs, chan_attrs,
+                              c.prog, [])]
+     xid = c.compound_async(ops, checks=False)
+     try:
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/server41tests/st_debug.py draft10-070910/nfs4/server41tests/st_debug.py
+--- server070724/nfs4/server41tests/st_debug.py	2007-06-07 12:13:52.000000000 -0400
++++ draft10-070910/nfs4/server41tests/st_debug.py	2007-08-08 14:53:14.000000000 -0400
+@@ -1,11 +1,11 @@
+ from st_create_session import exchange_id, create_session
+ from nfs4_const import *
+-from environment import check, fail, create_file
++from environment import check, fail, create_file, use_obj, open_file
+ from nfs4_type import open_owner4, openflag4, createhow4, open_claim4
+ import nfs4_ops as op
+ import threading
+ 
+-def testSupported2(t, env):
++def xxxtestSupported2(t, env):
+     """Do a simple OPEN create, using new automatic sequencode handling
+ 
+     FLAGS: open all
+@@ -31,7 +31,7 @@ def testSupported2(t, env):
+     print res
+     check(res)
+     
+-def testReadWrite(t, env):
++def xxxtestReadWrite(t, env):
+     """Do a simple READ and WRITE
+ 
+     FLAGS: open all
+@@ -59,7 +59,7 @@ def testReadWrite(t, env):
+     check(res)
+ 
+ 
+-def testDeadlock(t, env):
++def xxxtestDeadlock(t, env):
+     """Trigger deadlock bug
+ 
+     FLAGS: debug all
+@@ -86,3 +86,59 @@ def testDeadlock(t, env):
+         res = sess1.listen(xid)
+         check(res)
+         print res
++
++def testLayout(t, env):
++    """Verify layout handling
++
++    FLAGS: layout all
++    CODE: LAYOUT1
++    """
++    # Make sure E_ID returns MDS capabilities
++    c1 = env.c1.new_client(env.testname(t), flags=EXCHGID4_FLAG_USE_PNFS_MDS)
++    if not c1.flags & EXCHGID4_FLAG_USE_PNFS_MDS:
++        fail("Server can not be used as pnfs metadata server")
++    sess = c1.create_session()
++    # Test that fs handles block layouts
++    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
++    res = sess.compound(ops)
++    check(res)
++    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
++        fail("fs_layout_type not available")
++    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
++        fail("layout_type does not contain BLOCK")
++    # Open the file
++    owner = "owner for %s" % env.testname(t)
++    # openres = open_file(sess, owner, env.opts.path + ["simple_extent"])
++    openres = open_file(sess, owner, env.opts.path + ["hole_between_extents"])
++    check(openres)
++    # Get a layout
++    fh = openres.resarray[-1].object
++    ops = [op.putfh(fh),
++           op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_READ,
++                        0, 0xffffffff, 0, 0xffff)]
++    res = sess.compound(ops)
++    check(res)
++    
++def testGetDevList(t, env):
++    """Check devlist
++
++    FLAGS: layout all
++    CODE: LAYOUT2
++    """
++    # Make sure E_ID returns MDS capabilities
++    c1 = env.c1.new_client(env.testname(t), flags=EXCHGID4_FLAG_USE_PNFS_MDS)
++    if not c1.flags & EXCHGID4_FLAG_USE_PNFS_MDS:
++        fail("Server can not be used as pnfs metadata server")
++    sess = c1.create_session()
++    # Test that fs handles block layouts
++    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
++    res = sess.compound(ops)
++    check(res)
++    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
++        fail("fs_layout_type not available")
++    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
++        fail("layout_type does not contain BLOCK")
++    # Send GETDEVICELIST
++    ops = use_obj(env.opts.path) + [op.getdevicelist(LAYOUT4_BLOCK_VOLUME, 0, 0, "")]
++    res = sess.compound(ops)
++    check(res)
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/nfs4/server41tests/st_exchange_id.py draft10-070910/nfs4/server41tests/st_exchange_id.py
+--- server070724/nfs4/server41tests/st_exchange_id.py	2007-06-26 10:49:29.000000000 -0400
++++ draft10-070910/nfs4/server41tests/st_exchange_id.py	2007-05-18 14:47:28.000000000 -0400
+@@ -1,9 +1,9 @@
+ from nfs4_const import *
+ import nfs4_ops as op
+ from environment import check, fail
+-from nfs4_type import *
++from nfs4_type import client_owner4, conn_binding4args, channel_attrs4
+ from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
+-from nfs4lib import NFS4Error, hash_oids, encrypt_oids
++from nfs4lib import NFS4Error
+ 
+ def testSupported(t, env):
+     """Do a simple EXCHANGE_ID
+@@ -13,11 +13,10 @@ def testSupported(t, env):
+     """
+     c = env.c1
+     owner = client_owner4(c.verifier, env.testname(t))
+-    protect = state_protect4_a(SP4_NONE)
+-    res = c.compound([op.exchange_id(owner, 0, protect, [c.impl_id])])
++    res = c.compound([op.exchange_id(owner, 0, [c.impl_id])])
+     check(res)
+     # per draft 10 line 21793, server MUST set one of these bits
+-    if not (res.resarray[0].eir_flags & EXCHGID4_FLAG_MASK_PNFS):
++    if not (res.resarray[0].eir_flags & 0x70000):
+         fail("server did not set any EXCHGID4_FLAG_USE_* bits")
+ 
+ def testSupported2(t, env):
+@@ -29,60 +28,6 @@ def testSupported2(t, env):
+     # STUB - want to call from within a session
+     fail("TODO - fixme")
+     
+-def testSSV(t, env):
+-    """Do a simple EXCHANGE_ID
+-
+-    FLAGS: exchange_id all
+-    CODE: EID50
+-    """
+-    c = env.c1
+-    owner = client_owner4(c.verifier, env.testname(t))
+-    enforce = (1<<OP_CREATE_SESSION) | (1<<OP_BIND_CONN_TO_SESSION) | \
+-              (1<<OP_DESTROY_SESSION) | (1<<OP_DESTROY_CLIENTID) | \
+-              (1<<OP_BACKCHANNEL_CTL)
+-    allow = (1<<OP_CLOSE)
+-    oplists = state_protect_ops4(enforce, allow)
+-    ssv_parms = ssv_sp_parms4(oplists,
+-                              [hash_oids["sha256"], hash_oids["sha1"]],
+-                              ["giberrish_oid", encrypt_oids["aes256-CBC"]],
+-                              4, 2)
+-    protect = state_protect4_a(SP4_SSV, spa_ssv_parms=ssv_parms)
+-    res = c.compound([op.exchange_id(owner, 0, protect, [c.impl_id])])
+-    check(res)
+-    # per draft 10 line 21793, server MUST set one of these bits
+-    if not (res.resarray[0].eir_flags & EXCHGID4_FLAG_MASK_PNFS):
+-        fail("server did not set any EXCHGID4_FLAG_USE_* bits")
+-
+-    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+-    cb_sec= callback_sec_parms4(0) # Can we use ssv cred here?
+-
+-def testSSV2(t, env):
+-    """Do a simple EXCHANGE_ID
+-
+-    FLAGS: exchange_id all
+-    CODE: EID51
+-    """
+-    # E_ID with SP4_SSV set
+-    enforce = (1<<OP_CREATE_SESSION) | (1<<OP_BIND_CONN_TO_SESSION) | \
+-              (1<<OP_DESTROY_SESSION) | (1<<OP_DESTROY_CLIENTID) | \
+-              (1<<OP_BACKCHANNEL_CTL)
+-    allow = (1<<OP_CLOSE)
+-    oplists = state_protect_ops4(enforce, allow)
+-    ssv_parms = ssv_sp_parms4(oplists,
+-                              [hash_oids["sha256"], hash_oids["sha1"]],
+-                              ["giberrish_oid", encrypt_oids["aes256-CBC"]],
+-                              4, 2)
+-    protect = state_protect4_a(SP4_SSV, spa_ssv_parms=ssv_parms)
+-    c = env.c1.new_client(env.testname(t), protect=protect)
+-
+-    # CREATE_SESSION
+-    sess = c.create_session() # Can we use ssv cred for cb_sec here?
+-    # This should fail if not using GSS?  What about E_ID?
+-
+-    # SET_SSV
+-    res = sess.set_ssv('\x5a' * c.protect.ssv_len)
+-    print res
+-    
+ def testNoImplId(t, env):
+     """Do a simple EXCHANGE_ID w/o setting client impl_id
+ 
+@@ -91,8 +36,7 @@ def testNoImplId(t, env):
+     """
+     c = env.c1
+     owner = client_owner4(c.verifier, env.testname(t))
+-    protect = state_protect4_a(SP4_NONE)
+-    res = c.compound([op.exchange_id(owner, 0, protect, [])])
++    res = c.compound([op.exchange_id(owner, 0, [])])
+     check(res)
+ 
+ def testLongArray(t, env):
+@@ -103,8 +47,7 @@ def testLongArray(t, env):
+     """
+     c = env.c1
+     owner = client_owner4(c.verifier, env.testname(t))
+-    protect = state_protect4_a(SP4_NONE)
+-    ops = [op.exchange_id(owner, 0, protect, [c.impl_id, c.impl_id])]
++    ops = [op.exchange_id(owner, 0, [c.impl_id, c.impl_id])]
+     xid = c.compound_async(ops, checks=False)
+     try:
+         res = c.listen(xid)
+@@ -119,26 +62,16 @@ def testLongArray(t, env):
+ def testBadFlags(t, env):
+     """Using an undefined flag bit should return _INVAL
+ 
+-    draft11 17.35.4 line 22642:
+-    Bits not defined above should not be set in the eia_flags field.  If
+-    they are, the server MUST reject the operation with NFS4ERR_INVAL.
++    draft10 line 21738
+     
+     FLAGS: exchange_id all
+     CODE: EID4
+     """
+     c = env.c1
+     owner = client_owner4(c.verifier, env.testname(t))
+-    protect = state_protect4_a(SP4_NONE)
+-    res = c.compound([op.exchange_id(owner, 4, protect, [c.impl_id])])
++    res = c.compound([op.exchange_id(owner, 4, [c.impl_id])])
+     check(res, NFS4ERR_INVAL, "Using undefined flag bit 0x4")
+ 
+-def testBadUpdate(t, env):
+-    """ Creating new client while setting UPDATE flag should return error
+-    
+-    FLAGS: exchange_id all
+-    CODE: EID5
+-    """
+-    fail("TODO")
+ # STUB - want to send with various flags set
+ 
+ def testState000(t, env):
+diff -rpuN --exclude=fork.diff --exclude='*_const.py' --exclude='*_pack.py' --exclude='*_type.py' server070724/rpc/security.py draft10-070910/rpc/security.py
+--- server070724/rpc/security.py	2007-06-27 10:01:23.000000000 -0400
++++ draft10-070910/rpc/security.py	2007-05-18 17:08:20.000000000 -0400
+@@ -86,7 +86,6 @@ class CredInfo(object):
+         if sec is None:
+             sec = AuthNone()
+         self.sec = sec # Instance of Auth*
+-        # For client - context is the string sent over-the-wire in the cred
+         self.context = context # handle or authsys_parms
+         self.service = service
+         self.qop = qop
+@@ -255,122 +254,6 @@ class GSSContext(object):
+         finally:
+             self.lock.release()
+ 
+-# Uggh - this needs to go in nfs4 dir, not rpc dir
+-class SsvContext(object):
+-    def __init__(self):
+-        self.window = xxx
+-        self.ssv_len = xxx
+-        self.hash_funct = xxx
+-        self.encrypt_fact = xxx
+-        self.block_len = xxx
+-        self.ssvs = collections.deque()
+-        self.ssv_seq = 0
+-        self.ssvs.append('\0' * self.ssv_len)
+-        self.lock = threading.Lock()
+-
+-    def _get_ssv(self, seq=None):
+-        self.lock.acquire()
+-        try:
+-            if seq is None:
+-                seq = self.ssv_seq
+-            if seq == 0:
+-                # SET_SSV hasn't been called yet
+-                raise gssapi.Error() # STUB - better error
+-            try:
+-                ssv = self.ssvs[self.ssv_seq - seq]
+-            except IndexError:
+-                raise gssapi.Error() # STUB - better error
+-        finally:
+-            self.lock.release()
+-        return ssv, seq
+-
+-    def _set_ssv(self, ssv):
+-        self.lock.acquire()
+-        try:
+-            self.ssv_seq += 1
+-            self.ssvs.appendleft(ssv)
+-            while len(self.ssvs) > self.window:
+-                self.ssvs.pop()
+-        finally:
+-            self.lock.release()
+-
+-    def getMIC(self, data):
+-        ssv, seq = self._get_ssv()
+-        return self._computeMIC(data, ssv, seq)
+-
+-    def _computeMIC(self, data, ssv, seq):
+-        input = ssv_mic_plain_tkn4(seq, data)
+-        p = nfs4lib.FancyNFS4Packer()
+-        p.pack_ssv_mic_plain_tkn4(input)
+-        digest = hmac.new(ssv, p.get_buffer(), self.hash_funct).digest()
+-        output = ssv_mic_tkn4(seq, digest)
+-        p.reset()
+-        p.pack_ssv_mic_tkn4(output)
+-        return p.get_buffer()
+-        
+-    def verifyMIC(self, data, checksum):
+-        p = nfs4lib.FancyNFS4Unpacker(checksum)
+-        try:
+-            token = p.unpack_ssv_mic_tkn4()
+-            p.done()
+-        except:
+-            raise gssapi.Error() # STUB - better error
+-        ssv, seq = self._get_ssv(token.smt_ssv_seq)
+-        expect = self._computeMIC(data, ssv, seq)
+-        if expect != checksum:
+-            raise gssapi.Error() # STUB - better error
+-        return 0 # default qop
+-
+-    def wrap(self, data):
+-        ssv, seq = self._get_ssv()
+-        p = nfs4lib.FancyNFS4Packer()
+-        confounder = "stub_confounder" # STUB
+-        # We need to compute pad.  Easiest (though not fastest) way
+-        # is to pack w/o padding, determine padding needed, then repack.
+-        input = ssv_seal_plain_tkn4(confounder, seq, data, "")
+-        p.pack_ssv_seal_plain_tkn4()
+-        raw_len = len(p.get_buffer())
+-        pad = "\0" * (self.block_len - (raw_len % self.block_len))
+-        if pad:
+-            # NOTE Could do w/o above if statement, at cost of
+-            # repacking when no padding is needed.
+-            p.reset()
+-            input = ssv_seal_plain_tkn4(confounder, seq, data, "")
+-            p.pack_ssv_seal_plain_tkn4()
+-        input = p.get_buffer()
+-        digest = hmac.new(ssv, input, self.hash_funct).digest()
+-        # BUG - draft-11 is defective in handling IV, using this
+-        #     - as temp fix per Mike Eisler
+-        c = self.encrypt_fact(ssv, iv=digest[:self.block_len])
+-        output = ssv_seal_cipher_tkn4(seq, c.encrypt(input), digest)
+-        p.reset()
+-        p.pack_ssv_seal_cipher_tkn4(output)
+-        return p.get_buffer()
+-    
+-    def unwrap(self, data):
+-        p = nfs4lib.FancyNFS4Unpacker(checksum)
+-        try:
+-            token = p.unpack_ssv_seal_cipher_tkn4()
+-            p.done()
+-        except:
+-            raise gssapi.Error() # STUB - better error
+-        ssv, seq = self._get_ssv(token.ssct_ssv_seq)
+-        # BUG - defective draft-11 IV handling
+-        c = self.encrypt_fact(ssv, iv=token.ssct_hmac[:self.block_len])
+-        plain_xdr = c.decrypt(token.ssct_encr_data)
+-        p.reset(plain_xdr)
+-        try:
+-            plain = p.unpack_ssv_seal_plain_tkn4()
+-            p.done()
+-        except:
+-            raise gssapi.Error() # STUB - better error
+-        if plain.sspt_ssv_seq != seq:
+-            raise gssapi.Error() # STUB - better error
+-        digest = hmac.new(ssv, plain_xdr, self.hash_funct).digest()
+-        if digest != token.ssct_hmac:
+-            raise gssapi.Error() # STUB - better error
+-        return plain.sspt_orig_plain, 0
+-
+ class AuthGss(AuthNone):
+     flavor = RPCSEC_GSS
+     name = "RPCSEC_GSS"
+@@ -392,15 +275,6 @@ class AuthGss(AuthNone):
+     def _get_context(self, handle):
+         return self.contexts.get(handle, None)
+         
+-##     def init_cred_ssv(self, handle):
+-##         context = SsvContext()
+-##         self._add_context(context, handle)
+-##         return CredInfo(self, context=handle)
+-
+-    def init_given_context(self, context, handle=None):
+-        self._add_context(context, handle)
+-        return CredInfo(self, context=handle)
+-
+     def init_cred(self, call, target="nfs@jupiter", source=None, oid=None):
+         # STUB - need intelligent way to set defaults
+         good_major = [gssapi.GSS_S_COMPLETE, gssapi.GSS_S_CONTINUE_NEEDED]
+@@ -422,7 +296,7 @@ class AuthGss(AuthNone):
+         while True:
+             # Call initSecContext.  If it returns COMPLETE, we are done.
+             # If it returns CONTINUE_NEEDED, we must send d['token']
+-            # to the target, which will run it through acceptSecContext,
++            # to the target, who will run it through acceptSecContext,
+             # and give us back a token we need to send through initSecContext.
+             # Repeat as necessary.
+             token = context.init(target, token, gss_cred)

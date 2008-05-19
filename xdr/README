@@ -1,0 +1,22 @@
+Python XDR parser and code generator.  Features hooks for dealing with
+opaques and flags to turn on/off checking of array lengths and enum values.
+
+This is mature for my purposes.  Others have requested, and I may get 
+around to someday:
+       better error checking
+       auto generation of server/client stubs
+       use more of C's rpcgen syntax
+
+Run with "./xdrgen.py BASE.x".  This will generate three files:
+    BASE_const.py, BASE_type.py, and BASE_pack.py
+
+const and enums are place in BASE_const.py.  enums will also generate
+a dictionary with integers as keys and the identifier strings as values.
+
+structs and unions are turned into classes, which are defined in BASE_type.py
+
+Finally, the most important classes are BASEPacker and BASEUnpacker
+defined in BASE_pack.py. These allow translation from XDR strings to
+python classes and back.  These basically inherit from xdrlib, so see
+the Python documentation on xdrlib for usage.
+
