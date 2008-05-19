@@ -95,6 +95,7 @@ def scan_options(p):
     .showwarn = (True)
     .showfail = (True)
     .showomit = (False)
+    .showtraffic = (False)
 
     .maketree  = (False)
     .uselink   = (None)
@@ -155,6 +156,10 @@ def scan_options(p):
                  help="Show omitted tests")
     g.add_option("--hideomit", action="store_false", dest="showomit",
                  help="Hide omitted tests [default]")
+    g.add_option("--showtraffic", action="store_true", default=False,
+                 help="Show NFS packet information")
+    g.add_option("--hidetraffic", action="store_false", dest="showtraffic",
+                 help="Hide NFS packet information [default]")
     p.add_option_group(g)
 
     g = OptionGroup(p, "Test tree options",
@@ -244,6 +249,7 @@ def main():
                      formatter=IndentedHelpFormatter(2, 25)
                      )
     opt, args = scan_options(p)
+    environment.nfs4client.SHOW_TRAFFIC = opt.showtraffic
 
     # Create test database
     tests, fdict, cdict = testmod.createtests('server41tests')
