@@ -20,7 +20,6 @@ def testSupported(t, env):
     if not (res.resarray[0].eir_flags & EXCHGID4_FLAG_MASK_PNFS):
         fail("server did not set any EXCHGID4_FLAG_USE_* bits")
 
-# need NOT_ONLY_OP test
 
 def testSupported1a(t, env):
     """Do a simple EXCHANGE_ID - simple flag
@@ -423,3 +422,17 @@ def testSupported1a(t, env):
     protect = state_protect4_a(SP4_NONE)
     res = c.compound([op.exchange_id(owner, EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_CONFIRMED_R, protect, [c.impl_id])])
     check(res, NFS4ERR_INVAL)
+
+
+def testNotOnlyOp(t, env):
+    """Check for NFS4ERR_NOT_ONLY_OP
+
+    FLAGS: exchange_id all
+    CODE: EID8
+    """
+    c = env.c1
+    owner = client_owner4(c.verifier, env.testname(t))
+    protect = state_protect4_a(SP4_NONE)
+    res = c.compound([op.exchange_id(owner, 0, protect, [c.impl_id]), op.putrootfh()])
+    # per draft 21 18.35.3, server MUST return NFS4ERR_NOT_ONLY_OP
+    check(res, NFS4ERR_NOT_ONLY_OP)
