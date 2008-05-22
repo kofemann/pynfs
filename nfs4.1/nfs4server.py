@@ -1388,9 +1388,23 @@ class NFS4Server(rpc.Server):
         return ret_dict
 
     def op_access(self, arg, env):
-        # Can you say huge STUB?
-        # This just grants access to everything client asks.
-        res = ACCESS4resok(arg.access, arg.access)
+        check_session(env)
+        check_cfh(env)
+        supported = 0
+        access = 0
+        for flag, name in nfs4lib.access_flags.items():
+            # Was it asked for?
+            if not (flag & arg.access):
+                continue
+            # Is it supported?
+            access_funct = getattr(env.cfh, name.lower(), None)
+            if access_funct is None:
+                continue
+            supported |= flag
+            # Is it allowed?
+            if access_funct(env.principal):
+                access |= flag
+        res = ACCESS4resok(supported, access)
         return encode_status(NFS4_OK, res)
 
     def op_readdir(self, arg, env):

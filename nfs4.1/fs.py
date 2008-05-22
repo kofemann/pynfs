@@ -334,6 +334,32 @@ class FSObject(object):
     def _commit_layout(self, arg):
         raise NotImplementedError
 
+    def access4_read(self, principal):
+        """Returns True if principal can read object."""
+        # STUB
+        return True
+
+    def access4_lookup(self, principal):
+        """Returns True if principal can look up name in directory."""
+        # STUB
+        return self.type == NF4DIR
+
+    def access4_modify(self, principal):
+        """Returns True if principal can change existing object data."""
+        # STUB
+        return not self.fs.read_only
+
+    # STUB - don't differentiate between extend and modify
+    access4_extend = access4_modify
+
+    def access4_delete(self, principal):
+        """Returns True if principal can delete a directory entry."""
+        # STUB
+        return self.type == NF4DIR
+
+    # Dont support execute by default
+    # def access4_execute(self, principal):
+
     #######################
     # These all assume is a directory
     #######################
