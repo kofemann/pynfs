@@ -64,28 +64,31 @@ def set_attrbit_dicts():
 # Actually set the dictionaries
 set_attrbit_dicts()
 
+def set_flags(name, search_string=None):
+    """Make certain flag lists in nfs4.x easier to deal with.
 
-exchgid_flags = {}
-exchgid_mask = 0
-def set_exchange_flags():
-    global exchgid_flags, exchgid_mask
-    for name in dir(nfs4_const):
-        if name.startswith("EXCHGID4_FLAG_"):
-            value = getattr(nfs4_const, name)
-            exchgid_flags[value] = name
-            exchgid_mask |= value
-set_exchange_flags()
+    Several flags lists in nfs4.x are not enums, which means they are not
+    grouped in any way within nfs4_const except by name.  Make a dictionary
+    and a cumulative mask called <name>_flags and <name>_mask.  We
+    default to using flags of form <NAME>4_FLAG_, unless told otherwise.
+    """
+    flag_dict = {}
+    mask = 0
+    if search_string is None:
+        search_string = "%s4_FLAG_" % name.upper()
+    for var in dir(nfs4_const):
+        if var.startswith(search_string):
+            value = getattr(nfs4_const, var)
+            flag_dict[value] = var
+            mask |= value
+    # Now we need to set the appropriate module level variable
+    d = globals()
+    d["%s_flags" % name.lower()] = flag_dict
+    d["%s_mask" % name.lower()] = mask
 
-create_session_flags = {}
-create_session_mask = 0
-def set_create_session_flags():
-    global create_session_flags, create_session_mask
-    for name in dir(nfs4_const):
-        if name.startswith("CREATE_SESSION4_FLAG_"):
-            value = getattr(nfs4_const, name)
-            create_session_flags[value] = name
-            create_session_mask |= value
-set_create_session_flags()
+set_flags("exchgid")
+set_flags("create_session")
+set_flags("access", "ACCESS4_")
 
 class FancyNFS4Packer(nfs4_pack.NFS4Packer):
     """Handle fattr4 and dirlist4 more cleanly than auto-generated methods"""
