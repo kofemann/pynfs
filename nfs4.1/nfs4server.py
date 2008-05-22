@@ -290,36 +290,36 @@ class VerboseDict(dict):
         
 class ClientRecord(object):
     """The server's representation of a client and its state"""
-    def __init__(s, id, arg, principal, mech=None):
-        s.config = ServerPerClientConfig()
-        s.opsconfig = OpsConfigClient()
-        s.clientid = id
-        s.mech = mech
-        s.confirmed = False
-        s.freeze = False # Set True if removed from ClientList
-        s.update(arg, principal)
-        s.session_replay = Slot(0, default=default_replay_client) # v4.1 cache for just CREATE_SESSION
-        s.sessions = [] # sessions associated with this clientid
-        s.lastused = time.time() # time of last "RENEW" equivalant
-        s.state = VerboseDict(s.config) # {other_id : StateTableEntry}
-        s._next = 1 # counter for generating unique stateid 'other'
-        s._lock = Lock("Client")
+    def __init__(self, id, arg, principal, mech=None):
+        self.config = ServerPerClientConfig()
+        self.opsconfig = OpsConfigClient()
+        self.clientid = id
+        self.mech = mech
+        self.confirmed = False
+        self.freeze = False # Set True if removed from ClientList
+        self.update(arg, principal)
+        self.session_replay = Slot(0, default=default_replay_client) # v4.1 cache for just CREATE_SESSION
+        self.sessions = [] # sessions associated with this clientid
+        self.lastused = time.time() # time of last "RENEW" equivalant
+        self.state = VerboseDict(self.config) # {other_id : StateTableEntry}
+        self._next = 1 # counter for generating unique stateid 'other'
+        self._lock = Lock("Client")
         
-    def update(s, arg, principal):
+    def update(self, arg, principal):
         """Update properties of client based on EXCHANGE_ID arg"""
-        if s.confirmed:
+        if self.confirmed:
             # STUB - a confirmed update is much more restricted
-            #      - for example, s.protection should not be modified
+            #      - for example, self.protection should not be modified
             return
-        s.principal = principal
-        s.ownerid = arg.eia_clientowner.co_ownerid
-        s.verifier = arg.eia_clientowner.co_verifier
+        self.principal = principal
+        self.ownerid = arg.eia_clientowner.co_ownerid
+        self.verifier = arg.eia_clientowner.co_verifier
         if arg.eia_client_impl_id:
-            s.impl_id = arg.eia_client_impl_id[0]
+            self.impl_id = arg.eia_client_impl_id[0]
         else:
-            s.impl_id = None
-        s.use_profile = arg.eia_flags & EXCHGID4_FLAG_MASK_PNFS
-        s.protection = StateProtection(arg.eia_state_protect)
+            self.impl_id = None
+        self.use_profile = arg.eia_flags & EXCHGID4_FLAG_MASK_PNFS
+        self.protection = StateProtection(arg.eia_state_protect)
 
     def principal_matches(self, xxx):
         if self.protection.type == SP4_NONE:
@@ -338,21 +338,21 @@ class ClientRecord(object):
         self._lock.release()
         return other
 
-    def __hash__(s):
+    def __hash__(self):
         """Guarantee this can be used as dict key"""
-        return hash(s.clientid)
+        return hash(self.clientid)
     
-    def renew_lease(s):
-        s.lastused = time.time()
+    def renew_lease(self):
+        self.lastused = time.time()
 
-    def rebooted(s):
+    def rebooted(self):
         log_41.error("Client rebooted")
         # STUB - locking problems if server still handling other requests
         # Erase session state
-        s.session_replay = Slot(0, default=default_replay_client)
-        s.sessions = [] # sessions associated with this clientid
+        self.session_replay = Slot(0, default=default_replay_client)
+        self.sessions = [] # sessions associated with this clientid
         # Erase share and record lock state
-        for key, state in s.state.items():
+        for key, state in self.state.items():
             try:
                 state.acquire()
                 try:
@@ -364,8 +364,8 @@ class ClientRecord(object):
                     state.release()
             except StandardError, e:
                 log_41.exception("Ignoring problem during state removal")
-        s.state = {}
-        s.lastused = time.time()
+        self.state = {}
+        self.lastused = time.time()
 
     def find_active_cb_session(self):
         """Find and return a session that has a usable callback channel"""
@@ -374,115 +374,115 @@ class ClientRecord(object):
 
 class SessionRecord(object):
     """The server's representation of a session and its state"""
-    def __init__(s, client, csa):
-        s.client = client # reference back to client which created this session
-        s.sessionid = "%08x%08x" % (client.clientid,
+    def __init__(self, client, csa):
+        self.client = client # reference back to client which created this session
+        self.sessionid = "%08x%08x" % (client.clientid,
                                     client.session_replay.seqid) # XXX does this work?
-        s.channel_fore = Channel(csa.csa_fore_chan_attrs, client.config) # Normal communication
-        s.channel_back = Channel(csa.csa_back_chan_attrs, client.config) # Callback communication
-        s.persist = False # see 2.10.4.5 STUB - currently no way to set True
-        s.headerpadsize = 0 # STUB - ignored
-        s.binding = (client.protection.type != SP4_NONE)
-        s.nonce = {} # Store nonce while waiting for challange response
-        #s.ssv = None # crypto hash for securing channel binding
+        self.channel_fore = Channel(csa.csa_fore_chan_attrs, client.config) # Normal communication
+        self.channel_back = Channel(csa.csa_back_chan_attrs, client.config) # Callback communication
+        self.persist = False # see 2.10.4.5 STUB - currently no way to set True
+        self.headerpadsize = 0 # STUB - ignored
+        self.binding = (client.protection.type != SP4_NONE)
+        self.nonce = {} # Store nonce while waiting for challange response
+        #self.ssv = None # crypto hash for securing channel binding
         #            short for "Secret Session Verifier"
-        s.cb_prog = None # callback rpc program number
+        self.cb_prog = None # callback rpc program number
         # NOTE 2.10.6.3 implies multiple principals can use a session
         # but 2.4 implies principal linked with ownerid (ie client)
 
-    def get_nonce(s, connection, client_nonce):
+    def get_nonce(self, connection, client_nonce):
         """Get (and remember) nonce for the connection"""
         # NOTE XXX nonce records should have timestamps to allow removal
         # of stale data.  Also, is keying on connection enough?
         nonce = random.randint(0, 0xffffffffffffffff)
         while nonce == client_nonce:
             nonce = random.randint(0, 0xffffffffffffffff)
-        s.nonce[connection] = (nonce, client_nonce)
+        self.nonce[connection] = (nonce, client_nonce)
         return nonce
 
 class Channel(object):
-    def __init__(s, attrs, config=None):
-        s.connections = [] # communication info
-        s.maxrequestsize = attrs.ca_maxrequestsize
+    def __init__(self, attrs, config=None):
+        self.connections = [] # communication info
+        self.maxrequestsize = attrs.ca_maxrequestsize
         # This is over-the-wire.  Which means we must use a packed
         # COMPOUND4res limit of:
         # gss_wrap_size_limit(maxresponsesize - rpc_header - 4) - 8 - MIC_size
-        s.maxresponsesize = attrs.ca_maxresponsesize
-        s.maxresponsesize_cached = attrs.ca_maxresponsesize_cached
-        s.maxoperations = attrs.ca_maxoperations
-        s.maxrequests = attrs.ca_maxrequests
-        s.adjust_attrs(config)
-        s.slots = [Slot(i) for i in range(s.maxrequests)]
+        self.maxresponsesize = attrs.ca_maxresponsesize
+        self.maxresponsesize_cached = attrs.ca_maxresponsesize_cached
+        self.maxoperations = attrs.ca_maxoperations
+        self.maxrequests = attrs.ca_maxrequests
+        self.adjust_attrs(config)
+        self.slots = [Slot(i) for i in range(self.maxrequests)]
 
-    def adjust_attrs(s, config):
+    def adjust_attrs(self, config):
         """Take (client suggested) attrs, and adjust downwards"""
         if config is None:
             return
-        s.maxrequestsize = min(s.maxrequestsize, config.maxrequestsize)
-        s.maxresponsesize = min(s.maxresponsesize, config.maxresponsesize)
-        s.maxresponsesize_cached = min(s.maxresponsesize_cached,
-                                       s.maxresponsesize,
+        self.maxrequestsize = min(self.maxrequestsize, config.maxrequestsize)
+        self.maxresponsesize = min(self.maxresponsesize, config.maxresponsesize)
+        self.maxresponsesize_cached = min(self.maxresponsesize_cached,
+                                       self.maxresponsesize,
                                        config.maxresponsesize,
                                        config.maxresponsesize_cached)
-        s.maxoperations = min(s.maxoperations, config.maxoperations)
-        s.maxrequests = min(s.maxrequests, config.maxrequests)
+        self.maxoperations = min(self.maxoperations, config.maxoperations)
+        self.maxrequests = min(self.maxrequests, config.maxrequests)
 
-    def get_attrs(s):
-        return channel_attrs4(0, s.maxrequestsize,
-                              s.maxresponsesize, s.maxresponsesize_cached,
-                              s.maxoperations, s.maxrequests, [])
+    def get_attrs(self):
+        return channel_attrs4(0, self.maxrequestsize,
+                              self.maxresponsesize, self.maxresponsesize_cached,
+                              self.maxoperations, self.maxrequests, [])
 
-    def bind(s, connection):
+    def bind(self, connection):
         """Bind the connection to the channel"""
-        if connection not in s.connections:
-            s.connections.append(connection)
+        if connection not in self.connections:
+            self.connections.append(connection)
                               
         
 class Cache(object):
-    def __init__(s, data=None):
-        s.data = data
-        s.valid = threading.Event() # XXX Is anyone waiting on this?
+    def __init__(self, data=None):
+        self.data = data
+        self.valid = threading.Event() # XXX Is anyone waiting on this?
         if data is not None:
-            s.valid.set()
+            self.valid.set()
             
 class Slot(object):
-    def __init__(s, index, default=default_replay_slot):
-        s.id = index
-        s.seqid = 0
-        s.replay_cache = Cache(default)
-        s.seen = False # server has determined that client has seen reply
-        s.lock = Lock("Slot")
-        s.inuse = False # client has outstanding message
+    def __init__(self, index, default=default_replay_slot):
+        self.id = index
+        self.seqid = 0
+        self.replay_cache = Cache(default)
+        self.seen = False # server has determined that client has seen reply
+        self.lock = Lock("Slot")
+        self.inuse = False # client has outstanding message
 
-    def check_seqid(s, seqid):
+    def check_seqid(self, seqid):
         """Server replay checking"""
-        s.lock.acquire()
+        self.lock.acquire()
         try:
-            expected = inc_u32(s.seqid)
+            expected = inc_u32(self.seqid)
             if seqid == expected:
                 # All is good
-                s.seqid = expected
-                s.replay_cache = Cache()
-                s.seen = False
-                return s.replay_cache
-            elif seqid == s.seqid:
+                self.seqid = expected
+                self.replay_cache = Cache()
+                self.seen = False
+                return self.replay_cache
+            elif seqid == self.seqid:
                 # Replay
                 """ NOTE XXX
                 Must be a bit careful with replays, since it is possible
                 for a retransmitted request to come in before we have coded
                 a reply for the first request.
                 """
-                raise NFS4Replay(s.replay_cache)
+                raise NFS4Replay(self.replay_cache)
             else:
                 raise NFS4Error(NFS4ERR_SEQ_MISORDERED)
         finally:
-            s.lock.release()
+            self.lock.release()
 
-    def get_seqid(s):
+    def get_seqid(self):
         """Client seqid"""
         # locking not needed, since slot is handed out under channel lock
-        s.seqid = inc_u32(s.seqid)
-        return s.seqid
+        self.seqid = inc_u32(self.seqid)
+        return self.seqid
 
     # STUB - for client, need to track slot usage
 

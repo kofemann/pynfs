@@ -156,9 +156,9 @@ class FSObject(object):
         # Note only get here if self.name does not exist
         return getattr(self.meta, name)
     
-    def _set_fattrs(s):
-        s.fattr4_rdattr_error = NFS4_OK # NOTE does this need sent to disk?
-        s.fattr4_named_attr = False # STUB - not supported, so not in meta
+    def _set_fattrs(self):
+        self.fattr4_rdattr_error = NFS4_OK # NOTE does this need sent to disk?
+        self.fattr4_named_attr = False # STUB - not supported, so not in meta
         
     def check_dir(self):
         if self.type not in (NF4DIR, NF4ATTRDIR):
@@ -420,35 +420,35 @@ class FSObject(object):
         return obj, bitmask
 
 class FileSystem(object):
-    def __init__(s, fsid=0, objclass=FSObject):
+    def __init__(self, fsid=0, objclass=FSObject):
         log_fs.log(5, "FileSystem.__init__(fsid=%i)" % fsid)
-        s.fsid = (1, fsid) # Return a unique 2-tuple of uint64
-        s.objclass = objclass
-        s._disk_lock = Lock("FSLock")
-        s.read_only = False
+        self.fsid = (1, fsid) # Return a unique 2-tuple of uint64
+        self.objclass = objclass
+        self._disk_lock = Lock("FSLock")
+        self.read_only = False
         # This is list of currently active objects.
-        s._ids = {} # {obj.id: obj}
-        s._set_fattrs()
+        self._ids = {} # {obj.id: obj}
+        self._set_fattrs()
         # Do this last
-        s.root = s.create(NF4DIR)       # Points to FSObject
-        s.root.refcnt = 1
+        self.root = self.create(NF4DIR)       # Points to FSObject
+        self.root.refcnt = 1
 
-    def _set_fattrs(s):
+    def _set_fattrs(self):
         # STUB Mandatory attribute mask = 0x80fff
         # maxname needed
         # fileid and mounted_on_fileid needed for mount traversal
         mandatory = 0x80fff
         need_for_linux = [FATTR4_FILEID, FATTR4_MAXNAME, FATTR4_MOUNTED_ON_FILEID]
         need_for_cthon = [FATTR4_MODE, FATTR4_NUMLINKS]
-        # s.fattr4_supported_attrs = 0x80000020180fff
-        s.fattr4_supported_attrs = nfs4lib.list2bitmap(need_for_linux + need_for_cthon) | mandatory
+        # self.fattr4_supported_attrs = 0x80000020180fff
+        self.fattr4_supported_attrs = nfs4lib.list2bitmap(need_for_linux + need_for_cthon) | mandatory
 
-        s.fattr4_fh_expire_type = FH4_PERSISTENT
-        s.fattr4_link_support = False
-        s.fattr4_symlink_support = False
-        s.fattr4_unique_handles = False
+        self.fattr4_fh_expire_type = FH4_PERSISTENT
+        self.fattr4_link_support = False
+        self.fattr4_symlink_support = False
+        self.fattr4_unique_handles = False
         ########
-        s.fattr4_maxname = 256
+        self.fattr4_maxname = 256
 
     def attach_to_server(self, server):
         """Called at mount, gives fs a chance to interact with server.
@@ -466,7 +466,7 @@ class FileSystem(object):
         # Possible delegations fs supports on regular files
         return OPEN_DELEGATE_READ
 
-    def find(s, id):
+    def find(self, id):
         """ Returns a FSObject with given id
 
         There should only be one such outstanding.  If it has
@@ -475,28 +475,28 @@ class FileSystem(object):
         Note : cleanup might be helped by sys.getrefcount()
         """
         log_fs.log(5, "FileSystem.find(id=%r)" % id)
-        obj = s._ids.get(id, None)
+        obj = self._ids.get(id, None)
         if obj is not None:
             return obj
         else:
-            s._disk_lock.acquire()
+            self._disk_lock.acquire()
             try:
                 # It may have been added while we were waiting for the lock
-                obj = s._ids.get(id, None)
+                obj = self._ids.get(id, None)
                 if obj is not None:
                     return obj
                 # Guess not, create a new in-memory obj using info on disk
-                obj = s.find_on_disk(id)
-                s._ids[id] = obj
+                obj = self.find_on_disk(id)
+                self._ids[id] = obj
                 return obj
             finally:
-                s._disk_lock.release()
+                self._disk_lock.release()
 
-    def find_on_disk(s, id):
+    def find_on_disk(self, id):
         """Returns a FSObject created from disk info pointed to by id"""
         raise NotImplementedError
 
-    def sync(s, obj, how):
+    def sync(self, obj, how):
         """Syncs object to disk, returns value from enum stable_how4"""
         raise NotImplementedError
     
@@ -531,8 +531,8 @@ class FileSystem(object):
 
     
 class RootFSObj(FSObject):
-    """Have this behave like s.mounted_fs.root if it is not None,
-    except for s.parent and unioning the directories
+    """Have this behave like self.mounted_fs.root if it is not None,
+    except for self.parent and unioning the directories
     """
     def _get_fsid(self):
         if self.mounted_fs is None:
@@ -561,9 +561,9 @@ class RootFSObj(FSObject):
     fattr4_change = property(_get_change)
     vfs = property(_get_vfs)
 
-    def __init__(s, *args, **kwargs):
-        FSObject.__init__(s, *args, **kwargs)
-        s.mounted_fs = None # FS mounted here
+    def __init__(self, *args, **kwargs):
+        FSObject.__init__(self, *args, **kwargs)
+        self.mounted_fs = None # FS mounted here
 
     def exists(self, name):
         rv = FSObject.exists(self, name) 
@@ -620,32 +620,32 @@ class RootFSObj(FSObject):
         return over + under, verf
             
 class RootFS(FileSystem):
-    def __init__(s):
-        s._nextid = 0
-        FileSystem.__init__(s, objclass=RootFSObj)
-        s.fsid = (0,0)
-        s._fsids = {s.fsid: s.root} # {fs.fsid: obj where mounted}
-        s.root.mounted_fs = None
+    def __init__(self):
+        self._nextid = 0
+        FileSystem.__init__(self, objclass=RootFSObj)
+        self.fsid = (0,0)
+        self._fsids = {self.fsid: self.root} # {fs.fsid: obj where mounted}
+        self.root.mounted_fs = None
         
-    def mount(s, fs, path):
+    def mount(self, fs, path):
         print "mount(%r)" % path
-        dir = s.root
+        dir = self.root
         components = nfs4lib.path_components(path)
         print components
         for component in components:
             if not dir.exists(component):
-                obj = s.create(NF4DIR)
+                obj = self.create(NF4DIR)
                 print "Creating obj.id=%i" % obj.id
                 dir.link(component, obj, "", root=True)
             dir = dir.lookup(component, None, "superuser")
         dir.mounted_fs = fs
-        s._fsids[fs.fsid] = dir
+        self._fsids[fs.fsid] = dir
 
-    def alloc_id(s):
-        s._nextid += 1
-        return s._nextid
+    def alloc_id(self):
+        self._nextid += 1
+        return self._nextid
 
-    def dealloc_id(s, id):
+    def dealloc_id(self, id):
         pass
 
     def sync(self, obj, how):
@@ -660,12 +660,12 @@ class StubFS_Mem(FileSystem):
         FileSystem.__init__(self)
         self.fsid = (2, fsid)
         
-    def alloc_id(s):
+    def alloc_id(self):
         """Alloc disk space for an FSObject, and return an identifier
         that will allow us to find the disk space later.
         """
-        s._nextid += 1
-        return s._nextid
+        self._nextid += 1
+        return self._nextid
 
     def dealloc_id(self, id):
         """Free up disk space associated with id. """
@@ -730,9 +730,9 @@ class ConfigObj(FSObject):
         log_o.log(5, "FSObject.exists(%r)" % name)
         # HACK - build a fake client 
         class Fake(object):
-            def __init__(s):
-                s.clientid = 0
-                s.config = ServerPerClientConfig()
+            def __init__(self):
+                self.clientid = 0
+                self.config = ServerPerClientConfig()
         entries = self._build_entries(Fake())
         return entries.get(name, None)
     
@@ -824,7 +824,7 @@ class ConfigFS(FileSystem):
         # to change objects at will.
         return 0
 
-    def alloc_id(s):
+    def alloc_id(self):
         """Alloc disk space for an FSObject, and return an identifier
         that will allow us to find the disk space later.
         """
@@ -990,25 +990,25 @@ class StubFS_Disk(FileSystem):
             fd.close()
         return obj
 
-    def alloc_id(s):
+    def alloc_id(self):
         """Alloc disk space for an FSObject, and return an identifier
         that will allow us to find the disk space later.
         """
-        s._disk_lock.acquire()
+        self._disk_lock.acquire()
         try:
             # Get id
-            s._nextid += 1
-            id = s._nextid
-            s._fs_data["_nextid"] = id
-            s._fs_data.sync()
+            self._nextid += 1
+            id = self._nextid
+            self._fs_data["_nextid"] = id
+            self._fs_data.sync()
             # Create meta-data file
-            fd = open(os.path.join(s.path, "m_%i" % id), "w")
+            fd = open(os.path.join(self.path, "m_%i" % id), "w")
             fd.close()
             # Create data file
-            # fd = open(os.path.join(s.path, "d_%i" % id), "w")
+            # fd = open(os.path.join(self.path, "d_%i" % id), "w")
             # fd.close()
         finally:
-            s._disk_lock.release()
+            self._disk_lock.release()
         return id
 
     def dealloc_id(self, id):
@@ -1319,17 +1319,17 @@ class LayoutFSObj(FSObject):
 #             fd.write(text)
 #         fd.close()
         
-#     def alloc_id(s):
-#         rv = s._nextid
-#         s._nextid += 1
+#     def alloc_id(self):
+#         rv = self._nextid
+#         self._nextid += 1
 #         if rv > 4:
 #             test_layout_dict[rv] = []
 #         return rv
 
-#     def _alloc_blocks(s, count):
+#     def _alloc_blocks(self, count):
 #         # This needs to be lock protected
-#         rv = s._allocated
-#         s._allocated += count
+#         rv = self._allocated
+#         self._allocated += count
 #         return rv
 
 #     def dealloc_id(self, id):
@@ -1419,17 +1419,17 @@ class BlockLayoutFS(FileSystem):
     def attach_to_server(self, server):
         server.assign_deviceid(self.volume)
 
-    def alloc_id(s):
-        rv = s._nextid
-        s._nextid += 1
+    def alloc_id(self):
+        rv = self._nextid
+        self._nextid += 1
         if rv > 4:
             test_layout_dict[rv] = []
         return rv
 
-    def _alloc_blocks(s, count):
+    def _alloc_blocks(self, count):
         # This needs to be lock protected
-        rv = s._allocated
-        s._allocated += count
+        rv = self._allocated
+        self._allocated += count
         return rv
 
     def dealloc_id(self, id):

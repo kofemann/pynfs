@@ -94,16 +94,16 @@ class ServerConfig(object):
                          "Ctrl-c sends server into interactive debugging shell"),
               ]
 
-    def __init__(s):
-        s.minor_id = 0
-        s.major_id = "PyNFSv4.1"
-        s._owner = server_owner4(s.minor_id, s.major_id)
-        s.scope = "Default_Scope"
-        s.impl_domain = "citi.umich.edu"
-        s.impl_name = "pynfs X.X"
-        s.impl_date = 1172852767 # int(time.time())
-        s.impl_id = nfs_impl_id4(s.impl_domain, s.impl_name,
-                                 nfs4lib.get_nfstime(s.impl_date))
+    def __init__(self):
+        self.minor_id = 0
+        self.major_id = "PyNFSv4.1"
+        self._owner = server_owner4(self.minor_id, self.major_id)
+        self.scope = "Default_Scope"
+        self.impl_domain = "citi.umich.edu"
+        self.impl_name = "pynfs X.X"
+        self.impl_date = 1172852767 # int(time.time())
+        self.impl_id = nfs_impl_id4(self.impl_domain, self.impl_name,
+                                 nfs4lib.get_nfstime(self.impl_date))
 
 class ServerPerClientConfig(object):
     __metaclass__ = MetaConfig
