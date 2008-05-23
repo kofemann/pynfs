@@ -829,7 +829,7 @@ class ConfigFS(FileSystem):
         that will allow us to find the disk space later.
         """
         # This should only ever be called to create self.root
-        return 0
+        return 1 # linux client BUG - if this is zero, ls "loses" config dir
 
     def dealloc_id(self, id):
         """Free up disk space associated with id. """
