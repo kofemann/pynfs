@@ -505,6 +505,7 @@ class NFS4Server(rpc.Server):
         rpc.Server.__init__(self, prog=NFS4_PROGRAM, versions=[4], port=port,
                             **kwargs)
         self.root = RootFS().root # Root of exported filesystem tree
+        self._fsids = {self.root.fs.fsid: self.root.fs} # {fsid: fs}
         self.clients = ClientList() # List of attached clients
         self.sessions = {} # List of attached sessions
         self.minor_versions = [1]
@@ -541,9 +542,26 @@ class NFS4Server(rpc.Server):
         # STUB - need to implement grace period, and send info in SEQ flags
         self.sessions = {}
         self.clients.wipe()
-            
-    def mount(self, fs, *args, **kwargs):
-        self.root.fs.mount(fs, *args, **kwargs)
+
+    def mount(self, fs, path):
+        """Mount the fs at the given path, creating the path if in RootFS.
+
+        Note that order matters, since the mount hides anything beneath it.
+        """
+        print "Mounting %r on %r" % (fs.fsid, path)
+        # Find directory object on which to mount fs
+        dir = self.root
+        for comp in nfs4lib.path_components(path):
+            # BUG need lock on dir
+            if not dir.exists(comp):
+                if dir.fs.fsid != (0, 0): # Only allow creates if in RootFS
+                    raise RuntimeError
+                dir = dir.create(comp, "superuser", NF4DIR, {})[0]
+            else:
+                dir = dir.lookup(comp, None, "superuser")
+        # Do the actual mount
+        fs.mount(dir)
+        self._fsids[fs.fsid] = fs
         fs.attach_to_server(self)
 
     def assign_deviceid(self, dev):
@@ -1830,12 +1848,7 @@ class NFS4Server(rpc.Server):
         return fs.find(id)
 
     def fsid2fs(self, fsid):
-        fs = self.root.fs._fsids[fsid].mounted_fs
-        if fs is None:
-            # XXX This is ugly
-            # The root
-            fs = self.root.fs._fsids[fsid].fs
-        return fs
+        return self._fsids[fsid]
         
     def cb_compound_async(self, args, prog, credinfo=None, pipe=None, tag=None):
         if tag is None:

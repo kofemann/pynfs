@@ -86,7 +86,14 @@ class FSObject(object):
             self.meta.time_modify = value.time
         else:
             self.meta.time_modify = nfs4lib.get_nfstime()
-            
+
+    def _get_mounted_on_fileid(self):
+        if self == self.fs.root:
+            obj = (self.fs.mounted_on if self.fs.mounted_on else self)
+        else:
+            obj = self
+        return obj.fattr4_fileid
+
     fh = property(_getfh)
     fattr4_filehandle = fh
     fattr4_size = property(_getsize, _setsize)
@@ -94,7 +101,7 @@ class FSObject(object):
     fattr4_type = property(lambda s: s.type)
     fattr4_fsid = property(lambda s: fsid4(*(s.fs.fsid)))
     fattr4_fileid = property(lambda s: s.id)
-    fattr4_mounted_on_fileid = fattr4_fileid
+    fattr4_mounted_on_fileid = property(_get_mounted_on_fileid)
     fattr4_numlinks = property(lambda s: s.refcnt)
     fattr4_time_access_set = property(lambda s: s.time_access, _set_time_access)
     fattr4_time_modify_set = property(lambda s: s.time_modify, _set_time_modify)
@@ -140,6 +147,7 @@ class FSObject(object):
         self._set_fattrs()
         self.lock = RWLock(name=str(id))
         self.current_layout = None
+        self.covered_by = None # If this is a mountpoint for fs, equals fs.root 
         # XXX Need to write to disk here?
         self._init_hook()
 
@@ -199,16 +207,14 @@ class FSObject(object):
     def sync(self, how=FILE_SYNC4):
         """Write to disk, according to how"""
         log_o.log(5, "FSObject(id=%i).sync()" % self.id)
-        if self._last_sync == self.fattr4_change:
-            # NOTE - this MUST use fattr4_change, not just change,
-            # to correctly deal with mountpoints
+        if self._last_sync == self.change:
             log_o.log(5, "sync skipped")
             return FILE_SYNC4
         if how == UNSTABLE4: # XXX This could be incorporated into fs.sync()
             return UNSTABLE4
         rv = self.fs.sync(self, how)
         if rv == FILE_SYNC4:
-            self._last_sync = self.fattr4_change
+            self._last_sync = self.change
         return rv
 
     def write(self, data, offset, principal): # NF4REG only
@@ -329,15 +335,6 @@ class FSObject(object):
     def _commit_layout(self, arg):
         raise NotImplementedError
 
-    def lookup_parent(self, client, principal):
-        """Returns FSObject associated with name in the dir"""
-        log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
-        # We don't do utf8 checks here, since are fs variations
-        if self.type == NF4DIR:
-            raise RuntimeError("Bad type NF4DIR")
-        id = self.parent
-        return self.fs.find(id)
-
     #######################
     # These all assume is a directory
     #######################
@@ -350,15 +347,35 @@ class FSObject(object):
         return id is not None
     
     def lookup(self, name, client, principal):
-        """Returns FSObject associated with name in the dir"""
+        """Returns object associated with name in the dir, following mounts."""
         log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
         # We don't do utf8 checks here, since are fs variations
         if self.type != NF4DIR: # XXX STUB, also need to handle attrdir
             raise RuntimeError("Bad type %i" % self.type)
-        id = self.entries.get(name, None)
+        id = self.entries.get(name)
         if id is None:
             return None
-        return self.fs.find(id)
+        obj = self.fs.find(id)
+        while obj.covered_by is not None:
+            # Directory is hidden by a mount
+            obj = obj.covered_by
+        return obj
+
+    def lookup_parent(self, client, principal):
+        """Returns object which is parent of current dir."""
+        log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
+        # We don't do utf8 checks here, since are fs variations
+        if self.type != NF4DIR: # XXX STUB, also need to handle attrdir
+            raise RuntimeError("Bad type %i" % self.type)
+        dir = self
+        while dir.parent is None:
+            # At fs.root, so find parent of dir hidden by mount
+            dir = dir.fs.mounted_on
+            if dir is None:
+                # We are at the server root
+                raise NFS4Error(NFS4ERR_NOENT) # Per draft23 18.14.3
+        id = dir.parent
+        return dir.fs.find(id)
 
     def link(self, name, obj, principal):
         """Adds obj to the dir as name"""
@@ -429,6 +446,7 @@ class FileSystem(object):
         # This is list of currently active objects.
         self._ids = {} # {obj.id: obj}
         self._set_fattrs()
+        self.mounted_on = None # obj on which fs is mounted
         # Do this last
         self.root = self.create(NF4DIR)       # Points to FSObject
         self.root.refcnt = 1
@@ -450,6 +468,17 @@ class FileSystem(object):
         ########
         self.fattr4_maxname = 256
 
+    def mount(self, dir):
+        """Mount the fs at the given dir.
+
+        A mount covers a dir, and LOOKUP will return the top fs.root, as
+        opposed to the now hidden dir.
+        Note that 'covered_by' is an attribute of an obj, while 'mounted_on'
+        is an attribute of the fs.
+        """
+        dir.covered_by = self.root
+        self.mounted_on = dir
+        
     def attach_to_server(self, server):
         """Called at mount, gives fs a chance to interact with server.
 
@@ -529,117 +558,11 @@ class FileSystem(object):
         """Free up disk space associated with id. """
         raise NotImplementedError
 
-    
-class RootFSObj(FSObject):
-    """Have this behave like self.mounted_fs.root if it is not None,
-    except for self.parent and unioning the directories
-    """
-    def _get_fsid(self):
-        if self.mounted_fs is None:
-            return fsid4(*(self.fs.fsid))
-        else:
-            return fsid4(*(self.mounted_fs.fsid))
-    def _get_fileid(self):
-        if self.mounted_fs is None:
-            return super(RootFSObj, self).fattr4_fileid
-        else:
-            return self.mounted_fs.root.fattr4_fileid
-    def _get_change(self):
-        if self.mounted_fs is None:
-            return self.change
-        else:
-            return self.mounted_fs.root.change
-
-    def _get_vfs(self):
-        if self.mounted_fs is None:
-            return self.fs
-        else:
-            return self.mounted_fs
-
-    fattr4_fsid = property(_get_fsid)
-    fattr4_fileid = property(_get_fileid)
-    fattr4_change = property(_get_change)
-    vfs = property(_get_vfs)
-
-    def __init__(self, *args, **kwargs):
-        FSObject.__init__(self, *args, **kwargs)
-        self.mounted_fs = None # FS mounted here
-
-    def exists(self, name):
-        rv = FSObject.exists(self, name) 
-        if self.mounted_fs is None:
-            # Behave normally if nothing is mounted here
-            return rv
-        else:
-            # Union
-            return rv or self.mounted_fs.root.exists(name)
-
-    def lookup(self, *args, **kwargs):
-        obj = FSObject.lookup(self, *args, **kwargs)
-        if obj is None and self.mounted_fs is not None:
-            obj = self.mounted_fs.root.lookup(*args, **kwargs)
-        return obj
-
-    def unlink(self, *args, **kwargs):
-        if self.mounted_fs is None:
-            raise NFS4Error(NFS4ERR_ROFS)
-        else:
-            return self.mounted_fs.root.unlink(*args, **kwargs)
-
-    def link(self, name, obj, cred, root=False):
-        log_o.log(5, "RootFSObj.link(%s, root=%r)" % (name, root))
-        if root:
-            return FSObject.link(self, name, obj, cred)
-        elif self.mounted_fs is None:
-            raise NFS4Error(NFS4ERR_ROFS)
-        else:
-            return self.mounted_fs.root.link(name, obj, cred)
-
-    def create(self, name, principal, kind, attrs):
-        log_o.log(5, "RootFSObj.create(%s)" % name)
-        if self.mounted_fs is None:
-            raise NFS4Error(NFS4ERR_ROFS)
-        else:
-            return self.mounted_fs.root.create(name, principal, kind, attrs)
-        
-    def readdir(self, *args, **kwargs):
-        # STUB
-        log_o.log(5, "RootFSObj.readdir()")
-        over, verf = FSObject.readdir(self, *args, **kwargs)
-        if self.mounted_fs:
-            # Note we use under verf
-            under, verf = self.mounted_fs.root.readdir(*args, **kwargs)
-        else:
-            under = []
-        log_o.debug("READDIR - over: %r" % over)
-        log_o.debug("READDIR - under: %r" % under)
-        for name, obj in over:
-            for i in under:
-                if i[0] == name:
-                    del under[i]
-        return over + under, verf
-            
 class RootFS(FileSystem):
     def __init__(self):
         self._nextid = 0
-        FileSystem.__init__(self, objclass=RootFSObj)
+        FileSystem.__init__(self)
         self.fsid = (0,0)
-        self._fsids = {self.fsid: self.root} # {fs.fsid: obj where mounted}
-        self.root.mounted_fs = None
-        
-    def mount(self, fs, path):
-        print "mount(%r)" % path
-        dir = self.root
-        components = nfs4lib.path_components(path)
-        print components
-        for component in components:
-            if not dir.exists(component):
-                obj = self.create(NF4DIR)
-                print "Creating obj.id=%i" % obj.id
-                dir.link(component, obj, "", root=True)
-            dir = dir.lookup(component, None, "superuser")
-        dir.mounted_fs = fs
-        self._fsids[fs.fsid] = dir
 
     def alloc_id(self):
         self._nextid += 1
@@ -649,10 +572,7 @@ class RootFS(FileSystem):
         pass
 
     def sync(self, obj, how):
-        if obj.mounted_fs is None:
-            return FILE_SYNC4
-        else:
-            return obj.mounted_fs.root.sync(how)
+        return FILE_SYNC4
 
 class StubFS_Mem(FileSystem):
     def __init__(self, fsid):

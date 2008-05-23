@@ -8,7 +8,7 @@ def mount_stuff(server, opts):
     B = StubFS_Mem(2)
     C = StubFS_Mem(3)
     server.mount(A, path="/a")
-    # S.mount(B, path="/a/gen/b") # BUG - causes problems with mounted_on_fsid
+    server.mount(B, path="/b")
     server.mount(C, path="/foo/bar/c")
     if opts.use_block:
         dev = _create_simple_block_dev()
