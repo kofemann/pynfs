@@ -166,7 +166,7 @@ class %(CompoundState)s(object):
 
     def get_principal(self, cred):
         """Pull principal from credential"""
-        return cred.credinfo.principal
+        return nfs4lib.NFS4Principal(cred.credinfo.principal)
 
     def get_sec_triple(self, cred):
         """Pull security triple of (OID, QOP, service) from cred"""

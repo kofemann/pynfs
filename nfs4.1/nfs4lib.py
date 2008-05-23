@@ -265,6 +265,27 @@ class NFS4Replay(Exception):
     def __init__(self, cache):
         self.cache = cache
 
+class NFS4Principal(object):
+    """Encodes information needed to determine access rights."""
+    def __init__(self, name, system=False):
+        self.name = name
+        self.skip_checks = system
+
+    def member_of(self, group):
+        """Returns True if self.name is a memeber of given group."""
+        # STUB
+        return False
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        # STUB - ignores mappings
+        return self.name == other.name
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 def check(res, expect=nfs4_const.NFS4_OK, msg=None):
     if res.status == expect:
         return

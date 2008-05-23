@@ -551,14 +551,15 @@ class NFS4Server(rpc.Server):
         print "Mounting %r on %r" % (fs.fsid, path)
         # Find directory object on which to mount fs
         dir = self.root
+        principal = nfs4lib.NFS4Principal("root", system=True)
         for comp in nfs4lib.path_components(path):
             # BUG need lock on dir
             if not dir.exists(comp):
                 if dir.fs.fsid != (0, 0): # Only allow creates if in RootFS
                     raise RuntimeError
-                dir = dir.create(comp, "superuser", NF4DIR, {})[0]
+                dir = dir.create(comp, principal, NF4DIR, {})[0]
             else:
-                dir = dir.lookup(comp, None, "superuser")
+                dir = dir.lookup(comp, None, principal)
         # Do the actual mount
         fs.mount(dir)
         self._fsids[fs.fsid] = fs
