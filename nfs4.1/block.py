@@ -1,6 +1,6 @@
 from __future__ import with_statement
-from pnfs_block_pack import PNFS_BLOCKPacker as BlockPacker
-from pnfs_block_pack import PNFS_BLOCKUnpacker as BlockUnpacker
+from pnfs_block_pack import PNFS_BLOCKPacker as Packer
+from pnfs_block_pack import PNFS_BLOCKUnpacker as Unpacker
 from pnfs_block_type import *
 from pnfs_block_const import *
 
@@ -123,7 +123,7 @@ class Volume(object):
         # Create (unpacked) pnfs_block_volume4 structure for each volume
         addr = pnfs_block_deviceaddr4([d.get_xdr(mapping) for d in list])
         # Create packed xdr string
-        p = BlockPacker()
+        p = Packer()
         p.pack_pnfs_block_deviceaddr4(addr)
         return p.get_buffer()
         

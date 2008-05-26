@@ -38,7 +38,7 @@ class FSObject(object):
     This will keep read/writes current, but will not work with
     attrs and non NF4REG files.
     """
-    
+
     # NOTE that any change to these attrs needs to be eventually
     #      written to disk
     def _getfh(self):
@@ -74,13 +74,12 @@ class FSObject(object):
         else:
             raise NFS4Error(NFS4ERR_INVAL)
 
-
     def _set_time_access(self, value):
         if value.set_it == SET_TO_CLIENT_TIME4:
             self.meta.time_access = value.time
         else:
             self.meta.time_access = nfs4lib.get_nfstime()
-            
+
     def _set_time_modify(self, value):
         if value.set_it == SET_TO_CLIENT_TIME4:
             self.meta.time_modify = value.time
@@ -163,11 +162,11 @@ class FSObject(object):
     def __getattr__(self, name):
         # Note only get here if self.name does not exist
         return getattr(self.meta, name)
-    
+
     def _set_fattrs(self):
         self.fattr4_rdattr_error = NFS4_OK # NOTE does this need sent to disk?
         self.fattr4_named_attr = False # STUB - not supported, so not in meta
-        
+
     def check_dir(self):
         if self.type not in (NF4DIR, NF4ATTRDIR):
             if self.type == NF4LNK:
@@ -186,11 +185,11 @@ class FSObject(object):
     def change_data(self):
         self.change += 1
         # STUB reset time_* attrs
-        
+
     def change_meta(self):
         self.change += 1
         # STUB reset time_* attrs
-        
+
     def change_access(self):
         self.change += 1
         # STUB reset time_* attrs
@@ -203,7 +202,7 @@ class FSObject(object):
 
     def close(self):
         self.sync(FILE_SYNC4)
-    
+
     def sync(self, how=FILE_SYNC4):
         """Write to disk, according to how"""
         log_o.log(5, "FSObject(id=%i).sync()" % self.id)
@@ -345,7 +344,7 @@ class FSObject(object):
             raise RuntimeError("Bad type %i" % self.type)
         id = self.entries.get(name, None)
         return id is not None
-    
+
     def lookup(self, name, client, principal):
         """Returns object associated with name in the dir, following mounts."""
         log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
@@ -478,7 +477,7 @@ class FileSystem(object):
         """
         dir.covered_by = self.root
         self.mounted_on = dir
-        
+
     def attach_to_server(self, server):
         """Called at mount, gives fs a chance to interact with server.
 
@@ -528,7 +527,7 @@ class FileSystem(object):
     def sync(self, obj, how):
         """Syncs object to disk, returns value from enum stable_how4"""
         raise NotImplementedError
-    
+
     def create(self, kind):
         """Allocs disk space and returns a FSObject associated with it.
 
@@ -579,7 +578,7 @@ class StubFS_Mem(FileSystem):
         self._nextid = 0
         FileSystem.__init__(self)
         self.fsid = (2, fsid)
-        
+
     def alloc_id(self):
         """Alloc disk space for an FSObject, and return an identifier
         that will allow us to find the disk space later.
@@ -611,13 +610,13 @@ class ConfigObj(FSObject):
     def change_data(self):
         FSObject.change_data(self)
         self.dirty = True
-    
+
     def create(self, *args, **kwargs):
         raise NFS4Error(NFS4ERR_ACCESS)
 
     def link(self, *args, **kwargs):
         raise NFS4Error(NFS4ERR_ACCESS)
-        
+
     def close(self):
         """This verifies any written data
 
@@ -644,7 +643,7 @@ class ConfigObj(FSObject):
         except:
             log_o.info("close() verify failed", exc_info=True)
         self._reset()
-        
+
     def exists(self, name):
         """Returns True if name is in the dir"""
         log_o.log(5, "FSObject.exists(%r)" % name)
@@ -655,7 +654,7 @@ class ConfigObj(FSObject):
                 self.config = ServerPerClientConfig()
         entries = self._build_entries(Fake())
         return entries.get(name, None)
-    
+
     def lookup(self, name, client, principal):
         """Returns FSObject associated with name in the dir"""
         log_o.log(5, "ConfigObj.lookup(%r, %r)" % (name, principal))
@@ -758,7 +757,6 @@ class ConfigFS(FileSystem):
     def sync(self, obj, how):
         return FILE_SYNC4
 
-
     def find_on_disk(self, id):
         """
         id is 64 bits used as follows:
@@ -845,7 +843,7 @@ class StubFS_Disk(FileSystem):
         else:
             self._init(path)
         # XXX Note shelve DB is still open
-        
+
     def _reset(self, path, fsid):
         """Create an empty fs, overwriting all existing data."""
         # Check path exists
@@ -976,11 +974,7 @@ class StubFS_Disk(FileSystem):
 ###################################################
 
 from pnfs_block_type import pnfs_block_extent4, pnfs_block_layout4
-#from pnfs_block01_type import pnfs_block_extent as pnfs_block_extent4, pnfs_block_layout as pnfs_block_layout4
-from pnfs_block_pack import PNFS_BLOCKPacker, PNFS_BLOCKUnpacker
-#from pnfs_block01_pack import PNFS_BLOCK01Packer as PNFS_BLOCKPacker
 import block
-#import block01 as block
 
 class my_ro_extent(object):
     def __init__(self, f_offset, d_offset, length):
@@ -1046,10 +1040,10 @@ class LayoutFSObj(FSObject):
                     raw[-1].length += count
                 # file_end = end_request
                 file_end += count
-            
+
         # STUB - for the moment, ignore args.
         # We just expand raw and return that
-        id = self.fs.meta_device.long_id
+        id = self.fs.volume.devid
         file_offset = 0
         elist = []
         for e in raw:
@@ -1064,7 +1058,7 @@ class LayoutFSObj(FSObject):
                                             e.state))
         block_layout = pnfs_block_layout4(elist)
         print block_layout
-        p = PNFS_BLOCKPacker()
+        p = block.Packer()
         p.pack_pnfs_block_layout4(block_layout)
 ##         if self.id <= 4:
 ##             mode = LAYOUTIOMODE4_READ
@@ -1095,7 +1089,7 @@ class LayoutFSObj(FSObject):
         if not arg.loca_layoutupdate.lou_body:
             upd_list = []
         else:
-            p = PNFS_BLOCKUnpacker(arg.loca_layoutupdate.lou_body)
+            p = block.Unpacker(arg.loca_layoutupdate.lou_body)
             try:
                 update = p.unpack_pnfs_block_layoutupdate4()
                 p.done()
@@ -1142,7 +1136,7 @@ class LayoutFSObj(FSObject):
             return new_size
         else:
             return None
-        
+
     def read(self, offset, count, principal): # NF4REG only
         # STUB - need to acces scsi device - for now just return poison
         return ("poisoned" * (count >> 3))[0:count]
@@ -1151,10 +1145,6 @@ class LayoutFSObj(FSObject):
         self.change_access()
         return data
 
-                
-        
-        
-        
     def _getsize(self):
         # STUB
         return self._size
@@ -1175,110 +1165,17 @@ class LayoutFSObj(FSObject):
 
     fattr4_size = property(_getsize, _setsize)
 
-# class LayoutFS(FileSystem):
-#     """
-#     exports fs.meta_device
-#     """
-#     def __init__(self, fsid, backing_device="/dev/ram4"):
-#         # STUB - need some way to specify layout
-#         self._nextid = 0
-#         FileSystem.__init__(self, objclass=LayoutFSObj)
-#         self.fsid = (3, fsid)
-#         self.fattr4_fs_layout_type = [LAYOUT4_BLOCK_VOLUME]
-#         self.fattr4_supported_attrs |= 1 << FATTR4_FS_LAYOUT_TYPE
-#         self.fattr4_layout_blksize = 4096
-#         self.fattr4_supported_attrs |= 1 << FATTR4_LAYOUT_BLKSIZE
-#         self.fattr4_maxwrite = 4096
-#         self.fattr4_maxread = 4096
-#         self.fattr4_supported_attrs |= 1 << FATTR4_MAXWRITE
-#         self.fattr4_supported_attrs |= 1 << FATTR4_MAXREAD
-#         backing_device = backing_device
-#         self._make_topology(backing_device)
-#         self._make_files(backing_device)
-#         self._allocated = 19
-
-#     def _make_topology(self, dev):
-#         # STUB - use hardcoded concat->simple topo
-#         self.meta_device = block.build_simple(dev)
-#         #self.meta_device = block.build()
-
-#     def _make_files(self, dev):
-#         # STUB - hard code some test files with various properties
-        
-#         # These will use test_layout_dict to get id to layout mapping
-#         bs = self.fattr4_layout_blksize
-#         self.root.create("simple_extent", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
-#         self.root.create("split_extent", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
-#         self.root.create("hole_between_extents", None, NF4REG, {FATTR4_SIZE: int(5.5*bs)})
-#         self.root.create("partial_layout", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
-#         # Fill data blocks
-#         self._mark_blocks(dev, range(1, 19))
-#         self._mark_files(dev)
-        
-#     def _mark_blocks(self, dev, blocks):
-#         bs = self.fattr4_layout_blksize
-#         fd = open(dev, "rb+")
-#         for b in blocks:
-#             fd.seek(b * bs)
-#             fd.write(chr(64+b) * bs)
-#             fd.seek(b * bs)
-#             fd.write("Start of block %i  " % b)
-#             endtext = "  block %i ends here -->*" % b
-#             end_offset = len(endtext)
-#             fd.seek((b + 1) * bs - end_offset)
-#             fd.write(endtext)
-#         fd.close()
-
-#     def _mark_files(self, dev):
-#         bs = self.fattr4_layout_blksize
-#         fd = open(dev, "rb+")
-#         text = "  file ends here -->*"
-#         offset = len(text)
-#         for where in [4.5, 8.5, 14.5, 17.5]:
-#             fd.seek(int(bs*where) - offset)
-#             fd.write(text)
-#         fd.close()
-        
-#     def alloc_id(self):
-#         rv = self._nextid
-#         self._nextid += 1
-#         if rv > 4:
-#             test_layout_dict[rv] = []
-#         return rv
-
-#     def _alloc_blocks(self, count):
-#         # This needs to be lock protected
-#         rv = self._allocated
-#         self._allocated += count
-#         return rv
-
-#     def dealloc_id(self, id):
-#         pass
-
-#     def sync(self, obj, how):
-#         return FILE_SYNC4
-
-#     def delegation_options(self):
-#         # Never grant a delegation, since we don't want to deal with
-#         # conflicts with layouts
-#         return 0
-
-#     def get_devicelist(self, kind, verf):
-#         """Returns list of deviceid's of type kind, using verf for caching."""
-#         # Huge STUB
-#         if kind != LAYOUT4_BLOCK_VOLUME:
-#             return []
-#         d = self.meta_device.dump()[-1]
-#         return [d.long_id]
-
 class Device(object):
+    """Not used, but store here visible API being developed for backing_device.
+    """
     def __init__(self):
         self.address_body = "" # opaque part of device_addr4
-        self.deviceid = None # deviceid4, set by server
+        self.devid = None # deviceid4, set by server
 
 class BlockLayoutFS(FileSystem):
-    """
-    exports fs.meta_device
+    """Exports a filesystem using block layout protocol.
+
+    This is all a huge STUB.
     """
     def __init__(self, fsid, backing_device):
         # STUB - need some way to specify layout
@@ -1310,10 +1207,10 @@ class BlockLayoutFS(FileSystem):
         self._mark_blocks(dev, range(1, 19))
         self._mark_files(dev)
         # raise RuntimeError
-        
+
     def _mark_blocks(self, dev, blocks):
         bs = self.fattr4_layout_blksize
-        # STUB - use with
+        # STUB - use 'with'
         fd = dev.open()
         for b in blocks:
             fd.seek(b * bs)
@@ -1335,7 +1232,7 @@ class BlockLayoutFS(FileSystem):
             fd.seek(int(bs*where) - offset)
             fd.write(text)
         fd.close()
-        
+
     def attach_to_server(self, server):
         server.assign_deviceid(self.volume)
 
