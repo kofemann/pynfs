@@ -218,7 +218,8 @@ class FSObject(object):
 
     def write(self, data, offset, principal): # NF4REG only
         """Return count of bytes written"""
-        # STUB - do some principal checking
+        if not self.access4_modify(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         if len(data) == 0:
             return 0
         self.file.seek(offset)
@@ -229,8 +230,8 @@ class FSObject(object):
         return len(data)
 
     def read(self, offset, count, principal): # NF4REG only
-        # STUB - do some principal checking
-        
+        if not self.access4_read(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         self.file.seek(offset)
         data = self.file.read(count)
         self.change_access()
@@ -377,6 +378,8 @@ class FSObject(object):
         # We don't do utf8 checks here, since are fs variations
         if self.type != NF4DIR: # XXX STUB, also need to handle attrdir
             raise RuntimeError("Bad type %i" % self.type)
+        if not self.access4_lookup(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         id = self.entries.get(name)
         if id is None:
             return None
@@ -407,6 +410,8 @@ class FSObject(object):
         log_o.log(5, "FSObject.link(%r), fsid=%r" % (name, self.fs.fsid))
         if name in self.entries:
             raise RuntimeError
+        if not self.access4_extend(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         self.entries[name] = obj.id
         self.change_data()
         if obj.isdir:
@@ -419,6 +424,8 @@ class FSObject(object):
         # STUB - do some principal checking
         log_o.log(5, "FSObject(id=%i).unlink(%r)" % (self.id, name))
         obj = self.lookup(name, None, principal)
+        if not self.access4_delete(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         obj.lock.acquire_write()
         try:
             if obj.isdir and not obj.isempty:
@@ -434,6 +441,8 @@ class FSObject(object):
         # STUB - this API will certainly change
         # need to think how to deal with cookies
         log_o.log(5, "FSObject.readdir()")
+        if not self.access4_read(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         t = struct.unpack(">d", verifier)[0]
         if t != 0.0:
             try:
@@ -456,6 +465,8 @@ class FSObject(object):
         attrs is a dictionary of {bitnum: attr_value}
         """
         log_o.log(5, "FSObject.create(%r, %r)" % (name, principal))
+        if not self.access4_extend(principal):
+            raise NFS4Error(NFS4ERR_ACCESS)
         obj = self.fs.create(kind)
         bitmask = obj.set_attrs(attrs)
         self.link(name, obj, principal)
