@@ -24,6 +24,7 @@ class MetaData(object):
         self.type = 0
         self.refcnt = 0
         self.createverf = ""
+        self.owner = ""
         self.time_access = self.time_modify = self.time_create = nfs4lib.get_nfstime()
         if 1:
             self.parent = 0
@@ -93,6 +94,10 @@ class FSObject(object):
             obj = self
         return obj.fattr4_fileid
 
+    def _set_owner(self, value):
+        # STUB - do some utf8 checking here
+        self.owner = value
+
     fh = property(_getfh)
     fattr4_filehandle = fh
     fattr4_size = property(_getsize, _setsize)
@@ -100,6 +105,7 @@ class FSObject(object):
     fattr4_type = property(lambda s: s.type)
     fattr4_fsid = property(lambda s: fsid4(*(s.fs.fsid)))
     fattr4_fileid = property(lambda s: s.id)
+    fattr4_owner = property(lambda s: s.owner, _set_owner)
     fattr4_mounted_on_fileid = property(_get_mounted_on_fileid)
     fattr4_numlinks = property(lambda s: s.refcnt)
     fattr4_time_access_set = property(lambda s: s.time_access, _set_time_access)
@@ -468,6 +474,9 @@ class FSObject(object):
         if not self.access4_extend(principal):
             raise NFS4Error(NFS4ERR_ACCESS)
         obj = self.fs.create(kind)
+        if FATTR4_OWNER not in attrs:
+            # STUB - should also limit ability to arbitrarily set owner
+            attrs[FATTR4_OWNER] = principal.name
         bitmask = obj.set_attrs(attrs)
         self.link(name, obj, principal)
         return obj, bitmask
