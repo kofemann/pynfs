@@ -1084,6 +1084,10 @@ class NFS4Server(rpc.Server):
         env.set_cfh(self.root)
         return encode_status(NFS4_OK)
 
+    # op_putpubfh SHOULD be the same as op_putrootfh
+    # See draft23, section 18.20.3, line 25005
+    op_putpubfh = op_putrootfh
+
     def op_lookup(self, arg, env):
         check_session(env)
         check_cfh(env)
