@@ -61,7 +61,8 @@ class NFS4Client(rpc.Client):
         return self.listen(xid)
 
     def compound_async(self, ops, credinfo=None, pipe=None,
-                       tag=None, version=None, checks=True):
+                       tag=None, version=None, checks=True,
+                       packer=nfs4lib.FancyNFS4Packer):
         if tag is None:
             tag = self.tag
         if version is None:
@@ -70,7 +71,7 @@ class NFS4Client(rpc.Client):
             credinfo = self.default_cred
         if pipe is None:
             pipe = self.c1
-        p = nfs4lib.FancyNFS4Packer(check_enum=checks, check_array=checks)
+        p = packer(check_enum=checks, check_array=checks)
         c4 = COMPOUND4args(tag, version, ops)
         if SHOW_TRAFFIC:
             print
