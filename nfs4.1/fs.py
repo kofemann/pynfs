@@ -1244,11 +1244,12 @@ class BlockLayoutFS(FileSystem):
         # STUB - hard code some test files with various properties
         
         # These will use test_layout_dict to get id to layout mapping
+        princ = nfs4lib.NFS4Principal("root", system=True)
         bs = self.fattr4_layout_blksize
-        self.root.create("simple_extent", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
-        self.root.create("split_extent", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
-        self.root.create("hole_between_extents", None, NF4REG, {FATTR4_SIZE: int(5.5*bs)})
-        self.root.create("partial_layout", None, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
+        self.root.create("simple_extent", princ, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
+        self.root.create("split_extent", princ, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
+        self.root.create("hole_between_extents", princ, NF4REG, {FATTR4_SIZE: int(5.5*bs)})
+        self.root.create("partial_layout", princ, NF4REG, {FATTR4_SIZE: int(3.5*bs)})
         # Fill data blocks
         self._mark_blocks(dev, range(1, 19))
         self._mark_files(dev)
