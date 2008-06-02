@@ -1105,6 +1105,18 @@ class NFS4Server(rpc.Server):
         env.set_cfh(obj)
         return encode_status(NFS4_OK)
 
+    def op_lookupp(self, arg, env):
+        check_session(env)
+        check_cfh(env)
+        env.cfh.check_dir()
+        env.cfh.lock.acquire()
+        try:
+            obj = env.cfh.lookup_parent(env.session.client, env.principal)
+        finally:
+            env.cfh.lock.release()
+        env.set_cfh(obj)
+        return encode_status(NFS4_OK)
+
     def op_putfh(self, arg, env):
         check_session(env)
         obj = self.fh2obj(arg.object)

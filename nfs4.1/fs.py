@@ -397,10 +397,10 @@ class FSObject(object):
 
     def lookup_parent(self, client, principal):
         """Returns object which is parent of current dir."""
-        log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
+        log_o.log(5, "FSObject.lookup_parent(%r)" % (principal))
         # We don't do utf8 checks here, since are fs variations
-        if self.type != NF4DIR: # XXX STUB, also need to handle attrdir
-            raise RuntimeError("Bad type %i" % self.type)
+        if self.type not in [NF4DIR, NF4ATTRDIR]:
+            raise NFS4Error(NFS4ERR_NOTDIR) # Per draft23 18.14.3, line 23599
         dir = self
         while dir.parent is None:
             # At fs.root, so find parent of dir hidden by mount
