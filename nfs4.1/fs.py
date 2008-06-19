@@ -1080,7 +1080,7 @@ class LayoutFSObj(FSObject):
                 if arg.loga_length == 0xffffffffffffffff:
                     count = min(count, 4)
                 block_offset = self.fs._alloc_blocks(count)
-                if not raw or raw[-1].state != block.INVALID_DATA:
+                if not raw or raw[-1].state != block.PNFS_BLOCK_INVALID_DATA:
                     raw.append(EW(file_end + 1, block_offset, count, None))
                 else:
                     raw[-1].length += count
