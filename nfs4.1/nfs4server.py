@@ -478,11 +478,13 @@ class Slot(object):
         finally:
             self.lock.release()
 
-    def get_seqid(self):
+    def get_seqid(self, delta=1):
         """Client seqid"""
         # locking not needed, since slot is handed out under channel lock
-        self.seqid = inc_u32(self.seqid)
-        return self.seqid
+        new_seqid = int( (self.seqid + delta) & 0xffffffff )
+        if delta == 1:
+            self.seqid = new_seqid
+        return new_seqid
 
     # STUB - for client, need to track slot usage
 
