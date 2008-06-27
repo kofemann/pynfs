@@ -501,25 +501,35 @@ class StateTableEntry(object):
         self.seqid = 0   # last seqid sent out as part of stateid4. See 8.1.3.1
         self._private_lock = threading.Condition() # Non-shared lock
         self.invalid = False # Set True when no longer embedded in tree
-        self.use_count = 0
+        self.read_count = 0
+        self.write_count = 0
 #         if type == BYTE:
 #             self.locklist = []
 
-    def mark_inuse(self):
-        # Only call this if holding self.lock
-        with self._private_lock: # Note grabbing _private_lock not strictly needed
-            self.use_count += 1
-
-    def mark_done_using(self):
+    def mark_reading(self):
         with self._private_lock:
-            self.use_count -= 1
-            if self.use_count == 0:
+            self.read_count += 1
+
+    def mark_done_reading(self):
+        with self._private_lock:
+            self.read_count -= 1
+            if self.read_count + self.write_count == 0:
+                self._private_lock.notifyAll()
+
+    def mark_writing(self):
+        with self._private_lock:
+            self.write_count += 1
+
+    def mark_done_writing(self):
+        with self._private_lock:
+            self.write_count -= 1
+            if self.write_count + self.write_count == 0:
                 self._private_lock.notifyAll()
 
     def wait_until_unused(self):
         # Only call this if holding self.lock
         with self._private_lock:
-            if self.use_count != 0:
+            if self.read_count + self.write_count!= 0:
                 self._private_lock.wait()
 
     def get_id(self, cb=False):

@@ -1195,11 +1195,11 @@ class NFS4Server(rpc.Server):
             return encode_status(NFS4ERR_INVAL)
         with find_state(env, arg.stateid) as state:
             state.test_share(OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE)
-            state.mark_inuse()
+            state.mark_writing()
         count = env.cfh.write(arg.data, arg.offset, env.principal)
         # BUG - need to fix fs locking
         how = env.cfh.sync(arg.stable)
-        state.mark_done_using()
+        state.mark_done_writing()
         res = WRITE4resok(count, how, self.verifier)
         return encode_status(NFS4_OK, res)
 
@@ -1216,11 +1216,11 @@ class NFS4Server(rpc.Server):
         with find_state(env, arg.stateid) as state:
             if not bypass:
                 state.test_share(OPEN4_SHARE_ACCESS_READ, OPEN4_SHARE_DENY_NONE)
-            state.mark_inuse()
+            state.mark_reading()
         # BUG - need to fix fs locking
         data = env.cfh.read(arg.offset, arg.count, env.principal)
         eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
-        state.mark_done_using()
+        state.mark_done_reading()
         res = READ4resok(eof, data)
         return encode_status(NFS4_OK, res)
 
