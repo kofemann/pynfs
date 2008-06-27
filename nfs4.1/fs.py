@@ -113,6 +113,7 @@ class FSObject(object):
     fattr4_time_access = property(lambda s: s.time_access)
     fattr4_time_modify = property(lambda s: s.time_modify)
     isdir = property(lambda s: s.type == NF4DIR)
+    isfile = property(lambda s: s.type == NF4REG)
     isempty = property(lambda s: s.entries == {})
     vfs = property(lambda s: s.fs)
 
