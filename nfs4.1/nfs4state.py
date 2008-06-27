@@ -261,9 +261,9 @@ class DelegState(FileStateTyped):
     """
     type = DELEG
 
-    def __init__(s, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs["depth"] = 1 # key = (client,)
-        FileStateTyped.__init__(s, *args, **kwargs)
+        FileStateTyped.__init__(self, *args, **kwargs)
         # NOTE all delegations must be the same, either READ or WRITE.
         # Also note, there can only be one WRITE delegation out.
 
@@ -326,22 +326,22 @@ class DelegState(FileStateTyped):
 
 class AnonState(FileStateTyped):
     type = ANON
-    def __init__(s, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs["depth"] = 1 # key = (int,)
-        FileStateTyped.__init__(s, *args, **kwargs)
-        s._tree = DictTree(1)
-        s._tree[(0 ,)] = AnonEntry("\x00" * 12, s, (0,))
-        s._tree[(1 ,)] = AnonEntry("\xff" * 12, s, (1,))
+        FileStateTyped.__init__(self, *args, **kwargs)
+        self._tree = DictTree(1) # XXX - isn't this taken care of in the line above this? NMS
+        self._tree[(0 ,)] = AnonEntry("\x00" * 12, self, (0,))
+        self._tree[(1 ,)] = AnonEntry("\xff" * 12, self, (1,))
 
 class ShareState(FileStateTyped):
     """Holds share state for a single file"""
     type = SHARE
 
-    def __init__(s, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs["depth"] = 2 # key = (client, open_owner)
-        FileStateTyped.__init__(s, *args, **kwargs)
-        s.cache_valid = True # Are the cached values valid?
-        s.cached_access = s.cached_deny = 0 # When valid, union of all values
+        FileStateTyped.__init__(self, *args, **kwargs)
+        self.cache_valid = True # Are the cached values valid?
+        self.cached_access = self.cached_deny = 0 # When valid, union of all values
 
     def close(self, key):
         del self._tree[key]
@@ -497,49 +497,49 @@ class StateTableEntry(object):
     NOTE is is assumed that the lock is held pretty much the entire time
     the structure is in use.
     """
-    def __init__(s, other, state, key):
-        s.other = other # 'other' field of stateid4
-        s.lock = state.lock # lock shared with FileState()
-        s.file = state.file
-        s._state = state # FileStateTyped in which Entry is embedded
-        s.key = key   # key used to store in Tree
-        s.seqid = 0   # last seqid sent out as part of stateid4. See 8.1.3.1
-        s._private_lock = threading.Condition() # Non-shared lock
-        s.invalid = False # Set True when no longer embedded in tree
-        s.use_count = 0
+    def __init__(self, other, state, key):
+        self.other = other # 'other' field of stateid4
+        self.lock = state.lock # lock shared with FileState()
+        self.file = state.file
+        self._state = state # FileStateTyped in which Entry is embedded
+        self.key = key   # key used to store in Tree
+        self.seqid = 0   # last seqid sent out as part of stateid4. See 8.1.3.1
+        self._private_lock = threading.Condition() # Non-shared lock
+        self.invalid = False # Set True when no longer embedded in tree
+        self.use_count = 0
 #         if type == BYTE:
-#             s.locklist = []
+#             self.locklist = []
 
-    def mark_inuse(s):
-        # Only call this if holding s.lock
-        with s._private_lock: # Note grabbing _private_lock not strictly needed
-            s.use_count += 1
+    def mark_inuse(self):
+        # Only call this if holding self.lock
+        with self._private_lock: # Note grabbing _private_lock not strictly needed
+            self.use_count += 1
 
-    def mark_done_using(s):
-        with s._private_lock:
-            s.use_count -= 1
-            if s.use_count == 0:
-                s._private_lock.notifyAll()
+    def mark_done_using(self):
+        with self._private_lock:
+            self.use_count -= 1
+            if self.use_count == 0:
+                self._private_lock.notifyAll()
 
-    def wait_until_unused(s):
-        # Only call this if holding s.lock
-        with s._private_lock:
-            if s.use_count != 0:
-                s._private_lock.wait()
+    def wait_until_unused(self):
+        # Only call this if holding self.lock
+        with self._private_lock:
+            if self.use_count != 0:
+                self._private_lock.wait()
             
-    def get_id(s, cb=False):
+    def get_id(self, cb=False):
         """Return stateid4 associated with this state.
 
         NOTE assumes lock is held.
         """
         if cb:
             # seqid zeroed for callbacks per draft22 8.2.2
-            return stateid4(0, s.other)
+            return stateid4(0, self.other)
         else:
             # BUG - only increment if has changed
             # NOTE - careful about only inc if change, see draft22 9.9
-            s.seqid = nfs4lib.inc_u32(s.seqid)
-            return stateid4(s.seqid, s.other)
+            self.seqid = nfs4lib.inc_u32(self.seqid)
+            return stateid4(self.seqid, self.other)
 
     def delete(self):
         """Remove this entry from self.file.state table"""
@@ -562,17 +562,17 @@ class AnonEntry(StateTableEntry):
 class ShareEntry(StateTableEntry):
     type = SHARE
 
-    def __init__(s, other, state, key):
-        super(ShareEntry, s).__init__(other, state, key)
+    def __init__(self, other, state, key):
+        super(ShareEntry, self).__init__(other, state, key)
         # 2 bit value normally used
-        s.share_access = s.share_deny = 0
+        self.share_access = self.share_deny = 0
         # 3 bit value used to record history of unions, just so we
         # can implement (from 18.18.3 of draft 22):
         # The bits ... SHOULD equal the union of the ... bits specified
         # for some subset of the OPENs in effect for the current open-owner
         # on the current file.
-        s.access_hist = s.deny_hist = 0
-        s.test_share = state.test_share
+        self.access_hist = self.deny_hist = 0
+        self.test_share = state.test_share
 
     def add_share(self, access, deny):
         self.share_access |= (access & 3)
@@ -632,10 +632,10 @@ class ShareEntry(StateTableEntry):
 class DelegEntry(StateTableEntry):
     type = DELEG
 
-    def __init__(s, other, state, key):
-        super(DelegEntry, s).__init__(other, state, key)
-        s.deleg_type = OPEN_DELEGATE_READ
-        s.status = D_NORMAL
+    def __init__(self, other, state, key):
+        super(DelegEntry, self).__init__(other, state, key)
+        self.deleg_type = OPEN_DELEGATE_READ
+        self.status = D_NORMAL
 
     def test_share(self, *args, **kwargs):
         return self.open_state.test_share(*args, **kwargs)
