@@ -1196,10 +1196,12 @@ class NFS4Server(rpc.Server):
         with find_state(env, arg.stateid) as state:
             state.test_share(OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE)
             state.mark_writing()
-        count = env.cfh.write(arg.data, arg.offset, env.principal)
-        # BUG - need to fix fs locking
-        how = env.cfh.sync(arg.stable)
-        state.mark_done_writing()
+        try:
+            count = env.cfh.write(arg.data, arg.offset, env.principal)
+            # BUG - need to fix fs locking
+            how = env.cfh.sync(arg.stable)
+        finally:
+            state.mark_done_writing()
         res = WRITE4resok(count, how, self.verifier)
         return encode_status(NFS4_OK, res)
 
@@ -1217,10 +1219,12 @@ class NFS4Server(rpc.Server):
             if not bypass:
                 state.test_share(OPEN4_SHARE_ACCESS_READ, OPEN4_SHARE_DENY_NONE)
             state.mark_reading()
-        # BUG - need to fix fs locking
-        data = env.cfh.read(arg.offset, arg.count, env.principal)
-        eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
-        state.mark_done_reading()
+        try:
+            # BUG - need to fix fs locking
+            data = env.cfh.read(arg.offset, arg.count, env.principal)
+            eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
+        finally:
+            state.mark_done_reading()
         res = READ4resok(eof, data)
         return encode_status(NFS4_OK, res)
 
@@ -1478,8 +1482,10 @@ class NFS4Server(rpc.Server):
                                      error=NFS4ERR_OPENMODE)
                     # BUG fs locking
                     state.mark_writing()
-                bitmap = env.cfh.set_attrs(attrs, env.principal)
-                state.mark_done_writing()
+                try:
+                    bitmap = env.cfh.set_attrs(attrs, env.principal)
+                finally:
+                    state.mark_done_writing()
             return encode_status(NFS4_OK, bitmap)
         except NFS4Error, e:
             # SETATTR failure does not encode just status
