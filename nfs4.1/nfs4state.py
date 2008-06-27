@@ -329,7 +329,6 @@ class AnonState(FileStateTyped):
     def __init__(self, *args, **kwargs):
         kwargs["depth"] = 1 # key = (int,)
         FileStateTyped.__init__(self, *args, **kwargs)
-        self._tree = DictTree(1) # XXX - isn't this taken care of in the line above this? NMS
         self._tree[(0 ,)] = AnonEntry("\x00" * 12, self, (0,))
         self._tree[(1 ,)] = AnonEntry("\xff" * 12, self, (1,))
 
