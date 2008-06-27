@@ -1477,7 +1477,9 @@ class NFS4Server(rpc.Server):
                     state.test_share(OPEN4_SHARE_ACCESS_WRITE,
                                      error=NFS4ERR_OPENMODE)
                     # BUG fs locking
-                    bitmap = env.cfh.set_attrs(attrs, env.principal)
+                    state.mark_writing()
+                bitmap = env.cfh.set_attrs(attrs, env.principal)
+                state.mark_done_writing()
             return encode_status(NFS4_OK, bitmap)
         except NFS4Error, e:
             # SETATTR failure does not encode just status
