@@ -102,7 +102,7 @@ class ByteLock(object):
             return cmp(self.end, other.end)
         else:
             return out
-        
+
     def overlaps(self, start, end, exact=False):
         """Returns True if given range overlaps that of lock.
 
@@ -213,7 +213,7 @@ class DictTree(object):
         for i in myiter(self._data, self._depth):
             yield i
 
-        
+
 class FileStateTyped(object):
     """Super of a class to holds all state of a single type for a single file.
 
@@ -252,7 +252,7 @@ class FileStateTyped(object):
             self._tree[key] = entry
             client.state[other] = entry
         return entry
-        
+
 class DelegState(FileStateTyped):
     """Holds delegation state for a single file
 
@@ -425,7 +425,6 @@ class ByteState(FileStateTyped):
                                               lock.type, owner)
                     raise NFS4Error(NFS4ERR_DENIED, lock_denied=lock_denied)
 
-
     def _create_lockowner(self, key):
         """Create a new ByteEntry associated with lockowner.
 
@@ -464,9 +463,6 @@ class FileState(object):
 
     def __exit__(self, t, v, tb):
         self.lock.release()
-
-#         self.acquire = lock.acquire
-#         self.release = lock.release
 
     def close(self, key): # key = (client, open_owner)
         # client.config.allow_close_with_locks
@@ -525,7 +521,7 @@ class StateTableEntry(object):
         with self._private_lock:
             if self.use_count != 0:
                 self._private_lock.wait()
-            
+
     def get_id(self, cb=False):
         """Return stateid4 associated with this state.
 
@@ -546,7 +542,7 @@ class StateTableEntry(object):
         del self._state._tree[self.key]
         del self.key[0].state[self.other]
 
-        
+
 class AnonEntry(StateTableEntry):
     # STUB - I suspect this should look more like ShareEntry
     type = ANON
@@ -619,7 +615,7 @@ class ShareEntry(StateTableEntry):
         Note this is a bit tricky, since must interact with other state types.
         """
         self.file.state.close(self.key)
-    
+
     def create_lockowner(self, lockowner):
         """Create a lockowner dependent on this openowner."""
         newkey = list(self.key)
@@ -750,7 +746,7 @@ class ByteEntry(StateTableEntry):
 #                list[i].type == list[i-1].type:
 #                 list[i-1].end == list[i].end
 #                 del list[i]
-        
+
 #     def remove_posix_lock(self, start, end):
 #         """Removes locks in given range, shrinking locks that half-overlap"""
 #         new = []
