@@ -554,6 +554,11 @@ class AnonEntry(StateTableEntry):
     def __init__(self, other, state, key):
         super(AnonEntry, self).__init__(other, state, key)
 
+    def test_share(self, access, deny=OPEN4_SHARE_DENY_NONE,
+                   error=NFS4ERR_SHARE_DENIED):
+        # STUB to prevent server crash while real solutionn is implemented
+        pass
+
 class ShareEntry(StateTableEntry):
     type = SHARE
 
