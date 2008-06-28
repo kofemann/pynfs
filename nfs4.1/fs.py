@@ -735,19 +735,19 @@ class ConfigObj(FSObject):
         # XXX - actually, exists() needs checking to be lax.  Should
         # have a flag that controls checking, which exists() can set.
 
-        # NOTE XXX - apart from id==0, can't we just compute once and store?
-        if id == 0:
+        # NOTE XXX - apart from id==1, can't we just compute once and store?
+        if id == 1:
             # This is the root
-            entries = {"actions"   : makefh(1),
+            entries = {"actions"   : makefh(8),
                        "serverwide": makefh(2),
                        "perclient" : makefh(3, cid_mask),
                        "ops"       : makefh(4),
                        }
-        elif id == 1:
+        elif id == 8:
             # This is actions dir
             entries = {}
             for i, attr in enumerate(self.fs.server.actions.attrs):
-                entries[attr.name] = 1 | obj_mask(i)
+                entries[attr.name] = 8 | obj_mask(i)
         elif id == 2:
             # This is serverwide dir
             entries = {}
@@ -835,7 +835,7 @@ class ConfigFS(FileSystem):
             raise RuntimeError("id=%x" % id)
         if obj_flag():
             # Is an object associated with a configurable attribute
-            if dcode == 1:
+            if dcode == 8:
                 # parent == config/actions
                 config = self.server.actions
             elif dcode == 2:
@@ -856,10 +856,10 @@ class ConfigFS(FileSystem):
             obj.associate(config.attrs[line_code()])
         else:
             # Is a directory.  Tree is currently set up like:
-            #                       config (0)
+            #                       config (1)
             #        ______________/ /   \  \______________      
             #       /               /     \                \
-            # actions (1)   serverwide (2)  perclient (3)  ops (4)
+            # actions (8)   serverwide (2)  perclient (3)  ops (4)
             #                                         _____/ \___
             #                                        /           \
             #                                  serverwide (6) perclient (7)
