@@ -1377,13 +1377,13 @@ class NFS4Server(rpc.Server):
                 continue
             # Attributes hide in different places, call the place 'base'
             if info[attr].from_fs:
-                base = obj.vfs
+                base = obj.fs
             elif info[attr].from_serv:
                 base = self
             else:
                 base = obj
             name = "fattr4_%s" % nfs4lib.attr_name(attr)
-            if hasattr(base, name) and (obj.vfs.fattr4_supported_attrs & 1<<attr): # STUB we should be able to remove hasattr
+            if hasattr(base, name) and (obj.fs.fattr4_supported_attrs & 1<<attr): # STUB we should be able to remove hasattr
                 ret_dict[attr] = getattr(base, name)
                 print ret_dict[attr]
             else:
@@ -1396,9 +1396,9 @@ class NFS4Server(rpc.Server):
                     if name == "fattr4_layout_blksize":
                         print base == obj
                         print hasattr(base, name)
-                        print obj.vfs.fattr4_supported_attrs
+                        print obj.fs.fattr4_supported_attrs
                         print 1<<attr
-                        print obj.vfs.fattr4_supported_attrs & 1<<attr
+                        print obj.fs.fattr4_supported_attrs & 1<<attr
                     continue
                 else:
                     # This is for VERIFY/NVERIFY
@@ -1726,7 +1726,7 @@ class NFS4Server(rpc.Server):
         check_cfh(env)
         if arg.gdla_maxdevices == 0:
             return encode_status(NFS4ERR_INVAL)
-        fs = env.cfh.vfs
+        fs = env.cfh.fs
         # STUB Deal with whole cookie thing
         kind = arg.gdla_layout_type
         verf = (arg.gdla_cookieverf if arg.gdla_cookie else None)
@@ -1749,7 +1749,7 @@ class NFS4Server(rpc.Server):
 #     def op_getdeviceinfo(self, arg, env): # STUB
 #         check_session(env)
 #         # check_cfh(env)
-#         # fs = env.cfh.vfs
+#         # fs = env.cfh.fs
 #         # STUB - only deals with block volumes
 #         kind = arg.gdia_layout_type
 #         if kind != LAYOUT4_BLOCK_VOLUME:

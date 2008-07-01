@@ -115,7 +115,6 @@ class FSObject(object):
     isdir = property(lambda s: s.type == NF4DIR)
     isfile = property(lambda s: s.type == NF4REG)
     isempty = property(lambda s: s.entries == {})
-    vfs = property(lambda s: s.fs)
 
     def __init__(self, fs, id, kind=NF4DIR, parent=None):
         log_o.log(5, "FSObject.__init__(id=%r)" % id)
@@ -307,7 +306,7 @@ class FSObject(object):
         or raises the appropriate error.
         NOTE permissions checking on the range has already been done
         """
-        fs = self.vfs
+        fs = self.fs
         if not fs.fattr4_supported_attrs & (1 << FATTR4_FS_LAYOUT_TYPE):
             raise NFS4Error(NFS4ERR_LAYOUTUNAVAILABLE)
         try:
@@ -327,7 +326,7 @@ class FSObject(object):
         raise NotImplementedError
 
     def commit_layout(self, arg):
-        fs = self.vfs
+        fs = self.fs
         if arg.loca_reclaim:
             # STUB - this is just not supported
             raise NFS4Error(NFS4ERR_NO_GRACE)
