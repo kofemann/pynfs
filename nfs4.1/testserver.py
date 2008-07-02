@@ -137,7 +137,7 @@ def scan_options(p):
     p.add_option_group(g)
     
     g = OptionGroup(p, "Test output options",
-                    "These options affect how test results are shown")
+                    "These options affect how test results are shown.")
     g.add_option("-v", "--verbose", action="store_true", default=False,
                   help="Show tests as they are being run")
     g.add_option("--showpass", action="store_true", default=True,
@@ -166,7 +166,7 @@ def scan_options(p):
                     "If the tester cannot create various objects, certain "
                     "tests will not run.  You can indicate pre-existing "
                     "objects on the server which can be used "
-                    "(they will not altered).")
+                    "(they will not be altered).")
     g.add_option("--maketree", action="store_true", default=False,
                  help="(Re)create the test tree of object types")
     g.add_option("--uselink", default=None, metavar="OBJPATH",
