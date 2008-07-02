@@ -145,11 +145,6 @@ class OpsConfigServer(object):
     attrs = [ConfigLine(name.lower()[3:], 0, "Generic comment", _statcode)
              for name in nfs_opnum4.values()]
 
-class OpsConfigClient(object):
-    __metaclass__ = MetaConfig
-    attrs = [ConfigLine(name.lower()[3:], 0, "Generic comment", _statcode)
-             for name in nfs_opnum4.values()]
-
 class Actions(object):
     __metaclass__ = MetaConfig
     attrs = [ConfigLine("reboot", 0,

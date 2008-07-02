@@ -759,20 +759,10 @@ class ConfigObj(FSObject):
             for i, attr in enumerate(client.config.attrs):
                 entries[attr.name] = 3 | cid_mask | obj_mask(i)
         elif id == 4:
-            # This is ops dir
-            entries = {"serverwide": makefh(6),
-                       "perclient" : makefh(7, cid_mask),
-                       }
-        elif id == 6:
             # This is ops/serverwide dir
             entries = {}
             for i, attr in enumerate(self.fs.server.opsconfig.attrs):
                 entries[attr.name] = 6 | obj_mask(i)
-        elif id & dir_mask == 7 | 0x80:
-            # This is ops/perclient dir
-            entries = {}
-            for i, attr in enumerate(client.opsconfig.attrs):
-                entries[attr.name] = 7 | cid_mask | obj_mask(i)
         else:
             raise RuntimeError("Called readdir with id=%i" % id)
         return entries
@@ -844,12 +834,9 @@ class ConfigFS(FileSystem):
             elif dcode == 3:
                 # parent == config/perclient/
                 config= self.server.clients[client_code()].config
-            elif dcode == 6:
-                # parent = config/ops/serverwide/
+            elif dcode == 4:
+                # parent = config/ops/
                 config = self.server.opsconfig
-            elif dcode == 7:
-                # parent == config/ops/perclient/
-                config= self.server.clients[client_code()].opsconfig
             else:
                 raise RuntimeError("id=%x" % id)
             obj = self.objclass(self, id, NF4REG)
@@ -860,9 +847,7 @@ class ConfigFS(FileSystem):
             #        ______________/ /   \  \______________      
             #       /               /     \                \
             # actions (8)   serverwide (2)  perclient (3)  ops (4)
-            #                                         _____/ \___
-            #                                        /           \
-            #                                  serverwide (6) perclient (7)
+            #
             if line_code() != 0:
                 raise RuntimeError("id=%x" % id)
             # We don't have to do much here.

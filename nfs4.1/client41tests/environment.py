@@ -127,7 +127,7 @@ class Environment(testmod.Environment):
 
     def set_error(self, opname, code):
         # STUB - API will change
-        path = os.path.join(self.root, "config", "ops", "perclient", opname)
+        path = os.path.join(self.root, "config", "ops", opname)
         fd = open(path, "w")
         fd.write(str(code))
         fd.close()

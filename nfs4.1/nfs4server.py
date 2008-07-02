@@ -21,7 +21,7 @@ import logging
 from nfs4state import find_state
 from nfs4commoncode import CompoundState, encode_status, encode_status_by_name
 from fs import RootFS, ConfigFS
-from config import ServerConfig, ServerPerClientConfig, OpsConfigClient, OpsConfigServer, Actions
+from config import ServerConfig, ServerPerClientConfig, OpsConfigServer, Actions
 
 logging.basicConfig(level=logging.INFO,
                     format="%(levelname)-7s:%(name)s:%(message)s")
@@ -292,7 +292,6 @@ class ClientRecord(object):
     """The server's representation of a client and its state"""
     def __init__(self, id, arg, principal, mech=None):
         self.config = ServerPerClientConfig()
-        self.opsconfig = OpsConfigClient()
         self.clientid = id
         self.mech = mech
         self.confirmed = False
@@ -672,12 +671,7 @@ class NFS4Server(rpc.Server):
 
     def check_opsconfig(self, env, opname):
         log_cfg.debug("FRED - in opsconfig")
-        if env.session is None:
-            log_cfg.debug("Using server")
-            config = self.opsconfig
-        else:
-            log_cfg.debug("Using client")
-            config = env.session.client.opsconfig
+        config = self.opsconfig
         # STUB - the API should change here.  instead of a single value,
         # use something like a stack
         value = getattr(config, opname)
