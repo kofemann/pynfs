@@ -1,9 +1,79 @@
 from nfs4_const import *
 import nfs4_ops as op
-from environment import check, fail
+from environment import check, fail, get_invalid_utf8strings
 from nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids, FancyNFS4Packer
+
+def _simple_ops(t, env):
+    """Produce a simple, valid ops sequence"""
+    owner = client_owner4(env.c1.verifier, env.testname(t))
+    protect = state_protect4_a(SP4_NONE)
+    return [op.exchange_id(owner, EXCHGID4_FLAG_USE_NON_PNFS, protect,
+                           [env.c1.impl_id])]
+
+def testZeroOps(t, env):
+    """COMPOUND without operations should return NFS4_OK
+
+    FLAGS: compound all
+    CODE: COMP1
+    """
+    c = env.c1
+    res = c.compound([])
+    check(res)
+
+def testGoodTag(t, env):
+    """COMPOUND with tag
+
+    FLAGS: compound all
+    CODE: COMP2
+    """
+    c = env.c1
+    tag = 'tag test'
+    res = c.compound(_simple_ops(t, env), tag=tag)
+    check(res)
+    if res.tag != tag:
+        t.fail("Returned tag '%s' does not equal sent tag '%s'" %
+               (res.tag, tag))
+
+def testBadTags(t, env):
+    """COMPOUND with invalid utf8 tags
+
+    FLAGS: compound utf8 all
+    CODE: COMP3
+    """
+    c = env.c1
+    for tag in get_invalid_utf8strings():
+        res = c.compound([], tag=tag)
+        check(res, NFS4ERR_INVAL, "Compound with invalid utf8 tag %s" %
+              repr(tag))
+
+def testInvalidMinor(t, env):
+    """COMPOUND with invalid minor version returns NFS4ERR_MINOR_VERS_MISMATCH
+
+    FLAGS: compound all
+    CODE: COMP4a
+    """
+    c = env.c1
+    res = c.compound(_simple_ops(t, env), version=50)
+    check(res, NFS4ERR_MINOR_VERS_MISMATCH,
+          "COMPOUND with invalid minor version")
+    if res.resarray:
+        t.fail("Nonempty result array after NFS4ERR_MINOR_VERS_MISMATCH")
+
+def testInvalidMinor2(t, env):
+    """COMPOUND with invalid minor version returns NFS4ERR_MINOR_VERS_MISMATCH
+
+    even if using illegal opcode
+
+    FLAGS: compound all
+    CODE: COMP4b
+    """
+    c = env.c1
+    res = c.compound([op.illegal()], version=50)
+    check(res, NFS4ERR_MINOR_VERS_MISMATCH)
+    if res.resarray:
+        t.fail("Nonempty result array after NFS4ERR_MINOR_VERS_MISMATCH")
 
 def testUndefined(t, env):
     """Send an Illegal op code
@@ -30,7 +100,7 @@ def testUndefined(t, env):
     This test conforms with section 15.1.3.4  and section 16.2.3, line 21546.
 
     FLAGS: compound all
-    CODE: COMP1
+    CODE: COMP5
     """
     c = env.c1
     class CustomPacker(FancyNFS4Packer):
