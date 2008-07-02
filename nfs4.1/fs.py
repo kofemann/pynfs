@@ -762,7 +762,7 @@ class ConfigObj(FSObject):
             # This is ops/serverwide dir
             entries = {}
             for i, attr in enumerate(self.fs.server.opsconfig.attrs):
-                entries[attr.name] = 6 | obj_mask(i)
+                entries[attr.name] = 4 | obj_mask(i)
         else:
             raise RuntimeError("Called readdir with id=%i" % id)
         return entries
