@@ -1,4 +1,5 @@
 import os
+from environment import fail
 
 def testReboot(t, env):
     """Test reboot
