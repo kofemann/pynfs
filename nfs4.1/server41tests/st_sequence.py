@@ -1,6 +1,6 @@
 from st_create_session import create_session
 from nfs4_const import *
-from environment import check, fail, bad_sessionid
+from environment import check, fail, bad_sessionid, create_file
 from nfs4_type import channel_attrs4
 import nfs4_ops as op
 import nfs4lib
@@ -192,6 +192,26 @@ def testReplayCache001(t, env):
     res1 = sess1.compound([op.putrootfh()])
     check(res1)
     res2 = sess1.compound([op.putrootfh()], seq_delta=0)
+    check(res2)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
+
+def testReplayCache002(t, env):
+    """Send two successful non-idempotent compounds with same seqid
+
+    FLAGS: sequence all
+    CODE: SEQ9b
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+    res = create_file(sess1, "%s_1" % env.testname(t))
+    check(res)
+    ops = env.home + [op.savefh(),\
+          op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
+    res1 = sess1.compound(ops)
+    check(res1)
+    res2 = sess1.compound(ops, seq_delta=0)
     check(res2)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
