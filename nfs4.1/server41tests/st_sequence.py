@@ -3,6 +3,7 @@ from nfs4_const import *
 from environment import check, fail, bad_sessionid
 from nfs4_type import channel_attrs4
 import nfs4_ops as op
+import nfs4lib
 
 def testSupported(t, env):
     """Do a simple SEQUENCE
@@ -180,6 +181,21 @@ def testBadSlot(t, env):
     res = env.c1.compound([op.sequence(sess1.sessionid, 1, 8, 8, True)])
     check(res, NFS4ERR_BADSLOT)
 
+def testReplayCache001(t, env):
+    """Send two successful idempotent compounds with same seqid
+
+    FLAGS: sequence all
+    CODE: SEQ9a
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+    res1 = sess1.compound([op.putrootfh()])
+    check(res1)
+    res2 = sess1.compound([op.putrootfh()], seq_delta=0)
+    check(res2)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
 
 # XXX Need to test replay cache
 # successful/unsuccessful idem/non-idem/non-supp
