@@ -35,6 +35,50 @@ def testReboot(t, env):
     if  read != data:
         fail("'cat foo' = %r, expected %r" % (read, data))
     
+def testReboot2(t, env):
+    """Test v4.1 reboot with no state operation
+
+    FLAGS: reboot all
+    CODE: REBOOT2
+    """
+    """
+    cd $HOME
+    mkdir testdir
+    cd testdir
+    mkdir datadir - so that listdir(testdir) only has datadir
+    echo "1" > $ACTIONS/reboot
+    cd $ROOT  - kick off session recovery for root
+    cd $HOME  - kick off session recovery for home
+    cd testdir
+    listdir(testdir)
+    """
+    # cd $HOME
+    os.chdir(env.home)
+    # make a directory to hold the single datadir directory
+    testdir = env.testname(t)
+    os.mkdir(testdir)
+    # cd testsdir
+    os.chdir(testdir)
+    # make a directory
+    datadir = "testit"
+    os.mkdir(datadir)
+    # echo "test" > foo
+    # echo "1" > $ACTIONS/reboot
+    env.reboot_server()
+    # cd $ROOT
+    os.chdir(env.root)
+    # cd $HOME
+    os.chdir(env.home)
+    # read the directory
+    read = os.listdir(testdir)
+    # cleanup
+    os.chdir(testdir)
+    os.rmdir(datadir)
+    os.chdir(env.home)
+    os.rmdir(testdir)
+    if  read[0] != datadir:
+        fail("'listdir foo' = %r, expected %r" % (read, data))
+
 def testDelegReturn(t, env):
     """Test response to server returning error on DELEGRETURN
 
