@@ -758,6 +758,7 @@ class NFS4Server(rpc.Server):
         """
         See draft22 2.10.4
         """
+        self.check_opsconfig(env, "sequence")
         if env.index != 0:
             return encode_status(NFS4ERR_SEQUENCE_POS)
         session = self.sessions.get(arg.sa_sessionid, None)

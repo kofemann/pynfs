@@ -96,3 +96,34 @@ def testOpenZeroes(t, env):
         if op.owner.clientid != 0:
             fail("clientid != 0")
         
+def testSessionReset(t, env):
+    """Test response to server returning NFS4ERR_BADSESSION error on SEQUENCE in OPEN compound
+
+    FLAGS: sequence all
+    CODE: SESSIONRESET1
+    """
+    """
+    cd $HOME
+    echo "test" >foo
+    echo "NFS4ERR_BADSESSION" > $CONFIG/ops/sequence
+    cd $ROOT
+    cd $HOME
+    cat foo
+    """
+    # cd $HOME
+    os.chdir(env.home)
+    # echo "test" > foo
+    fd = open(env.testname(t), "w")
+    data = "test\n"
+    fd.write(data)
+    fd.close()
+    # Set sequence to return error
+    env.set_error("sequence", "NFS4ERR_BADSESSION")
+    # cat foo - this compound gets the NFS4ERR_BADSESSION
+    fd = open(env.testname(t), "r")
+    read = fd.read()
+    fd.close()
+    # cd $ROOT - test session recovery for root export
+    os.chdir(env.root)
+    if  read != data:
+        fail("'cat foo' = %r, expected %r" % (read, data))
