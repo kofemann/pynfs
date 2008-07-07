@@ -127,3 +127,22 @@ def testSessionReset(t, env):
     os.chdir(env.root)
     if  read != data:
         fail("'cat foo' = %r, expected %r" % (read, data))
+
+def testSessionReset2(t, env):
+    """Test response to server returning NFS4ERR_BADSESSION error on solo SEQUENCE for lease renewal
+
+    FLAGS: sequence all
+    CODE: SESSIONRESET2
+    """
+    """
+    cd $HOME
+    echo "NFS4ERR_BADSESSION" > $CONFIG/ops/sequence and
+    wait the server leasetime so that client renews lease
+    cd $ROOT
+    """
+    # cd $HOME
+    os.chdir(env.home)
+    # Set sequence to return error and wait lease time
+    env.set_error_wait_lease("sequence", "NFS4ERR_BADSESSION")
+    # cd $ROOT check session is reset...
+    os.chdir(env.root)

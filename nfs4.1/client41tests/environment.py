@@ -131,6 +131,20 @@ class Environment(testmod.Environment):
         fd = open(path, "w")
         fd.write(str(code))
         fd.close()
+
+    def set_error_wait_lease(self, opname, code):
+        path = os.path.join(self.root, "config", "serverwide", "lease_time")
+        fd = open(path, "r")
+        lease = fd.readlines()
+        fd.close()
+        time.sleep(1)
+        path = os.path.join(self.root, "config", "ops", opname)
+        fd = open(path, "w")
+        fd.write(str(code))
+        print "wait for leasetime: ", lease[1], "seconds"
+        fd.close()
+        time.sleep(int(lease[1]))
+
         
     def init(self):
         """Run once before any test is run"""
