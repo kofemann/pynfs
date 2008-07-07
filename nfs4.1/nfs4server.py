@@ -1607,10 +1607,10 @@ class NFS4Server(rpc.Server):
         # BUG fs locking
         old_change_src = env.sfh.fattr4_change
         old_change_dst = env.cfh.fattr4_change
-        src = env.sfh.lookup(arg.oldname, env.session.client, env.principal)
+        src = env.sfh.lookup(arg.oldname, env.session.client, env.principal, follow_mount=False)
         if src is None:
             return encode_status(NFS4ERR_NOENT)
-        dst = env.cfh.lookup(arg.newname, env.session.client, env.principal)
+        dst = env.cfh.lookup(arg.newname, env.session.client, env.principal, follow_mount=False)
         if dst is not None:
             if dst.fattr4_fileid == src.fattr4_fileid:
                 # They are the same file, do nothing

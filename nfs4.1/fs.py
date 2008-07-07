@@ -378,7 +378,7 @@ class FSObject(object):
         id = self.entries.get(name, None)
         return id is not None
 
-    def lookup(self, name, client, principal):
+    def lookup(self, name, client, principal, follow_mount=True):
         """Returns object associated with name in the dir, following mounts."""
         log_o.log(5, "FSObject.lookup(%r, %r)" % (name, principal))
         # We don't do utf8 checks here, since are fs variations
@@ -390,9 +390,10 @@ class FSObject(object):
         if id is None:
             return None
         obj = self.fs.find(id)
-        while obj.covered_by is not None:
-            # Directory is hidden by a mount
-            obj = obj.covered_by
+        if follow_mount:
+            while obj.covered_by is not None:
+                # Directory is hidden by a mount
+                obj = obj.covered_by
         return obj
 
     def lookup_parent(self, client, principal):
