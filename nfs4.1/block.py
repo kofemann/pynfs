@@ -4,6 +4,7 @@ from pnfs_block_pack import PNFS_BLOCKUnpacker as Unpacker
 from pnfs_block_type import *
 from pnfs_block_const import *
 
+import fs_base
 from threading import Lock
 import struct
 
@@ -28,84 +29,40 @@ def getid(d):
     id_lock.release()
     return out
 
-class FileVolume(object):
+class BlockVolume(fs_base.LayoutFile):
+    """Deals with disk topology information"""
+    class FakeFs(object):
+        def _find_extent(self, pos, inode):
+            # inode here is the topology root block.Volume
+            vol, v_pos, limit = inode.extent(pos, 1 << 64)
+            return fs_base.Extent(fs_base.VALID, v_pos, pos, limit, vol._fd)
+
     def __init__(self, volume):
-        self._vol = volume
-        self._pos = 0
-        self._end = volume._size
-        self._open = []
+        self._component_list = [vol for vol in volume._dump()
+                                if type(vol) == Simple]
+        self._openlist = []
         self.address_body = volume.get_addr()
+        super(BlockVolume, self).__init__(volume, self.FakeFs(), volume._size)
 
-    def tell(self):
-        return self._pos
-
-    def __enter__(self, mode="rb+"):
+    def open(self, mode="rb+"):
         # STUB - need care with mode, for example--append would not work as is
-        list = [vol for vol in self._vol._dump() if type(vol) == Simple]
-        for vol in list:
+        for vol in self._component_list:
             # STUB - rewrite in terms of context managers
             if vol.backing_dev is None:
                 raise IOError("No backing device for Simple Volume %i" % vol.id)
             vol._fd = open(vol.backing_dev, mode)
-            self._open.append(vol._fd)
-        return self
-
-    def __exit__(self, t, v, tb):
-        # XXX Careful here - what if errors on a close?
-        for fd in reversed(self._open):
-            fd.close()
-
-    def open(self, mode="rb+"):
-        # STUB - need care with mode, for example--append would not work as is
-        list = [vol for vol in self._vol._dump() if type(vol) == Simple]
-        for vol in list:
-            # STUB - rewrite in terms of context managers
-            vol._fd = open(vol.backing_dev, mode)
+            self._openlist.append(vol._fd)
         return self
 
     def close(self):
-        list = [vol for vol in self._vol._dump() if type(vol) == Simple]
-        for vol in list:
-            # STUB - rewrite in terms of context managers
-            vol._fd.close()
+        # XXX Careful here - what if errors on a close, or previously on open?
+        for fd in reversed(self._openlist):
+            fd.close()
 
-    def seek(self, offset, whence=0):
-        """Set _pos."""
-        # Find new pos
-        if whence == 0: # From file start
-            newpos = offset
-        elif whence == 1: # Relative to pos
-            newpos = self._pos + offset
-        elif whence == 2: # Relative to end
-            newpos = self._end + offset
-        # Check bounds
-        if 0 <= newpos < self._end:
-            self._pos = newpos
-        else:
-            raise IOError("Pos out of bounds")
+    __enter__ = open
 
-    def write(self, str):
-        while str:
-            vol, pos, limit = self._vol.extent(self._pos, self._end - self._pos)
-            vol._fd.seek(pos)
-            segment = str[:limit]
-            vol._fd.write(segment)
-            self._pos += len(segment)
-            str = str[limit:]
-
-    def read(self, count=None):
-        out = []
-        bytes_to_read = self._end - self._pos
-        if count is not None and count >= 0:
-            bytes_to_read = min(bytes_to_read, count)
-        while bytes_to_read:
-            vol, pos, limit = self._vol.extent(self._pos, bytes_to_read)
-            vol._fd.seek(pos)
-            segment = vol._fd.read(limit)
-            out.append(segment)
-            self._pos += len(segment)
-            bytes_to_read -= len(segment)
-        return "".join(out)
+    def __exit__(self, t, v, tb):
+        self.close()
 
 class Volume(object):
     """Superclass used to represent topology components."""

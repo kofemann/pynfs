@@ -16,7 +16,7 @@ def mount_stuff(server, opts):
         server.mount(E, path="/block")
 
 def _create_simple_block_dev():
-    from block import Simple, Slice, Concat, Stripe, FileVolume
+    from block import Simple, Slice, Concat, Stripe, BlockVolume
     v1 = Simple([(-512, "Fred's python test volume 1, comp 1"),
                  (-1024, "Can we handle a second sig component?")],
                 backing_dev = "/dev/ram4")
@@ -25,4 +25,4 @@ def _create_simple_block_dev():
     s2 = Slice(v1, length, length)
     s3 = Slice(v1, 2*length, length)
     c1 = Concat([s3, s1])
-    return FileVolume(c1)
+    return BlockVolume(c1)

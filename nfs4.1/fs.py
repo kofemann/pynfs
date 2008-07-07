@@ -1222,7 +1222,7 @@ class BlockLayoutFS(FileSystem):
         self.fattr4_maxread = 4096
         self.fattr4_supported_attrs |= 1 << FATTR4_MAXWRITE
         self.fattr4_supported_attrs |= 1 << FATTR4_MAXREAD
-        self.volume = backing_device # of type FileVolume for now
+        self.volume = backing_device # of type BlockVolume for now
         self._make_files(backing_device)
         self._allocated = 19
 
