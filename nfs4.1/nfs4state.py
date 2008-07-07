@@ -348,21 +348,19 @@ class ShareState(FileStateTyped):
 
     def add_share(self, client, owner, access, deny):
         """An open wants to add its share state to the file."""
-        self.test_share(access, deny)
+        # Is this test_share necessary?  It's duplicated in the caller of add_share
+        self.file.state.test_share(access, deny)
         entry = self.grab_entry((client, owner), ShareEntry)
         entry.add_share(access, deny)
         self.cache_valid = False
         return entry
 
-    def test_share(self, access, deny=OPEN4_SHARE_DENY_NONE,
-                   error=NFS4ERR_SHARE_DENIED):
+    def _test_share(self, access, deny, error, anon):
         """Check (access, deny) against all current shares.
 
         Raises error if there is a conflict.
         """
         # OK to use full access/deny
-        if access & 3 == 0:
-            raise NFS4Error(NFS4ERR_INVAL)
         if self.cache_valid:
             current_access, current_deny = self.cached_access, self.cached_deny
         else:
@@ -373,6 +371,7 @@ class ShareState(FileStateTyped):
                 current_deny |= entry.share_deny
             self.cached_access, self.cached_deny = current_access, current_deny
             self.cache_valid = True
+        current_access |= anon
         if access & current_deny or deny & current_access:
             raise NFS4Error(error)
 
@@ -451,7 +450,6 @@ class FileState(object):
         # Pass through the following attributes
         self.anon0 = self.types[ANON][(0,)]
         self.anon1 = self.types[ANON][(1,)]
-        self.test_share = self.types[SHARE].test_share
         self.add_share = self.types[SHARE].add_share
         self.recall_conflicting_delegations = \
             self.types[DELEG].recall_conflicting_delegations
@@ -464,6 +462,21 @@ class FileState(object):
 
     def __exit__(self, t, v, tb):
         self.lock.release()
+
+    def test_share(self, access, deny=OPEN4_SHARE_DENY_NONE,
+                   error=NFS4ERR_SHARE_DENIED, client=None):
+        """Check (access, deny) against all current shares.
+
+        Raises error if there is a conflict.
+        """
+        if access & 3 == 0:
+            raise NFS4Error(NFS4ERR_INVAL)
+        anon = 0
+        if self.anon0.read_count + self.anon1.read_count:
+            anon |= OPEN4_SHARE_ACCESS_READ
+        if self.anon0.write_count + self.anon1.write_count:
+            anon |= OPEN4_SHARE_ACCESS_WRITE
+        self.types[SHARE]._test_share(access, deny, error, anon)
 
     def close(self, key): # key = (client, open_owner)
         # client.config.allow_close_with_locks
