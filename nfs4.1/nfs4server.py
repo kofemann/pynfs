@@ -1300,7 +1300,7 @@ class NFS4Server(rpc.Server):
 
     def open_claim_fh(self, arg, env):
         """Simulated switch function from op_open that handles CLAIM_FH"""
-        if not env.cfh.isfile():
+        if not env.cfh.isfile:
             raise NFS4Error(NFS4ERR_INVAL, tag="expected cfh to be a file")
         existing = env.cfh
         # Build a somewhat pointless cinfo
