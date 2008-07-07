@@ -21,7 +21,7 @@ SHARE, BYTE, DELEG, LAYOUT, ANON = range(5) # State types
 D_NORMAL, D_CB_INIT, D_CB_SENT, D_CB_RECEIVED, D_INVALID = range(5) # delegation states
 
 @contextmanager
-def find_state(env, stateid, allow_0=True):
+def find_state(env, stateid, allow_0=True, allow_bypass=False):
     """Find the matching StateTableEntry, and manage its lock."""
     # First we convert special stateids, see draft22 8.2.3
     anon = False
@@ -40,7 +40,7 @@ def find_state(env, stateid, allow_0=True):
     elif stateid.other == "\xff" * 12:
         if allow_0 and stateid.seqid == 0xffffffff:
             stateid = nfs4lib.state00 # Needed to pass seqid checks below
-            state = env.cfh.state.anon1
+            state = (env.cfh.state.anon1 if allow_bypass else env.cfh.state.anon0)
             anon = True
         else:
             raise NFS4Error(NFS4ERR_BAD_STATEID)
@@ -472,9 +472,9 @@ class FileState(object):
         if access & 3 == 0:
             raise NFS4Error(NFS4ERR_INVAL)
         anon = 0
-        if self.anon0.read_count + self.anon1.read_count:
+        if self.anon0.read_count:
             anon |= OPEN4_SHARE_ACCESS_READ
-        if self.anon0.write_count + self.anon1.write_count:
+        if self.anon0.write_count:
             anon |= OPEN4_SHARE_ACCESS_WRITE
         self.types[SHARE]._test_share(access, deny, error, anon)
 
@@ -571,6 +571,13 @@ class StateTableEntry(object):
 
 
 class AnonEntry(StateTableEntry):
+    """Handle special anonymous stateids
+
+    Note that there are only two instances of this class per file, for key 0
+    and 1.  The all zero special stateid always maps to the key==0 object.
+    However, the all ones special stateid may map to either, depending on how
+    it is used.
+    """
     # STUB - I suspect this should look more like ShareEntry
     type = ANON
     def __init__(self, other, state, key):
@@ -583,7 +590,8 @@ class AnonEntry(StateTableEntry):
         # Error due to draft23 9.1.2: "when the OPEN denies READ or WRITE
         # operations, that denial results in such operations being rejected
         # with error NFS4ERR_LOCKED"
-        self.file.state.test_share(access, error=NFS4ERR_LOCKED)
+        if self.key != (1, ):
+            self.file.state.test_share(access, error=NFS4ERR_LOCKED)
 
 class ShareEntry(StateTableEntry):
     type = SHARE

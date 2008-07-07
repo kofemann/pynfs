@@ -1203,15 +1203,9 @@ class NFS4Server(rpc.Server):
         check_session(env)
         check_cfh(env)
         env.cfh.verify_file()
-        if nfs4lib.test_equal(nfs4lib.state11, arg.stateid, "stateid4") and \
-                env.session.client.config.allow_stateid1:
-            bypass = True
-        else:
-            bypass = False
-
-        with find_state(env, arg.stateid) as state:
-            if not bypass:
-                state.has_permission(OPEN4_SHARE_ACCESS_READ)
+        with find_state(env, arg.stateid, allow_bypass= \
+                    env.session.client.config.allow_stateid1) as state:
+            state.has_permission(OPEN4_SHARE_ACCESS_READ)
             state.mark_reading()
         try:
             # BUG - need to fix fs locking
