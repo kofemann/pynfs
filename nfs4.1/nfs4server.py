@@ -1870,11 +1870,16 @@ class NFS4Server(rpc.Server):
     def fh2obj(self, fh):
         """Given a fh, find the appropriate FSObject"""
         log_41.log(5, "fh2obj(%r)" % fh)
-        major, minor, flag, id = struct.unpack("!QQbQ", fh)
-        log_41.log(5, "fh2obj - %i, %i, %i, %i = " % (major, minor, flag, id ))
-        fs = self.fsid2fs((major, minor))
-        log_41.log(5, "fh2obj - chooses fsid %r" % (fs.fsid,))
-        return fs.find(id)
+        try:
+            major, minor, flag, id = struct.unpack("!QQbQ", fh)
+            log_41.log(5, "fh2obj - %i, %i, %i, %i = " % \
+                            (major, minor, flag, id ))
+            fs = self.fsid2fs((major, minor))
+            log_41.log(5, "fh2obj - chooses fsid %r" % (fs.fsid,))
+            obj = fs.find(id)
+        except:
+            raise NFS4Error(NFS4ERR_BADHANDLE)
+        return obj
 
     def fsid2fs(self, fsid):
         return self._fsids[fsid]
