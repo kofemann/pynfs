@@ -54,7 +54,7 @@ class FileVolume(object):
         # XXX Careful here - what if errors on a close?
         for fd in reversed(self._open):
             fd.close()
-        
+
     def open(self, mode="rb+"):
         # STUB - need care with mode, for example--append would not work as is
         list = [vol for vol in self._vol._dump() if type(vol) == Simple]
@@ -106,7 +106,7 @@ class FileVolume(object):
             self._pos += len(segment)
             bytes_to_read -= len(segment)
         return "".join(out)
-            
+
 class Volume(object):
     """Superclass used to represent topology components."""
 
@@ -126,7 +126,7 @@ class Volume(object):
         p = Packer()
         p.pack_pnfs_block_deviceaddr4(addr)
         return p.get_buffer()
-        
+
     def _dump(self):
         """Recursively scan for all devices in tree.
 
@@ -150,7 +150,7 @@ class Volume(object):
         """Map a byte offset to the corresponding Simple volume and byte offset.
         """
         return NotImplementedError
-    
+
     def extent(self, i, limit):
         """Same as resolve, with addition of how far mapping extends."""
         return NotImplementedError
@@ -164,7 +164,7 @@ class Simple(Volume):
             # Make it easy to send a single component
             signature = [signature]
         self.sig = [pnfs_block_sig_component4(i, s) for i, s in signature]
-        self._size = size # in blocks
+        self._size = size # in bytes
         self.backing_dev = backing_dev
         if backing_dev is None:
             if size is None:
@@ -180,8 +180,6 @@ class Simple(Volume):
             elif true_size < size:
                 raise ValueError("backing dev size %r < %r" % (true_size, size))
             self._write_sig(fd)
-#         self._used = 0 # bitmask of blocks assigned to Slices
-#         self._lock = Lock()
 
     def _write_sig(self, fd):
         """Write out disk signature to open fd."""
@@ -194,32 +192,7 @@ class Simple(Volume):
 
     def __repr__(self):
         return "Simple %i" % self.id
-    
-#     def get_slice(self, start, length):
-#         def set_bits(n):
-#             """Set n lower-order bits"""
-#             # XXX There is certainly a better way to do this
-#             out = 0
-#             while n:
-#                 out <<= 1
-#                 out |= 1
-#                 n -= 1
-#             return out
-#         mask = set_bits(length)
-#         mask <<= start
-#         self._lock.acquire()
-#         try:
-#             if mask & self._used:
-#                 raise RuntimeError("Already allocated")
-#             self._used |= mask
-#         finally:
-#             self._lock.release()
-#         return Slice(self, start, length)
 
-#     def put_slice(self, slice):
-#         # STUB - should deallocate slice
-#         pass
-    
     def _dump(self):
         """Since this is always a leaf node of tree, end recursive scan."""
         return (self, )
@@ -293,7 +266,7 @@ class Concat(Volume):
             sum = next
         # Shouldn't get here
         raise RuntimeError
-    
+
     def extent(self, i, limit):
         sum = 0
         for v in self.volumes:
@@ -317,7 +290,7 @@ class Stripe(Volume):
         info = pnfs_block_stripe_volume_info4(self.stripe_unit,
                                               [mapping[v] for v in self.volumes])
         return pnfs_block_volume4(PNFS_BLOCK_VOLUME_STRIPE, bv_stripe_info=info)
-    
+
     def __repr__(self):
         return "Slice %i (size=%i) of %r" % (self.id, self.stripe_unit,
                                              [v.id for v in self.volumes])
@@ -333,7 +306,7 @@ class Stripe(Volume):
         """
         def split(x, mod):
             return (x // mod, x % mod)
-        
+
         if i < 0 or i >= self._size:
             raise ValueError("Asked for %i of %i" % (i, self._size))
         global_stripe_number, stripe_pos = split(i, self.stripe_unit)
@@ -341,11 +314,11 @@ class Stripe(Volume):
                                                  len(self.volumes))
         disk_pos = local_stripe_number * self.stripe_unit + stripe_pos
         return self.volumes[disk_number].resolve(disk_pos)
-        
+
     def extent(self, i, limit):
         def split(x, mod):
             return (x // mod, x % mod)
-        
+
         global_stripe_number, stripe_pos = split(i, self.stripe_unit)
         local_stripe_number, disk_number = split(global_stripe_number,
                                                  len(self.volumes))
@@ -360,42 +333,6 @@ def remove_dups(l):
         if i not in out:
             out.append(i)
     return out
-
-# def build_simple(backing_dev):
-#     sig = "Fred's python test volume 1"
-#     fd = open(backing_dev, "rb+")
-#     # Determine device size
-#     fd.seek(0, 2)
-#     bytes = fd.tell()
-#     # Write disk signature
-#     fd.seek(-512, 2)
-#     fd.write(sig)
-#     fd.close()
-#     # build topology
-#     v1 = Simple(bytes/512, sig)
-#     final = Concat([v1])
-#     return final
-
-# def build():
-#     v1 = Simple(1024, "pyvol1")
-#     v2 = Simple(2048, "pyvol2")
-#     v3 = Simple(4096, "pyvol3")
-#     s1_1 = v1.get_slice(0, 1024) #
-#     s2_1 = v2.get_slice(0, 512)   #
-#     s2_2 = v2.get_slice(512, 512) # c1
-#     s2_3 = v2.get_slice(1024, 512) #
-#     s2_4 = v2.get_slice(1536, 512) # c1
-#     s3_1 = v3.get_slice(0, 1024)    #
-#     s3_2 = v3.get_slice(1024, 1024)
-#     s3_3 = v3.get_slice(2048, 1024) #
-#     s3_4 = v3.get_slice(3072, 1024)
-    
-#     s4_1 = Concat([s2_2, s2_4]) #
-#     s4_2 = Stripe(64, [s2_1, s2_3])
-
-#     stripe1 = Stripe(256, [s1_1, s3_1, s4_1, s3_3])
-#     final = Concat([stripe1, s3_2, s4_2, s3_4])
-#     return final
 
 if __name__=="__main__":
     pass
