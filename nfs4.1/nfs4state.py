@@ -507,6 +507,9 @@ class StateTableEntry(object):
 #         if type == BYTE:
 #             self.locklist = []
 
+    def has_permission(self, access):
+        raise NotImplementedError
+
     def mark_reading(self):
         with self._private_lock:
             self.read_count += 1
@@ -560,10 +563,14 @@ class AnonEntry(StateTableEntry):
     def __init__(self, other, state, key):
         super(AnonEntry, self).__init__(other, state, key)
 
-    def test_share(self, access, deny=OPEN4_SHARE_DENY_NONE,
-                   error=NFS4ERR_SHARE_DENIED):
-        # STUB to prevent server crash while real solutionn is implemented
-        pass
+    def has_permission(self, access):
+        # Note for an anon entry, we are not checking if the state grants
+        # permission, but that it does not conflict with anybody else
+
+        # Error due to draft23 9.1.2: "when the OPEN denies READ or WRITE
+        # operations, that denial results in such operations being rejected
+        # with error NFS4ERR_LOCKED"
+        self.file.state.test_share(access, error=NFS4ERR_LOCKED)
 
 class ShareEntry(StateTableEntry):
     type = SHARE
@@ -578,7 +585,13 @@ class ShareEntry(StateTableEntry):
         # for some subset of the OPENs in effect for the current open-owner
         # on the current file.
         self.access_hist = self.deny_hist = 0
-        self.test_share = state.test_share
+
+    def has_permission(self, access):
+        """Verify access against current share"""
+        if (not self.share_access) or \
+                (access == OPEN4_SHARE_ACCESS_WRITE and
+                 not (self.share_access & OPEN4_SHARE_ACCESS_WRITE)):
+            raise NFS4Error(NFS4ERR_OPENMODE)
 
     def add_share(self, access, deny):
         self.share_access |= (access & 3)
@@ -643,12 +656,17 @@ class DelegEntry(StateTableEntry):
         self.deleg_type = OPEN_DELEGATE_READ
         self.status = D_NORMAL
 
-    def test_share(self, *args, **kwargs):
-        return self.open_state.test_share(*args, **kwargs)
-
     def delegreturn(self):
         self.status = D_INVALID
         self.delete()
+
+    def has_permission(self, access):
+        # From draft23 9.1.2:
+        # "For delegation stateids the access mode is based on the type of
+        #  delegation"
+        if access == OPEN4_SHARE_ACCESS_WRITE and \
+                self.deleg_type = OPEN_DELEGATE_READ:
+            raise NFS4Error(NFS4ERR_OPENMODE) # Is this the correct error???
 
     def initiate_recall(self, dispatcher):
         """Handle CB_RECALL for this delegation.
@@ -703,12 +721,13 @@ class DelegEntry(StateTableEntry):
 class ByteEntry(StateTableEntry):
     type = BYTE
 
+    # From draft23 9.1.2: "the appropriate mode is the access mode for the
+    # open stateid associated with the lock"
+    has_permission = property(lambda s: s.open_state.has_permission)
+
     def __init__(self, other, state, key):
         super(ByteEntry, self).__init__(other, state, key)
         self.locks = [] # The list of ByteLocks associated with key
-
-    def test_share(self, *args, **kwargs):
-        return self.open_state.test_share(*args, **kwargs)
 
     def add_lock(self, type, start, end):
         """Try to add a lock for the lockowner implicit in self.key."""

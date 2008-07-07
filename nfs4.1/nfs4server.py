@@ -1188,7 +1188,7 @@ class NFS4Server(rpc.Server):
         if arg.offset + len(arg.data) > 0x3ffffffe: # STUB - arbitrary value
             return encode_status(NFS4ERR_INVAL)
         with find_state(env, arg.stateid) as state:
-            state.test_share(OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE)
+            state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
             state.mark_writing()
         try:
             count = env.cfh.write(arg.data, arg.offset, env.principal)
@@ -1211,7 +1211,7 @@ class NFS4Server(rpc.Server):
 
         with find_state(env, arg.stateid) as state:
             if not bypass:
-                state.test_share(OPEN4_SHARE_ACCESS_READ, OPEN4_SHARE_DENY_NONE)
+                state.has_permission(OPEN4_SHARE_ACCESS_READ)
             state.mark_reading()
         try:
             # BUG - need to fix fs locking
@@ -1472,8 +1472,7 @@ class NFS4Server(rpc.Server):
                 bitmap = env.cfh.set_attrs(attrs, env.principal)
             else:
                 with find_state(env, arg.stateid) as state:
-                    state.test_share(OPEN4_SHARE_ACCESS_WRITE,
-                                     error=NFS4ERR_OPENMODE)
+                    state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
                     # BUG fs locking
                     state.mark_writing()
                 try:
