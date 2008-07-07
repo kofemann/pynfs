@@ -250,5 +250,19 @@ def testReplayCache004(t, env):
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
-# XXX Need to test replay cache
-# successful/unsuccessful idem/non-idem/non-supp
+def testReplayCache005(t, env):
+    """Send two unsupported compounds with same seqid
+
+    FLAGS: sequence all
+    CODE: SEQ9e
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+    res1 = sess1.compound([op.illegal()])
+    check(res1, NFS4ERR_OP_ILLEGAL)
+    res2 = sess1.compound([op.illegal()], seq_delta=0)
+    check(res2, NFS4ERR_OP_ILLEGAL)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
+
