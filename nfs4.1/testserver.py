@@ -183,6 +183,8 @@ def scan_options(p):
                  help="Use SERVER:/OBJPATH as regular file")
     g.add_option("--usedir", default=None, metavar="OBJPATH",
                  help="Use SERVER:/OBJPATH as directory")
+    g.add_option("--usespecial", default=None, metavar="OBJPATH",
+                 help="Use SERVER:/OBJPATH as directory")
     g.add_option("--userofs", default=None, metavar="DIRPATH",
                  help="Use SERVER:/DIRPATH for ROFS tests")
     g.add_option("--usefh", default=None, metavar="FH",
