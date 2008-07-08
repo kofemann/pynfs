@@ -686,7 +686,7 @@ class DelegEntry(StateTableEntry):
         # "For delegation stateids the access mode is based on the type of
         #  delegation"
         if access == OPEN4_SHARE_ACCESS_WRITE and \
-                self.deleg_type = OPEN_DELEGATE_READ:
+                self.deleg_type == OPEN_DELEGATE_READ:
             raise NFS4Error(NFS4ERR_OPENMODE) # Is this the correct error???
 
     def initiate_recall(self, dispatcher):
