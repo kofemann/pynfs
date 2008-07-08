@@ -524,3 +524,34 @@ def close_file(sess, fh, stateid, seqid=0):
     ops += [op.close(seqid, stateid)]
     res = sess.compound(ops)
     return res
+
+def maketree(sess, tree, root=None, owner=None):
+    if owner is None:
+        owner = tree[0]
+        if type(owner) is list:
+            owner = owner[0]
+    if root is None:
+        root = sess.c.homedir
+        tree = [tree]
+    for obj in tree:
+        if type(obj) is list:
+            res = create_obj(sess, root + [obj[0]])
+            check(res)
+            maketree(sess, obj[1:], root + [obj[0]], owner)
+        else:
+            create_confirm(sess, owner, root + [obj])
+
+def rename_obj(sess, oldpath, newpath):
+    # Set (sfh) to olddir
+    ops = use_obj(oldpath[:-1]) + [op.savefh()]
+    # Set (cfh) to newdir
+    ops += use_obj(newpath[:-1])
+    # Call rename
+    ops += [op.rename(oldpath[-1], newpath[-1])]
+    return sess.compound(ops)
+
+def link(sess, old, new):
+    ops = use_obj(old) + [op.savefh()]
+    ops += use_obj(new[:-1])
+    ops += [op.link(new[-1])]
+    return sess.compound(ops)

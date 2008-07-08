@@ -6,6 +6,7 @@ __all__ = ["st_exchange_id.py", # draft 21
            "st_verify.py",
            "st_getdevicelist.py",
            "st_lookupp.py",
+           "st_rename.py",
 ##            "st_lookup.py",
            ##################
 ##           "st_debug.py",
