@@ -10,6 +10,7 @@ __all__ = ["st_exchange_id.py", # draft 21
            "st_putfh.py",
 ##            "st_lookup.py",
            ##################
+           "st_block.py",
 ##           "st_debug.py",
 ##           "st_loop",
            ]
