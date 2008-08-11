@@ -108,3 +108,65 @@ def testStateid2(t, env):
                            layoutupdate4(LAYOUT4_BLOCK_VOLUME, p.get_buffer()))]
     res = sess.compound(ops)
     check(res)
+
+def testEmptyCommit(t, env):
+    """Check for proper handling of empty LAYOUTCOMMIT.
+
+    FLAGS: block
+    CODE: BLOCK3
+    """
+    c1 = env.c1.new_client(env.testname(t), flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = c1.create_session()
+    # Create the file
+    res = create_file(sess, env.testname(t))
+    check(res)
+    # Get layout 1
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+    print open_stateid
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
+                        0, 8192, 8192, open_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    # Get layout 2
+    lo_stateid1 = res.resarray[-1].logr_stateid
+    print lo_stateid1
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
+                        8192, 8192, 8192, lo_stateid1, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid2 = res.resarray[-1].logr_stateid
+    print lo_stateid2
+    # Parse opaque to get info for commit
+    # STUB not very general
+    layout = res.resarray[-1].logr_layout[-1]
+    p = BlockUnpacker(layout.loc_body)
+    opaque = p.unpack_pnfs_block_layout4()
+    p.done()
+    extent = opaque.blo_extents[-1]
+    extent.bex_state = PNFS_BLOCK_READWRITE_DATA
+    p = BlockPacker()
+    p.pack_pnfs_block_layoutupdate4(pnfs_block_layoutupdate4([extent]))
+    time = newtime4(True, get_nfstime())
+    ops = [op.putfh(fh),
+           op.layoutcommit(extent.bex_file_offset,
+                           extent.bex_length,
+                           False, lo_stateid2,
+                           newoffset4(True, 2 * 8192 - 1),
+                           time,
+                           layoutupdate4(LAYOUT4_BLOCK_VOLUME, p.get_buffer()))]
+    res = sess.compound(ops)
+    check(res)
+    # Send another LAYOUTCOMMIT, with an empty opaque
+    time = newtime4(True, get_nfstime())
+    ops = [op.putfh(fh),
+           op.layoutcommit(extent.bex_file_offset,
+                           extent.bex_length,
+                           False, lo_stateid2,
+                           newoffset4(True, 2 * 8192 - 1),
+                           time,
+                           layoutupdate4(LAYOUT4_BLOCK_VOLUME, ""))]
+    res = sess.compound(ops)
+    check(res)
