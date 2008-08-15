@@ -3,19 +3,17 @@ from __future__ import with_statement
 import use_local # HACK so don't have to rebuild constantly
 import nfs4lib
 from nfs4lib import inc_u32, NFS4Error, NFS4Replay
-import nfs4_type, nfs4_const
 import rpc
 from nfs4_const import *
 from nfs4_type import *
 from sctrl_pack import SCTRLPacker, SCTRLUnpacker
 import sctrl_type, sctrl_const
-import sys, traceback, threading
+import traceback, threading
 from locking import Lock, Counter
 import time
 import hmac
 import random
 import struct
-import block
 import collections
 import logging
 from nfs4state import find_state
