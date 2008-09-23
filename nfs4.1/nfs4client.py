@@ -319,7 +319,7 @@ class ClientRecord(object):
                                              protect_args)
     def create_session(self,
                        flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
-                       fore_attrs=None, back_attrs=None, sec=None):
+                       fore_attrs=None, back_attrs=None, sec=None, prog=None):
         chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
         if fore_attrs is None:
             fore_attrs = chan_attrs
@@ -327,10 +327,12 @@ class ClientRecord(object):
             back_attrs = chan_attrs
         if sec is None:
             sec= [callback_sec_parms4(0)]
+        if prog is None:
+            prog = self.c.prog
         res = self.c.compound([op.create_session(self.clientid, self.seqid,
                                                  flags,
                                                  fore_attrs, back_attrs,
-                                                 self.c.prog, sec)],
+                                                 prog, sec)],
                               self.cred)
         nfs4lib.check(res)
         return self._add_session(res.resarray[0])
