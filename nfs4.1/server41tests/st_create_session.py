@@ -4,6 +4,7 @@ from environment import check, fail
 from nfs4_type import *
 import random
 import nfs4lib
+import threading
 from rpc import RPCAcceptError, GARBAGE_ARGS
 
 def create_session(c, clientid, sequenceid, cred=None, flags=0):
@@ -260,3 +261,56 @@ def testManyClients(t, env):
         c = env.c1.new_client("%s_Client_%i" % (env.testname(t), i))
         sess = c.create_session()
         
+def testCallbackProgram(t, env):
+    """Check server can handle random transient program number
+
+    FLAGS: create_session all
+    CODE: CSESS20
+    """
+    cb_occurred = threading.Event()
+    transient = 0x40000004
+    def mycheck(msg):
+        print "Got call using prog=0x%x" % msg.prog
+        cb_occurred.prog = msg.prog
+        cb_occurred.set()
+    orig = env.c1._check_program
+    try:
+        env.c1._check_program = mycheck
+        c = env.c1.new_client(env.testname(t))
+        sess = c.create_session(prog=transient)
+        cb_occurred.wait(10)
+        if not cb_occurred.isSet():
+            fail("No CB_NULL sent")
+        if cb_occurred.prog != transient:
+            fail("Expected cb progam 0x%x, got 0x%x" %
+                 (transient, cb_occurred.prog))
+    finally:
+        env.c1._check_program = orig
+
+def testCallbackVersion(t, env):
+    """Check server sends callback program with version==4
+
+    This is mandated by draft25 18.36.3.
+
+    FLAGS: create_session all
+    CODE: CSESS21
+    """
+    cb_occurred = threading.Event()
+    transient = 0x40000000
+    orig = env.c1._check_program
+    def mycheck(msg):
+        print "Got call using version=%i" % msg.vers
+        cb_occurred.vers = msg.vers
+        cb_occurred.set()
+        orig(msg)
+    try:
+        env.c1._check_version = mycheck
+        c = env.c1.new_client(env.testname(t))
+        sess = c.create_session(prog=transient)
+        cb_occurred.wait(10)
+        if not cb_occurred.isSet():
+            fail("No CB_NULL sent")
+        if cb_occurred.vers != 4:
+            fail("Expected cb version 4, got %i" % cb_occurred.vers)
+    finally:
+        env.c1._check_version = orig
