@@ -27,6 +27,7 @@ log_cb.setLevel(logging.DEBUG)
 SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
 class NFS4Client(rpc.Client):
     def __init__(self, host='localhost', port=2049, ctrl_proc=16):
+        # cb_version==4 per draft25 18.36.3
         rpc.Client.__init__(self, 100003, 4, cb_version = 4)
         self.minorversion = 1
         self.minor_versions = [1]
