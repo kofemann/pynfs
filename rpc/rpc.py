@@ -797,7 +797,7 @@ class Client(ConnectionHandler):
         self.timeout = timeout
         self.secureport = secureport
         self.rpcversion = 2
-        self.prog = 123 # Callback handling prog #
+        self.prog = 0x40000000 # Callback handling prog #
         self.versions=[cb_version] # List of supported versions of CB server
         self.security = {0: security.AuthNone(),
                          1: security.AuthSys(), #authsys_parms(3, "server",
