@@ -24,6 +24,12 @@ logging.basicConfig(level=logging.INFO,
 log_cb = logging.getLogger("nfs.client.cb")
 log_cb.setLevel(logging.DEBUG)
 
+def str_xor(a, b):
+    """xor two string which represent binary data"""
+    # Note assumes they are the same length
+    # XXX There has to be a library function somewhere that does this
+    return ''.join(map(lambda x:chr(ord(x[0])^ord(x[1])), zip(a, b)))
+
 SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
 class NFS4Client(rpc.Client):
     def __init__(self, host='localhost', port=2049, ctrl_proc=16):
