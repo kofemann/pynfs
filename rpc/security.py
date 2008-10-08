@@ -662,8 +662,8 @@ class AuthGss(AuthNone):
             # RFC 2203 Sect 5.3.3.3 para 4
             auth_error(RPCSEC_GSS_CTXPROBLEM)
         context.check_seqid(cred.seq_num)
-        return Credinfo(self, cred.handle, service=cred.service,
-                        gss_proc=cred.gss.proc, qop=0)
+        return CredInfo(self, cred.handle, service=cred.service,
+                        gss_proc=cred.gss_proc, qop=0)
 
     def handle_gss_proc_1(self, cred, data):
         """INIT"""
