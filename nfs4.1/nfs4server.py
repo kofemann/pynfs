@@ -792,8 +792,7 @@ class NFS4Server(rpc.Server):
         # STUB - figure out return flags
         pass
         # return
-        res = SEQUENCE4resok(session.sessionid, inc_u32(slot.seqid),
-                             arg.sa_slotid,
+        res = SEQUENCE4resok(session.sessionid, slot.seqid, arg.sa_slotid,
                              arg.sa_highest_slotid, channel.maxrequests, 0)
         return encode_status(NFS4_OK, res)
         
