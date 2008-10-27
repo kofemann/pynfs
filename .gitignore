@@ -1,0 +1,20 @@
+*.pyc
+*.pyo
+/build
+/out_last
+
+# Generated files
+/lib/nfs4/nfs4_ops.py
+*_const.py
+*_type.py
+*_pack.py
+*.so
+
+# emacs files
+*~
+\#*#
+
+# quilt files
+patches
+series
+.pc
