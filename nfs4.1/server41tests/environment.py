@@ -111,18 +111,23 @@ class Environment(testmod.Environment):
     def __init__(self, opts):
         self._lock = Lock()
         self.opts = opts
-        opts.home = opts.path + ['tmp']
-        self.cred1 = AuthSys().init_cred(uid=4321, gid=42, name="mystery")
-        self.cred2 = AuthSys().init_cred(uid=1111, gid=37, name="shampoo")
         self.c1 = nfs4client.NFS4Client(opts.server, opts.port)
-        if 0:
+        s1 = rpc.security.instance(opts.flavor)
+        if opts.flavor == rpc.AUTH_NONE:
+            self.cred1 = s1.init_cred()
+        elif opts.flavor == rpc.AUTH_SYS:
+            self.cred1 = s1.init_cred(uid=4321, gid=42, name="mystery")
+        elif opts.flavor == rpc.RPCSEC_GSS:
             call = self.c1.make_call_function(self.c1.c1, 0,
                                               self.c1.default_prog,
                                               self.c1.default_vers)
-            krb5_cred = AuthGss().init_cred(call, target="nfs@jupiter")
-            krb5_cred.service = 1 # 1=krb5, 2=krb5i, 3=krb5p
+            krb5_cred = AuthGss().init_cred(call, target="nfs@%s" % opts.server)
+            krb5_cred.service = opts.service
             self.cred1 = krb5_cred
         self.c1.set_cred(self.cred1)
+        self.cred2 = AuthSys().init_cred(uid=1111, gid=37, name="shampoo")
+
+        opts.home = opts.path + ['tmp']
         self.c1.homedir = opts.home
         # Put this after client creation, to ensure _last_verf bigger than
         # any natural client verifiers

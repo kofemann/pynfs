@@ -117,16 +117,16 @@ def scan_options(p):
     p.add_option("--nocleanup", action="store_true", default=False,
                  help="Skip final cleanup of test directory")
     p.add_option("--outfile", "--out", default=None, metavar="FILE",
-                 help="Store test results in FILE [None]")
+                 help="Store test results in FILE [%default]")
     p.add_option("--debug_fail", action="store_true", default=False,
                  help="Force some checks to fail")
 
-##     g = OptionGroup(p, "Security flavor options",
-##                     "These options choose or affect the security flavor used.")
-##     g.add_option("--security", default='sys',
-##                  help="Choose security flavor such as krb5i [sys]")
-##     p.add_option_group(g)
-    
+    g = OptionGroup(p, "Security flavor options",
+                    "These options choose or affect the security flavor used.")
+    g.add_option("--security", default='sys',
+                 help="Choose security flavor such as krb5i [%default]")
+    p.add_option_group(g)
+
     g = OptionGroup(p, "Test selection options",
                     "These options affect how flags are interpreted.")
     g.add_option("--force", action="store_true", default=False,
@@ -302,21 +302,21 @@ def main():
                     p.error(e)
             setattr(opt, attr, [comp for comp in path if comp])
 
-    #opt.path += ['tmp']
+    # Check that --security option is valid
+    # FIXME STUB
+    tempd = {'none' : (rpc.AUTH_NONE, 0),
+             'sys'  : (rpc.AUTH_SYS, 0),
+             'krb5' : (rpc.RPCSEC_GSS, 1),
+             'krb5i': (rpc.RPCSEC_GSS, 2),
+             'krb5p': (rpc.RPCSEC_GSS, 3),
+             }
+    if opt.security not in tempd:
+        p.error("Unknown security: %s\nValid flavors are %s" %
+                (opt.security, str(tempd.keys())))
 
-##     # Check that --security option is valid
-##     # sets --flavor to a rpc.SecAuth* class, and sets flags for its options
-##     valid = rpc.supported.copy()
-##     # FIXME - STUB - the only gss mech available is krb5
-##     if 'gss' in valid:
-##         valid['krb5'] =  valid['krb5i'] =  valid['krb5p'] = valid['gss']
-##         del valid['gss']
-##     if opt.security not in valid:
-##         p.error("Unknown security: %s\nValid flavors are %s" %
-##                 (opt.security, str(valid.keys())))
-##     opt.flavor = valid[opt.security]
-##     opt.service = {'krb5':1, 'krb5i':2, 'krb5p':3}.get(opt.security, 0)
-               
+    # flavor has changed from class to int
+    opt.flavor, opt.service = tempd[opt.security]
+
     # Make sure args are valid
     opt.args = []
     for a in args:
