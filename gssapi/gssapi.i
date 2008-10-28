@@ -1,4 +1,7 @@
+/* This is the name of the created module */
 %module gssapi
+
+/* This code is inserted directly into the created *_wrap.c file */
 %{
 #ifdef HEIMDAL 
 #include <gssapi.h>
@@ -33,6 +36,16 @@ gss_OID_desc krb5oid = {
  * to other gssapi routines.
  */
 #ifdef SWIGPYTHON
+/* typemap(in) type name (params):
+ *     Convert Python->C anything that matches "type name" that is used
+ *     as input to a function.  For output-only variables, where the
+ *     inpute value is ignored, use 'numinputs=0'
+ *     Variable: $input
+ *
+ * typemap(out) type name:
+ *     Convert C->Python  the return value of functions
+ *     Variable: $result
+*/
 %typemap(in) gss_buffer_t INPUT (gss_buffer_desc temp) {
 	printfred;
 	if ($input == Py_None) {
@@ -56,20 +69,6 @@ gss_OID_desc krb5oid = {
 	}
 }
 
-#if 0
-%typemap(in) gss_buffer_t INPUT (gss_buffer_desc temp) {
-	printfred;
-	if (SWIG_ConvertPtr($input, &temp, $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
-		/* Assume is a python string */
-		temp.value = (void *) PyString_AsString($input);
-		if (!temp.value)
-			return NULL;
-		temp.length = strlen(temp.value) + 1;
-	}
-	$1 = ($1_ltype) &temp;
-}
-#endif
-
 %typemap(in, numinputs=0) gss_buffer_t OUTPUT (gss_buffer_desc temp) {
 	printfred;
 	$1 = &temp;
@@ -85,29 +84,6 @@ gss_OID_desc krb5oid = {
 		return NULL;
 }
 
-#if 0
-%typemap(in, numinputs=0) gss_name_t *OUTPUT (gss_name_t temp) {
-	printfred;
-	$1 = &temp;
-}
-%typemap(argout) gss_name_t *OUTPUT {
-	PyObject *o;
-	printdict;
-	o = PyString_FromStringAndSize(*($1), strlen(*($1)) + 1);
-	//o = PyString_FromString(*($1));
-	if (!o)
-		return NULL;
-	if (PyDict_SetItemString($result, "$1_name", o) == -1)
-		return NULL;
-}
-%typemap(in) gss_name_t INPUT {
-	printfred;
-	$1 = PyString_AsString($input);
-	if (!$1)
-		return NULL;
-}
-#endif
-	
 %typemap(in, numinputs=0) void **OUTPUT (void *temp) {
 	printfred;
 	$1 = ($1_ltype) &temp;
@@ -174,20 +150,6 @@ gss_OID_desc krb5oid = {
 		return NULL;
 }
 	
-#endif
-
-#if 0	
-/*
- * All functions return OM_uint32, which corresponds to major.
- */
-%typemap(out) OM_uint32 {
-	/* Returns {"major":$1} */
-	$result = PyDict_New();
-	if (!$result ||
-	    (PyDict_SetItemString($result, "major", PyInt_FromLong($1)) == -1))
-		return NULL;
-}
-
 #endif
 
 %typemap(in, numinputs=0) OM_uint32 *OUTPUT ($*1_type temp=0) {
@@ -262,12 +224,6 @@ typedef struct {
 	return o;
 }
 
-#if 0
-%typemap(in) gss_name_t {
-	printf("NAME MAP\n");
-	$1 = $input->ptr;
-}
-#endif
 typedef struct {
 	gss_ctx_id_t const handle;
 	gss_OID const mech;
@@ -384,6 +340,7 @@ class Error(Exception):
 
 /* Non-function declarations */
 
+/* the format is %rename (<python name>) <C name> */
 %rename (krb5oid) krb5oid_ptr;
 %rename (NT_HOSTBASED_SERVICE) GSS_C_NT_HOSTBASED_SERVICE;
 %rename (NT_USER_NAME) GSS_C_NT_USER_NAME;
