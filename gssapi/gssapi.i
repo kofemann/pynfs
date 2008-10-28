@@ -243,7 +243,7 @@ typedef struct {
 	%extend {
 		// XXX typemap name, mechs
 		Credential(gss_cred_usage_t usage=GSS_C_INITIATE,
-			   gss_name_t *name=NULL, gss_OID_set mechs=NULL, 
+			   gss_name_t name=NULL, gss_OID_set mechs=NULL,
 			   OM_uint32 lifetime=0);
 		~Credential();
 		PyObject * const mechs; /* Show as read-only tuple */
@@ -419,9 +419,9 @@ extern gss_OID GSS_C_NT_USER_NAME;
 typedef unsigned int OM_uint32;
 typedef OM_uint32 gss_qop_t;
 typedef OM_uint32 gss_cred_usage_t;
-typedef void * gss_name_t;
-typedef void * gss_cred_id_t;
-typedef void * gss_ctx_id_t;
+typedef struct gss_name_struct * gss_name_t;
+typedef struct gss_cred_id_struct * gss_cred_id_t;
+typedef struct gss_ctx_id_struct * gss_ctx_id_t;
 
 //typedef struct gss_buffer_desc_struct *gss_buffer_t;
 
