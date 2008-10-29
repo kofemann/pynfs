@@ -27,12 +27,6 @@ void print_mechs(gss_OID_set mechs)
 }
 
 
-typedef struct {
-	gss_name_t ptr;
-	char *name;
-	gss_OID oid;
-} Name;
-
 void throw_exception(OM_uint32 major, OM_uint32 minor)
 {
 	printf("Called throw_exception(%i, %i)\n", major, minor);
@@ -40,6 +34,48 @@ void throw_exception(OM_uint32 major, OM_uint32 minor)
 	return;
 }
 
+/*******************************************/
+
+/* Structure mapping to INTERNAL NAME type from RFC 2743.
+ * ->handle is the actual value returned from gss calls, which is freed
+ * automatically during the destructor call.  The others are the reults
+ * of gss_display_name applied to ->handle.
+ */
+typedef struct {
+	gss_name_t handle;
+	gss_buffer_desc name_buffer;
+	gss_OID oid;
+} Name;
+
+void delete_Name(Name *self)
+{
+	OM_uint32 minor;
+
+	if (!self)
+		return;
+	printf("Called delete_Name()\n");
+	/* Ignore any errors */
+	gss_release_buffer(&minor, &self->name_buffer);
+	if (self->handle)
+		gss_release_name(&minor, &self->handle);
+	free(self);
+}
+
+/* We have the handle, now fill the name and oid */
+int _Name_fill(Name *self)
+{
+	OM_uint32 major, minor;
+
+	major = gss_display_name(&minor, self->handle, &self->name_buffer,
+				 &self->oid);
+	if (major) {
+		throw_exception(major, minor);
+		return -1;
+	}
+	return 0;
+}
+
+/* This is called when creation is initiated directly from python */
 Name *new_Name(gss_buffer_t name, gss_OID type)
 {
 	Name *self;
@@ -50,50 +86,47 @@ Name *new_Name(gss_buffer_t name, gss_OID type)
 		PyErr_NoMemory(); // XXX Make sure this works
 		return NULL;
 	}
-	if (name == NULL) {
-		printf("No name given\n");
-		return self;
-	}
-	major = gss_import_name(&minor, name, type, &(self->ptr));
-	printf("ptr = %p\n", self->ptr);
+	major = gss_import_name(&minor, name, type, &(self->handle));
 	if (major) {
 		throw_exception(major, minor);
 		free(self);
 		return NULL;
 	}
+	if (_Name_fill(self)) {
+		delete_Name(self);
+		return NULL;
+	}
 	return self;
 }
 
-Name *Name_create(gss_name_t name)
+#if 0
+/* This is called from typemaps when other calls need to create a Name obj */
+Name *_internal_new_Name(gss_name_t name)
 {
 	Name *self;
+
 	self = malloc(sizeof(Name));
 	if (!self) {
 		PyErr_NoMemory(); // XXX Make sure this works
 		return NULL;
 	}
-	self->ptr = name;
-	self->name = NULL;
+	self->handle = name;
+	if (_Name_fill(self)) {
+		delete_Name(self);
+		return NULL;
+	}
 	return self;
 }
+#endif
 
-void delete_Name(Name *self)
+gss_buffer_t Name_name_get(Name *self)
 {
-	OM_uint32 minor;
-	printf("Called delete_Name()\n");
-	gss_release_name(&minor, &self->ptr); // ignore any errors
-	free(self);
+	return &self->name_buffer;
 }
 
-char *Name_name_get(Name *self)
+gss_OID *Name_oid_get(Name *self)
 {
-	static char temp[] = "Default";
-	return temp;
-}
-
-void Name_name_set(Name *self, char *data)
-{
-	throw_exception(0,0);
+	return &self->oid;
 }
 
 /*******************************************/
@@ -242,7 +275,7 @@ gss_buffer_t Context_init(Context *self,
 	}
 	printf("calling gss_init_sec_context()\n");
 	major = gss_init_sec_context(&minor, cred ? cred->handle : NULL,
-				     &self->handle, target->ptr, mech, flags,
+				     &self->handle, target->handle, mech, flags,
 				     lifetime, bindings, token,
 				     &self->mech, out_token,
 				     &self->flags, &self->lifetime);

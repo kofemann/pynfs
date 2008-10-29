@@ -189,18 +189,40 @@ gss_OID_desc krb5oid = {
 		return NULL;
 }
 
+%typemap(out) gss_buffer_t {
+	PyObject *o;
+	OM_uint32 minor;
+	o = PyString_FromStringAndSize($1->value, $1->length);
+	if (!o)
+		return NULL;
+	gss_release_buffer(&minor, $1);
+	free($1);
+	return o;
+}
+
+%typemap(out) gss_buffer_t const {
+	PyObject *o;
+	o = PyString_FromStringAndSize($1->value, $1->length);
+	if (!o)
+		return NULL;
+	return o;
+}
+
 /* Try to make our own python classes */
+
+/* Exports to user the readonly attributes handle, name, and oid.
+ * name is the printable string user probably cares about.
+ */
 typedef struct {
-	gss_name_t ptr;
-	//char *name;
-	gss_OID oid;
+	gss_name_t const handle;
 	%extend {
 		%apply gss_buffer_t INPUT {gss_buffer_t name};
 
 		Name(gss_buffer_t name, gss_OID type);
 		~Name();
-		char *name;
 		%clear gss_buffer_t name;
+		gss_buffer_t const name;
+		gss_OID * const oid;
 
 	}
 } Name;
@@ -220,18 +242,6 @@ typedef struct {
 		PyObject * const mechs; /* Show as read-only tuple */
 	}
 } Credential;
-
-%typemap(out) gss_buffer_t {
-	PyObject *o;
-	OM_uint32 minor;
-	printf("BUFFER_T OUT\n");
-	o = PyString_FromStringAndSize($1->value, $1->length);
-	if (!o)
-		return NULL;
-	gss_release_buffer(&minor, $1);
-	free($1);
-	return o;
-}
 
 typedef struct {
 	gss_ctx_id_t const handle;
