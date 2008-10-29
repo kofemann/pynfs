@@ -141,8 +141,9 @@ class Recording(object):
 
 class StateProtection(object):
     ssv = property(lambda s: s.ssvs[0])
-    def __init__(self, arg):
-        self.principal = self.mech = None # BUG - how set this?
+    def __init__(self, arg, principal):
+        self.principal = principal
+        self.mech = None # BUG - how set this?
         self.type = arg.spa_how
         if self.type != SP4_NONE:
             self.must_enforce = arg.spo_must_enforce
@@ -316,7 +317,7 @@ class ClientRecord(object):
         else:
             self.impl_id = None
         self.use_profile = arg.eia_flags & EXCHGID4_FLAG_MASK_PNFS
-        self.protection = StateProtection(arg.eia_state_protect)
+        self.protection = StateProtection(arg.eia_state_protect, principal)
 
     def principal_matches(self, xxx):
         if self.protection.type == SP4_NONE:
