@@ -76,12 +76,21 @@ gss_OID_desc krb5oid = {
 
 %typemap(argout) gss_buffer_t OUTPUT {
 	PyObject *o;
+	OM_uint32 major, minor;
 	printdict;
 	o = PyString_FromStringAndSize($1->value, $1->length);
 	if (!o)
 		return NULL;
 	if (PyDict_SetItemString($result, "$1_name", o) == -1)
 		return NULL;
+	/* The returned buffer will never be reference again, since
+	 * data has been copied to the Python string.
+	 */
+	major = gss_release_buffer(&minor, $1);
+	if (major) {
+		/* Better error handling needed */
+		return NULL;
+	}
 }
 
 %typemap(in, numinputs=0) void **OUTPUT (void *temp) {
