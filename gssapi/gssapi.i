@@ -229,17 +229,15 @@ typedef struct {
 
 typedef struct {
 	gss_cred_id_t const handle;
-	//gss_OID_set mechs;
 	OM_uint32 const lifetime;
 	gss_cred_usage_t const usage;
-	gss_name_t const name;
 	%extend {
-		// XXX typemap name, mechs
 		Credential(gss_cred_usage_t usage=GSS_C_INITIATE,
 			   gss_name_t name=NULL, gss_OID_set mechs=NULL,
 			   OM_uint32 lifetime=0);
 		~Credential();
 		PyObject * const mechs; /* Show as read-only tuple */
+		PyObject * const name; /* Returns wrapped Name * */
 	}
 } Credential;
 

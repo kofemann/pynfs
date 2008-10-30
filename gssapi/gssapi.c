@@ -134,10 +134,10 @@ gss_OID *Name_oid_get(Name *self)
 typedef struct {
 	gss_cred_id_t handle;
 	gss_OID_set mechs;
-	//PyObject *mechs; /* list */
 	OM_uint32 lifetime;
 	gss_cred_usage_t usage;
-	gss_name_t name;
+	Name *name;
+	PyObject *py_name;
 } Credential;
 
 
@@ -146,37 +146,46 @@ Credential *new_Credential(gss_cred_usage_t usage,
 			   OM_uint32 lifetime)
 {
 	Credential *self;
-	OM_uint32 major, minor;
+	OM_uint32 ignore, major = 0, minor;
 
 	self = calloc(1, sizeof(Credential));
 	if (!self) {
-		PyErr_NoMemory(); // XXX Make sure this works
+		PyErr_NoMemory();
 		return NULL;
 	}
-	printf("Calling acquire_cred\n");
+	self->name = calloc(1, sizeof(Name));
+	if (!self->name) {
+		PyErr_NoMemory();
+		goto fail;
+	}
+
 	major = gss_acquire_cred(&minor, name, lifetime, mechs, usage,
 				 &self->handle, &self->mechs, &self->lifetime);
-	printf("lifetime=%i\n", self->lifetime);
 	if (major)
+		goto gss_fail;
+
+	major = gss_inquire_cred(&minor, self->handle, &self->name->handle,
+				 &self->lifetime, &self->usage,
+				 &self->mechs);
+	if (major)
+		goto gss_fail;
+
+	/* Create python representation of name */
+	if (_Name_fill(self->name))
 		goto fail;
-	if (name != NULL) {
-		/* Make sure we own a reference to self->name */
-		major = gss_duplicate_name(&minor, name, &self->name);
-		if (major)
-			goto fail;
-		self->usage = usage;
-	}
-	else {
-		printf("calling inquire_cred\n");
-		major = gss_inquire_cred(&minor, self->handle, &self->name,
-					 &self->lifetime, &self->usage,
-					 &self->mechs);
-		if (major)
-			goto fail;
-	}
+	self->py_name = SWIG_NewPointerObj(SWIG_as_voidptr(self->name),
+					   SWIGTYPE_p_Name, SWIG_POINTER_OWN);
+	if (!self->py_name)
+		goto fail;
+
 	return self;
- fail:
+
+ gss_fail:
 	throw_exception(major, minor);
+ fail:
+	gss_release_cred(&ignore, &self->handle);
+	gss_release_oid_set(&ignore, &self->mechs);
+	delete_Name(self->name);
 	free(self);
 	return NULL;
 }
@@ -184,11 +193,17 @@ Credential *new_Credential(gss_cred_usage_t usage,
 void delete_Credential(Credential *self)
 {
 	OM_uint32  minor;
-	printf("Called delete_Credential()\n");
-	gss_release_name(&minor, &self->name);
+	Py_XDECREF(self->py_name);
 	gss_release_cred(&minor, &self->handle);
 	gss_release_oid_set(&minor, &self->mechs);
+	printf("Finished delete_Credential\n");
 	free(self);
+}
+
+PyObject *Credential_name_get(Credential *self)
+{
+	Py_INCREF(self->py_name);
+	return self->py_name;
 }
 
 PyObject *Credential_mechs_get(Credential *self)
