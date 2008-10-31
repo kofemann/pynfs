@@ -236,11 +236,12 @@ PyObject *OIDset_list_get(OIDset *self)
 
 typedef struct {
 	gss_cred_id_t handle;
-	gss_OID_set mechs;
+	OIDset *mechs;
 	OM_uint32 lifetime;
 	gss_cred_usage_t usage;
 	Name *name;
 	PyObject *py_name;
+	PyObject *py_mechs;
 } Credential;
 
 
@@ -261,17 +262,32 @@ Credential *new_Credential(gss_cred_usage_t usage,
 		PyErr_NoMemory();
 		goto fail;
 	}
+	self->mechs = calloc(1, sizeof(*self->mechs));
+	if (!self->mechs) {
+		PyErr_NoMemory();
+		goto fail;
+	}
 
 	major = gss_acquire_cred(&minor, name, lifetime, mechs, usage,
-				 &self->handle, &self->mechs, &self->lifetime);
+				 &self->handle, &self->mechs->handle,
+				 &self->lifetime);
+	if (major)
+		goto gss_fail;
+	gss_release_oid_set(&ignore, &self->mechs->handle);
+	self->mechs->handle = NULL;
+
+	/* Grab all available gss state regarding cred */
+	major = gss_inquire_cred(&minor, self->handle, &self->name->handle,
+				 &self->lifetime, &self->usage,
+				 &self->mechs->handle);
 	if (major)
 		goto gss_fail;
 
-	major = gss_inquire_cred(&minor, self->handle, &self->name->handle,
-				 &self->lifetime, &self->usage,
-				 &self->mechs);
-	if (major)
-		goto gss_fail;
+	/* Create python representation of mechs */
+	self->py_mechs = SWIG_NewPointerObj(SWIG_as_voidptr(self->mechs),
+					   SWIGTYPE_p_OIDset, SWIG_POINTER_OWN);
+	if (!self->py_mechs)
+		goto fail;
 
 	/* Create python representation of name */
 	if (_Name_fill(self->name))
@@ -287,7 +303,7 @@ Credential *new_Credential(gss_cred_usage_t usage,
 	throw_exception(major, minor);
  fail:
 	gss_release_cred(&ignore, &self->handle);
-	gss_release_oid_set(&ignore, &self->mechs);
+	delete_OIDset(self->mechs);
 	delete_Name(self->name);
 	free(self);
 	return NULL;
@@ -297,8 +313,8 @@ void delete_Credential(Credential *self)
 {
 	OM_uint32  minor;
 	Py_XDECREF(self->py_name);
+	Py_XDECREF(self->py_mechs);
 	gss_release_cred(&minor, &self->handle);
-	gss_release_oid_set(&minor, &self->mechs);
 	printf("Finished delete_Credential\n");
 	free(self);
 }
@@ -311,37 +327,8 @@ PyObject *Credential_name_get(Credential *self)
 
 PyObject *Credential_mechs_get(Credential *self)
 {
-	/* Convert oid_set into a python tuple */
-	PyObject *out, **list;
-	int i;
-
-	list = calloc(self->mechs->count, sizeof(PyObject *));
-	if (list == NULL) {
-		PyErr_NoMemory();
-		return NULL;
-	}
-	out = PyTuple_New(self->mechs->count);
-	if (out == NULL) {
-		free(list);
-		PyErr_NoMemory();
-		return NULL;
-	}
-	for (i=0; i < self->mechs->count; i++) {
-		list[i] = PyString_FromStringAndSize((char *) self->mechs->elements[i].elements,
-						  self->mechs->elements[i].length);
-		if (list[i] == NULL) {
-			int j;
-			for (j=0; j<i; j++) {
-				Py_DECREF(list[j]);
-			}
-			Py_DECREF(out);
-			PyErr_NoMemory();
-			free(list);
-			return NULL;
-		}
-		PyTuple_SET_ITEM(out, i, list[i]);
-	}
-	return out;
+	Py_INCREF(self->py_mechs);
+	return self->py_mechs;
 }
 
 /*******************************************/
