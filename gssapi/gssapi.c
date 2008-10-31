@@ -132,6 +132,46 @@ gss_OID *Name_oid_get(Name *self)
 /*******************************************/
 
 typedef struct {
+	gss_OID handle;
+} OID;
+
+OID *new_OID(gss_OID oid)
+{
+	OID *self;
+	self = malloc(sizeof(*self));
+	if (!self) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+	self->handle = oid;
+	return self;
+}
+
+void delete_OID(OID *self)
+{
+	free(self);
+}
+
+gss_OID *OID_handle_get(OID *self)
+{
+	return &self->handle;
+}
+
+PyObject *OID_name_get(OID *self)
+{
+	PyObject *out;
+	out = PyString_FromStringAndSize((char *)self->handle->elements,
+					 self->handle->length);
+	if (!out) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+	return out;
+}
+
+/*******************************************/
+
+typedef struct {
 	gss_cred_id_t handle;
 	gss_OID_set mechs;
 	OM_uint32 lifetime;
