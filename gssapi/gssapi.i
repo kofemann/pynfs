@@ -237,6 +237,15 @@ typedef struct {
 } OID;
 
 typedef struct {
+	%extend {
+		OIDset(gss_OID_set set);
+		~OIDset();
+		gss_OID_set * const handle;
+		PyObject * const list;
+	}
+} OIDset;
+
+typedef struct {
 	gss_cred_id_t const handle;
 	OM_uint32 const lifetime;
 	gss_cred_usage_t const usage;

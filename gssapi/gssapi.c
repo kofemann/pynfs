@@ -131,6 +131,8 @@ gss_OID *Name_oid_get(Name *self)
 
 /*******************************************/
 
+/* TODO: Why do we have ot allocate anything here?  Can't we just
+ * attach the methods to  gss_OID? */
 typedef struct {
 	gss_OID handle;
 } OID;
@@ -165,6 +167,67 @@ PyObject *OID_name_get(OID *self)
 	if (!out) {
 		PyErr_NoMemory();
 		return NULL;
+	}
+	return out;
+}
+
+/*******************************************/
+
+/* TODO: Make this behave more like a sequence */
+typedef struct {
+	gss_OID_set handle;
+	OID *array;
+} OIDset;
+
+OIDset *new_OIDset(gss_OID_set set)
+{
+	OIDset *self;
+
+	self = malloc(sizeof(*self));
+	if (!self) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+
+	self->handle = set;
+	return self;
+}
+
+void delete_OIDset(OIDset *self)
+{
+	OM_uint32  minor;
+	printf("Called %s()\n", __func__);
+	if (self) {
+		if (self->handle)
+			gss_release_oid_set(&minor, &self->handle);
+		free(self);
+	}
+}
+
+gss_OID_set *OIDset_handle_get(OIDset *self)
+{
+	return &self->handle;
+}
+
+PyObject *OIDset_list_get(OIDset *self)
+{
+	PyObject *out, *tmp;
+	int i;
+
+	out = PyTuple_New(self->handle->count);
+	if (out == NULL) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+	for (i=0; i < self->handle->count; i++) {
+		tmp = PyString_FromStringAndSize((char *) self->handle->elements[i].elements,
+						 self->handle->elements[i].length);
+		if (!tmp) {
+			Py_DECREF(out);
+			PyErr_NoMemory();
+			return NULL;
+		}
+		PyTuple_SET_ITEM(out, i, tmp);
 	}
 	return out;
 }
