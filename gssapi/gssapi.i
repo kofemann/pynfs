@@ -658,7 +658,6 @@ OM_uint32 gss_unwrap
 /********/
 
 %rename (inquireContext) gss_inquire_context;
-%apply gss_ctx_id_t INPUT {gss_ctx_id_t ctx};
 %apply void **OUTPUT {gss_name_t *source, gss_name_t *target};
 %apply OM_uint32 *OUTPUT {OM_uint32 *time, OM_uint32 *flags};
 %apply void **OUTPUT {gss_OID *mech};
@@ -674,7 +673,6 @@ OM_uint32 gss_inquire_context
 	    int *initiated,           	/* locally_initiated */
 	    int *open			/* open */
 	   );
-%clear gss_ctx_id_t ctx;
 %clear gss_name_t *source, gss_name_t *target;
 %clear OM_uint32 *time, OM_uint32 *flags;
 %clear gss_OID *mech;
