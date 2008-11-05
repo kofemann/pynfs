@@ -135,7 +135,6 @@ class Recording(object):
         self.queue = None
 
 class StateProtection(object):
-    ssv = property(lambda s: s.ssvs[0])
     def __init__(self, arg, client):
         self.client = client
         self.type = arg.spa_how
@@ -143,6 +142,7 @@ class StateProtection(object):
             self.must_enforce = arg.spo_must_enforce
             self.must_allow = arg.spo_must_allow
         if self.type == SP4_SSV:
+            self.ssv_seq = 0
             # Choose hash algorithm
             for i, oid in enumerate(arg.ssp_hash_algs):
                 hash_funct = nfs4lib.hash_algs.get(oid, None)
@@ -150,28 +150,20 @@ class StateProtection(object):
                     break
             else:
                 raise NFS4Error(NFS4ERR_HASH_ALG_UNSUPP)
-            self.ssv_len = hash_funct().digest_size # BUG - should be based on encryption key size
-            self.hash_funct = hash_funct
             self.hash_index = i
             # Choose encryption algorithm
-            self.encrypt_funct = self.deny # STUB
-            self.encrypt_index = 0
+            for i, oid in enumerate(arg.ssp_encr_algs):
+                enc_factory = nfs4lib.encrypt_algs.get(oid, None)
+                if enc_factory is not None:
+                    break
+            else:
+                raise NFS4Error(NFS4ERR_ENCR_ALG_UNSUPP)
+            self.encrypt_index = i
+            self.context = nfs4lib.SSVContext(hash_funct, enc_factory,
+                                              min(16, arg.ssp_window),
+                                              client=False)
 
-            self.window = min(16, arg.ssp_window)
-            self.ssvs = collections.deque()
-            self.ssvs.append('\0' * self.ssv_len)
             self.lock = Lock("ssv")
-            
-        # STUB - etc
-
-    def set_ssv(self, ssv):
-        self.lock.acquire()
-        try:
-            self.ssvs.appendleft(ssv)
-            while len(self.ssvs) > self.window:
-                self.ssvs.pop()
-        finally:
-            self.lock.release()
 
     def deny(self, env, op, bypass_ssv=False):
         """Raise error if op in must_enforce and MECH/SSV checks fail"""
@@ -192,19 +184,24 @@ class StateProtection(object):
                         return
                 raise NFS4Error(err_code, tag="Did not use ssv gss_mech")
 
-    def rv(self):
+    def rv(self, arg):
+        """Fills in data structure for part of EID return"""
+        # STUB This is al sorts of buggy in more complicated situations,
+        # But will work for the first EID
         rv = state_protect4_r(self.type)
         if self.type == SP4_MACH_CRED:
             rv.spr_mach_ops = state_protect_ops4(self.must_enforce,
                                                  self.must_allow)
         elif self.type == SP4_SSV:
+            handles = [self.client.get_new_handle()
+                       for i in range(arg.ssp_num_gss_handles)]
             info = ssv_prot_info4(state_protect_ops4(self.must_enforce,
                                                      self.must_allow),
                                   self.hash_index,
                                   self.encrypt_index,
-                                  self.ssv_len,
-                                  self.window,
-                                  ["handle_stub"])
+                                  self.context.ssv_len,
+                                  self.context.window,
+                                  handles)
             rv.spr_ssv_info = info
         return rv
             
@@ -296,6 +293,7 @@ class ClientRecord(object):
         self.lastused = time.time() # time of last "RENEW" equivalant
         self.state = VerboseDict(self.config) # {other_id : StateTableEntry}
         self._next = 1 # counter for generating unique stateid 'other'
+        self._handle_ctr = Counter(name="ssv_handle_counter")
         self._lock = Lock("Client")
         
     def update(self, arg, principal):
@@ -322,6 +320,12 @@ class ClientRecord(object):
         else:
             # blah blah blah
             pass
+
+    def get_new_handle(self):
+        """Used to supply ssv gss handles in response to EID requests."""
+        str = "handle_%i:%i" % (self.clientid, self._handle_ctr.next())
+        self.security[rpc.RPCSEC_GSS]._add_context(self.protection.context, str)
+        return str
         
     def get_new_other(self):
         self._lock.acquire()
@@ -846,39 +850,32 @@ class NFS4Server(rpc.Server):
         return encode_status(NFS4_OK, res)
 
     def op_set_ssv(self, arg, env):
-        if env.session is None:
-            # QUESTION XXX Allowed error returns for set_ssv in draft9
-            # seem to be missing this
-            return encode_status(NFS4ERR_OP_NOT_IN_SESSION)
-        # QUESTION Spec says MUST be called on connection bound to session
-        #          doesn't SEQUENCE getting OK enforce this already?
+        # This implements draft26
+        # SSV originally stood for "Secret Session Verifier"
+        check_session(env)
         protect = env.session.client.protection
         if protect.type != SP4_SSV:
-            return encode_status(NFS4ERR_CONN_BINDING_NOT_ENFORCED,
+            # Per draft26 18.47.3
+            return encode_status(NFS4ERR_INVAL,
                                  msg="Did not request SP4_SSV protection")
-        hash_funct = protect.hash_funct
         # Do some argument checking
-        # QUESTION note _INVAL not a legit return
-        size = protect.ssv_len
+        size = protect.context.ssv_len
         if len(arg.ssa_ssv) != size:
-            # Per 17.36.5 (CREATE_SESSION)
             return encode_status(NFS4ERR_INVAL, msg="SSV size != %i" % size)
         if arg.ssa_ssv == "\0" * size:
-            # Per 2.10.6.3
             return encode_status(NFS4ERR_INVAL, msg="SSV==0 not allowed")
         # Now we need to compute and check digest, using SEQUENCE args
         p = nfs4lib.FancyNFS4Packer()
         p.pack_SEQUENCE4args(env.argarray[0].opsequence)
-        digest = hmac.new(protect.ssv, p.get_buffer(), hash_funct).digest()
+        digest = protect.context.hmac(p.get_buffer(), SSV4_SUBKEY_MIC_I2T)
         if digest != arg.ssa_digest:
             return encode_status(NFS4ERR_BAD_SESSION_DIGEST)
-        check_size(env, digest)
         # OK, it checks, so set new ssv
-        protect.set_ssv(nfs4lib.str_xor(protect.ssv, arg.ssa_ssv))
+        protect.context.set_ssv(arg.ssa_ssv)
         # Now create new digest using SEQUENCE result
         p.reset()
         p.pack_SEQUENCE4res(env.results[0].switch)
-        digest = hmac.new(protect.ssv, p.get_buffer(), hash_funct).digest()
+        digest = protect.context.hmac(p.get_buffer(), SSV4_SUBKEY_MIC_T2I)
         res = SET_SSV4resok(digest)
         return encode_status(NFS4_OK, res)
             
@@ -971,7 +968,8 @@ class NFS4Server(rpc.Server):
             # For an ancient draft I marked this as buggy in the replay case.
             # I don't see anything wrong now.
             seq = inc_u32(c.session_replay.seqid)
-        res = EXCHANGE_ID4resok(c.clientid, seq, flags, c.protection.rv(),
+        res = EXCHANGE_ID4resok(c.clientid, seq, flags,
+                                c.protection.rv(arg.eia_state_protect),
                                 self.config._owner, self.config.scope,
                                 [self.config.impl_id])
         return encode_status(NFS4_OK, res, msg="draft21")
