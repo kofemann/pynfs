@@ -264,8 +264,6 @@ typedef struct {
 	gss_OID const mech;
 	OM_uint32 const flags;
 	OM_uint32 const lifetime;
-	gss_name_t const source_name;
-	gss_name_t const target_name;
 	int const open;
 	%extend {
 		Context();
@@ -289,6 +287,8 @@ typedef struct {
 		PyObject *unwrap(gss_buffer_t token);
 		%clear gss_buffer_t token;
 		%clear gss_buffer_t msg;
+		PyObject * const source_name;
+		PyObject * const target_name;
 	}
 } Context;
 

@@ -311,9 +311,12 @@ typedef struct {
 	gss_OID mech;
 	OM_uint32 flags;
 	OM_uint32 lifetime;
-	gss_name_t source_name;
-	gss_name_t target_name;
 	int open;
+	int local;
+	Name *source_name;
+	Name *target_name;
+	PyObject *py_sname;
+	PyObject *py_tname;
 } Context;
 
 Context *new_Context(void) 
@@ -334,24 +337,98 @@ void delete_Context(Context *self)
 	printf("Calling delete_Context()\n");
 	if (self->handle)
 		gss_delete_sec_context(&minor, &self->handle, NULL);
-	/* XXX STUB - delete names */
+	Py_XDECREF(self->py_sname);
+	Py_XDECREF(self->py_tname);
 	free(self);
 }
 
+PyObject *Context_source_name_get(Context *self)
+{
+	if (self->py_sname) {
+		Py_INCREF(self->py_sname);
+		return self->py_sname;
+	} else
+		Py_RETURN_NONE;
+}
+
+PyObject *Context_target_name_get(Context *self)
+{
+	if (self->py_tname) {
+		Py_INCREF(self->py_tname);
+		return self->py_tname;
+	} else
+		Py_RETURN_NONE;
+}
+
+/* We rely on this to maintain that Name * fields of Context is non-NULL
+ * iff corresponding python object exists.
+ */
+int _Context_fill(Context *self)
+{
+	OM_uint32 major, minor;
+	int status = -1;
+
+	self->source_name = calloc(1, sizeof(Name));
+	if (!self->source_name)
+		goto out_nomem;
+	self->target_name = calloc(1, sizeof(Name));
+	if (!self->target_name)
+		goto out_nomem;
+
+	major = gss_inquire_context(&minor, self->handle,
+				    &self->source_name->handle,
+				    &self->target_name->handle,
+				    &self->lifetime, &self->mech,
+				    &self->flags, &self->local, &self->open);
+	if (major) {
+		throw_exception(major, minor);
+		goto out_err;
+	}
+	status = _Name_fill(self->source_name);
+	if (status)
+		goto out_err;
+	status = _Name_fill(self->target_name);
+	if (status)
+		goto out_err;
+	self->py_sname = SWIG_NewPointerObj(SWIG_as_voidptr(self->source_name),
+					   SWIGTYPE_p_Name, SWIG_POINTER_OWN);
+	if (!self->py_sname)
+		goto out_nomem;
+	self->py_tname = SWIG_NewPointerObj(SWIG_as_voidptr(self->target_name),
+					   SWIGTYPE_p_Name, SWIG_POINTER_OWN);
+	if (!self->py_tname) {
+		Py_XDECREF(self->py_sname);
+		self->source_name = NULL;
+		goto out_nomem;
+	}
+	return 0;
+
+ out_nomem:
+	status = -ENOMEM;
+	PyErr_NoMemory();
+ out_err:
+	delete_Name(self->source_name);
+	delete_Name(self->target_name);
+	self->source_name = NULL;
+	self->target_name = NULL;
+	return status;
+}
+
+/* Called by client to initiate context */
 gss_buffer_t Context_init(Context *self, 
 		  Name *target, gss_buffer_t token, Credential *cred,
 		  gss_OID mech, OM_uint32 flags, OM_uint32 lifetime,
 		  gss_channel_bindings_t bindings)
 {
-	OM_uint32 major, minor;
+	OM_uint32 major, minor, ignore;
 	gss_buffer_t out_token;
+	int status;
 
 	out_token = malloc(sizeof(gss_buffer_desc));
 	if (!out_token) {
 		PyErr_NoMemory();
 		return NULL;
 	}
-	printf("calling gss_init_sec_context()\n");
 	major = gss_init_sec_context(&minor, cred ? cred->handle : NULL,
 				     &self->handle, target->handle, mech, flags,
 				     lifetime, bindings, token,
@@ -362,21 +439,27 @@ gss_buffer_t Context_init(Context *self,
 		throw_exception(major, minor);
 		return NULL;
 	}
-	printf("success\n");
 	if (major == GSS_S_COMPLETE) {
-		// XXX set target and source name
-		self->open = 1;
+		status = _Context_fill(self);
+		if (status) {
+			gss_release_buffer(&ignore, out_token);
+			free(out_token);
+			return NULL;
+		}
 	}
 	return out_token;
 }
 
+/* Called by server to initiate context based on client request */
 gss_buffer_t Context_accept(Context *self,
 		    gss_buffer_t token, Credential *cred,
 		    gss_channel_bindings_t bindings)
 {
-	OM_uint32 major, minor;
+	OM_uint32 major, minor, ignore;
 	gss_buffer_t out_token;
+	int status;
 
+	/* This is buggy, as it will never be freed */
 	out_token = malloc(sizeof(gss_buffer_desc));
 	if (!out_token) {
 		PyErr_NoMemory();
@@ -386,7 +469,7 @@ gss_buffer_t Context_accept(Context *self,
 	major = gss_accept_sec_context(&minor, &self->handle,
 				       cred ? cred->handle : NULL,
 				       token, bindings,
-				       &self->source_name,
+				       &self->source_name->handle,
 				       &self->mech, out_token, 
 				       &self->flags, &self->lifetime, NULL);
 	if ((major != GSS_S_COMPLETE) && (major != GSS_S_CONTINUE_NEEDED)) {
@@ -395,8 +478,12 @@ gss_buffer_t Context_accept(Context *self,
 		return NULL;
 	}
 	if (major == GSS_S_COMPLETE) {
-		// XXX set target and source name
-		self->open = 1;
+		status = _Context_fill(self);
+		if (status) {
+			gss_release_buffer(&ignore, out_token);
+			free(out_token);
+			return NULL;
+		}
 	}
 	return out_token;
 }

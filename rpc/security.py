@@ -76,7 +76,7 @@ class CredInfo(object):
             if c is None:
                 return "gss_nobody" # STUB
             else:
-                return gssapi.displayName(c.source_name).name
+                return c.source_name.name
         else:
             raise
     flavor = property(lambda s: s.sec.flavor)
