@@ -1,32 +1,5 @@
 %{
 
-void print_OID(gss_OID_desc oid)
-{
-        static char hex[] = "0123456789ABCDEF";
-        int i;
-        char c, *str;
-
-        printf("%i : ", oid.length);
-        str = (char *) oid.elements;
-        for (i=0; i<oid.length; i++) {
-                c = str[i];
-                printf("%c", hex[(c&0xf0)>>4]);
-                printf("%c", hex[c&0x0f]);
-        }
-        printf("\n");
-}
-
-void print_mechs(gss_OID_set mechs)
-{
-        int i;
-
-        printf("There are %i OIDs in the set:\n", mechs->count);
-        for (i=0; i<mechs->count; i++) {
-                print_OID(mechs->elements[i]);
-        }
-}
-
-
 void throw_exception(OM_uint32 major, OM_uint32 minor)
 {
 	printf("Called throw_exception(%i, %i)\n", major, minor);
