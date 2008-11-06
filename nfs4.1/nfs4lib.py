@@ -9,29 +9,42 @@ state11 = nfs4_type.stateid4(0xffffffff, "\xff" * 12)
 state01 = nfs4_type.stateid4(1, "\0" * 12)
 
 import hashlib # Note this requires 2.5 or higher
-# The strings are oid values derived from RFC4055
-hash_oids = {"sha1" : '+\x0e\x03\x02\x1a',
-             "sha256" : '`\x86H\x01e\x03\x04\x02\x01',
-             "sha384" : '`\x86H\x01e\x03\x04\x02\x02',
-             "sha512" : '`\x86H\x01e\x03\x04\x02\x03',
-             "sha224" : '`\x86H\x01e\x03\x04\x02\x04'
+
+# Note that all the oid strings have tag and length bytes prepended, as
+# per description of sec_oid4 in draft26 sect 3.2
+
+# The strings are oid values derived from RFC4055 section 2.1
+# sha1   : 1.3.14.3.2.26
+# sha256 : 2.16.840.1.101.3.4.2.4.1
+# sha384 : 2.16.840.1.101.3.4.2.4.2
+# sha512 : 2.16.840.1.101.3.4.2.4.3
+# sha224 : 2.16.840.1.101.3.4.2.4.4
+hash_oids = {"sha1"   : '\x06\x05\x2b\x0e\x03\x02\x1a',
+             "sha256" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01',
+             "sha384" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02',
+             "sha512" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03',
+             "sha224" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04',
              }
-hash_algs = {'+\x0e\x03\x02\x1a'          : hashlib.sha1,
-             '`\x86H\x01e\x03\x04\x02\x01': hashlib.sha256,
-             '`\x86H\x01e\x03\x04\x02\x02': hashlib.sha384,
-             '`\x86H\x01e\x03\x04\x02\x03': hashlib.sha512,
-             '`\x86H\x01e\x03\x04\x02\x04': hashlib.sha224
+hash_algs = {'\x06\x05\x2b\x0e\x03\x02\x1a'                : hashlib.sha1,
+             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01': hashlib.sha256,
+             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02': hashlib.sha384,
+             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03': hashlib.sha512,
+             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04': hashlib.sha224,
              }
 
-# These strings are oid values derived from
-# <http://csrc.nist.gov/pki/CSOR/Documents/aes1.asn>
-encrypt_oids = {"aes128-CBC" : '`\x86H\x01e\x03\x04\x01\x02',
-                "aes192-CBC" : '`\x86H\x01e\x03\x04\x01\x16',
-                "aes256-CBC" : '`\x86H\x01e\x03\x04\x01*',
+# These strings are oid values derived from data found at
+# <http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/isop.html> and
+# <http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/algorithms.html>
+# aes128-CBC : 2.16.840.1.101.3.4.1.2
+# aes192-CBC : 2.16.840.1.101.3.4.1.22
+# aes256-CBC : 2.16.840.1.101.3.4.1.42
+encrypt_oids = {"aes128-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x02',
+                "aes192-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x16',
+                "aes256-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x2a',
                 }
 
-# This is taken from draft-13 section 2.10.7.4 (The SSV GSS Mechanism)
-ssv_mech_oid = '+\x06\x01\x04\x01\x81\xe1R\x01\x01'
+# Defined in draft26 sect 2.10.9 as 1.3.6.1.4.1.28882.1.1
+ssv_mech_oid = '\x06\x0a\x2b\x06\x01\x04\x01\x81\xe1\x52\x01\x01'
 
 # Static FATTR4 dictionaries that are created from nfs4_const data
 attr2bitnum = {}
