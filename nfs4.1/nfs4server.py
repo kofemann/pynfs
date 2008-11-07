@@ -59,11 +59,6 @@ default_replay_client, default_replay_slot = create_default_replays()
 # global functions
 ##################################################
 
-def str_xor(a, b):
-    """xor two string which represent binary data"""
-    # Note assumes they are the same length
-    # XXX There has to be a library function somewhere that does this
-    return ''.join(map(lambda x:chr(ord(x[0])^ord(x[1])), zip(a, b)))
 
 def check_secured_gss(env):
     """Verify using GSS with integ or privacy"""
@@ -879,7 +874,7 @@ class NFS4Server(rpc.Server):
             return encode_status(NFS4ERR_BAD_SESSION_DIGEST)
         check_size(env, digest)
         # OK, it checks, so set new ssv
-        protect.set_ssv(str_xor(protect.ssv, arg.ssa_ssv))
+        protect.set_ssv(nfs4lib.str_xor(protect.ssv, arg.ssa_ssv))
         # Now create new digest using SEQUENCE result
         p.reset()
         p.pack_SEQUENCE4res(env.results[0].switch)

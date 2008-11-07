@@ -1,7 +1,13 @@
+from __future__ import with_statement
 import nfs4_const
 import nfs4_pack
 import nfs4_type
 import time
+import collections
+import hmac
+import struct
+import random
+from locking import Lock
 try:
     from Crypto.Cipher import AES
 except ImportError:
@@ -232,6 +238,177 @@ def bitmap2list(bitmap):
         bitnum += 1
         bitmap >>= 1
     return out
+
+##########################################################
+
+def printhex(str, pretty=True):
+    """Print string as hex digits"""
+    if pretty:
+        print "".join(["%02x " % ord(c) for c in str])
+    else:
+        # Can copy/paste this string
+        print "".join(["\\x%02x" % ord(c) for c in str])
+
+def str_xor(a, b):
+    """xor two string which represent binary data"""
+    # Note assumes they are the same length
+    # XXX There has to be a library function somewhere that does this
+    return ''.join(map(lambda x:chr(ord(x[0])^ord(x[1])), zip(a, b)))
+
+def random_string(size):
+    """Returns a random string of given length."""
+    return "".join([chr(random.randint(0, 255)) for i in xrange(size)])
+
+class SSVContext(object):
+    """Holds algorithms and keys needed for SSV encryption and hashing"""
+    class SSVName(object):
+        def __init__(self, name):
+            self.name = name
+
+    def __init__(self, hash_funct, encrypt_factory, window, client=True):
+        self.source_name = self.SSVName("SSV Stub name")
+        self.hash = hash_funct
+        self.encrypt = encrypt_factory
+        self.window = window
+        self.local = client # True for client, False for server
+        # Per draft 26:
+        # "The length of SSV MUST be equal to the length of the key used by
+        # the negotiated encryption algorithm."
+        self.ssv_len = encrypt_factory.key_size
+        self.ssvs = collections.deque()
+        self.ssv_seq = 0 # This basically counts the number of SET_SSV calls
+        self.lock = Lock("ssv")
+        # Per draft 26:
+        # "Before SET_SSV is called the first time on a client ID,
+        # the SSV is zero"
+        self._add_ssv('\0' * self.ssv_len)
+
+    def _subkey(self, ssv, i):
+        """Generate subkeys as defined in draft26 2.10.9"""
+        if i == 0:
+            return ssv
+        else:
+            return hmac.new(ssv, struct.pack('>L', i), self.hash).digest()
+
+    def _add_ssv(self, ssv):
+        """Adds the literal string ssv and its associated subkeys"""
+        # Lock held by caller
+        keys = [self._subkey(ssv, i) for i in range(5)]
+        self.ssvs.appendleft(keys)
+        if len(self.ssvs) > self.window:
+            self.ssvs.pop()
+
+    def set_ssv(self, ssv):
+        """Handles the state management of SET_SSV call, XORing for new ssv."""
+        with self.lock:
+            new_ssv = str_xor(ssv, self.ssvs[0][0])
+            self._add_ssv(new_ssv)
+            self.ssv_seq += 1 # draft26 18.47.3
+
+    def hmac(self, data, key_index):
+        return hmac.new(self.ssvs[0][key_index], data, self.hash).digest()
+
+    def _computeMIC(self, data, key, seqnum):
+        """Compute getMIC token from given data"""
+        # See draft26 2.10.9
+        p = FancyNFS4Packer()
+        p.pack_ssv_mic_plain_tkn4(nfs4_type.ssv_mic_plain_tkn4(seqnum, data))
+        hash = hmac.new(key, p.get_buffer(), self.hash).digest()
+        p.reset()
+        p.pack_ssv_mic_tkn4(nfs4_type.ssv_mic_tkn4(seqnum, hash))
+        return p.get_buffer()
+
+    def getMIC(self, data):
+        dir = (SSV4_SUBKEY_MIC_I2T if self.local else SSV4_SUBKEY_MIC_T2I)
+        with self.lock:
+            seqnum = self.ssv_seq
+            key = self.ssvs[0][dir]
+        return self._computeMIC(data, key, seqnum)
+
+    def verifyMIC(self, data, checksum):
+        p = FancyNFS4Unpacker(checksum)
+        try:
+            token = p.unpack_ssv_mic_tkn4()
+            p.done()
+        except:
+            raise "Need error here" # STUB
+        if token.smt_ssv_seq == 0:
+            raise "Need error here" # STUB
+        dir = (SSV4_SUBKEY_MIC_T2I if self.local else SSV4_SUBKEY_MIC_I2T)
+        with self.lock:
+            index = self.ssv_seq - token.smt_ssv_seq
+            try:
+                key = self.ssvs[index][dir]
+            except KeyError:
+                raise "Need error here" # STUB
+        expect = self._computeMIC(data, key, token.smt_ssv_seq)
+        if expect != checksum:
+            raise "Need error here" # STUB
+        return 0 # default qop
+
+    def wrap(self, data):
+        """Compute wrap token from given data"""
+        # See draft26 2.10.9
+        with self.lock:
+            keys = self.ssvs[0]
+            seqnum = self.ssv_seq
+        blocksize = self.encrypt.block_size
+        cofounder = random_string(4) # '4' pulled out of nowhere
+        p = FancyNFS4Packer()
+        # We need to compute pad.  Easiest (though not fastest) way
+        # is to pack w/o padding, determine padding needed, then repack.
+        input = nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, "")
+        p.pack_ssv_seal_plain_tkn4(input)
+        offset = len(p.get_buffer()) % blocksize
+        if offset:
+            pad = '\0' * (blocksize - offset)
+            p.reset()
+            input = nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, pad)
+            p.pack_ssv_seal_plain_tkn4(input)
+        plain_xdr = p.get_buffer()
+        p.reset()
+        iv = random_string(blocksize)
+        dir = (SSV4_SUBKEY_SEAL_I2T if self.local else SSV4_SUBKEY_SEAL_T2I)
+        obj = self.encrypt.new(keys[dir], IV=iv)
+        encrypted = obj.encrypt(plain_xdr)
+        dir = (SSV4_SUBKEY_MIC_I2T if self.local else SSV4_SUBKEY_MIC_T2I)
+        hash = hmac.new(keys[dir], plain_xdr, self.hash).digest()
+        token = nfs4_type.ssv_seal_cipher_tkn4(seqnum, iv, encrypted, hash)
+        p.pack_ssv_seal_cipher_tkn4(token)
+        return p.get_buffer()
+
+    def unwrap(self, data):
+        """Undo the effects of wrap"""
+        p = FancyNFS4Unpacker(data)
+        try:
+            token = p.unpack_ssv_seal_cipher_tkn4()
+            p.done()
+        except:
+            raise "Need error here" # STUB
+        if token.ssct_ssv_seq == 0:
+            raise "Need error here" # STUB
+        with self.lock:
+            index = self.ssv_seq - token.ssct_ssv_seq
+            try:
+                keys = self.ssvs[index]
+            except KeyError:
+                raise "Need error here" # STUB
+        dir = (SSV4_SUBKEY_SEAL_T2I if self.local else SSV4_SUBKEY_SEAL_I2T)
+        obj = self.encrypt.new(keys[dir], IV=token.ssct_iv)
+        xdr = obj.decrypt(token.ssct_encr_data)
+        dir = (SSV4_SUBKEY_MIC_T2I if self.local else SSV4_SUBKEY_MIC_I2T)
+        hash = hmac.new(keys[dir], xdr, self.hash).digest()
+        if hash != token.ssct_hmac:
+            raise "Need error here" # STUB
+        p.reset(xdr)
+        try:
+            plain = p.unpack_ssv_seal_plain_tkn4()
+            p.done()
+        except:
+            raise "Need error here" # STUB
+        if plain.sspt_ssv_seq != token.ssct_ssv_seq:
+            raise "Need error here" # STUB
+        return plain.sspt_orig_plain, 0
 
 ##########################################################
 
