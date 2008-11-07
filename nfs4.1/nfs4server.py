@@ -136,9 +136,8 @@ class Recording(object):
 
 class StateProtection(object):
     ssv = property(lambda s: s.ssvs[0])
-    def __init__(self, arg, principal):
-        self.principal = principal
-        self.mech = None # BUG - how set this?
+    def __init__(self, arg, client):
+        self.client = client
         self.type = arg.spa_how
         if self.type != SP4_NONE:
             self.must_enforce = arg.spo_must_enforce
@@ -182,14 +181,14 @@ class StateProtection(object):
             return
         check_secured_gss(env)
         if self.type == SP4_MACH_CRED:
-            if env.principal != self.principal or \
-               env.mech != self.mech:
+            if env.principal != self.client.principal or \
+               env.mech != self.client.mech:
                 raise NFS4Error(err_code, tag="Failed machine_cred check")
         elif self.type == SP4_SSV:
             if env.mech != nfs4lib.ssv_mech_oid:
                 if bypass_ssv:
-                    if env.principal == self.principal and \
-                       env.mech == self.mech:
+                    if env.principal == self.client.principal and \
+                       env.mech == self.client.mech:
                         return
                 raise NFS4Error(err_code, tag="Did not use ssv gss_mech")
 
@@ -312,7 +311,7 @@ class ClientRecord(object):
         else:
             self.impl_id = None
         self.use_profile = arg.eia_flags & EXCHGID4_FLAG_MASK_PNFS
-        self.protection = StateProtection(arg.eia_state_protect, principal)
+        self.protection = StateProtection(arg.eia_state_protect, self)
 
     def principal_matches(self, xxx):
         if self.protection.type == SP4_NONE:
