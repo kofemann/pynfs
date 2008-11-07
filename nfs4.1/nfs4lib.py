@@ -2,6 +2,12 @@ import nfs4_const
 import nfs4_pack
 import nfs4_type
 import time
+try:
+    from Crypto.Cipher import AES
+except ImportError:
+    class AES(object):
+        def new(self, *args, **kwargs):
+            raise NotImplementedError("could not import Crypto.Cipher")
 
 # Special stateids
 state00 = nfs4_type.stateid4(0, "\0" * 12)
@@ -25,12 +31,29 @@ hash_oids = {"sha1"   : '\x06\x05\x2b\x0e\x03\x02\x1a',
              "sha512" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03',
              "sha224" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04',
              }
-hash_algs = {'\x06\x05\x2b\x0e\x03\x02\x1a'                : hashlib.sha1,
-             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01': hashlib.sha256,
-             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02': hashlib.sha384,
-             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03': hashlib.sha512,
-             '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04': hashlib.sha224,
+hash_algs = {hash_oids["sha1"]   : hashlib.sha1,
+             hash_oids["sha256"] : hashlib.sha256,
+             hash_oids["sha384"] : hashlib.sha384,
+             hash_oids["sha512"] : hashlib.sha512,
+             hash_oids["sha224"] : hashlib.sha224,
              }
+
+class _e_wrap(object):
+    """Wrap encryption algs so they have a consistent interface"""
+    block_size = property(lambda s: s._block_size)
+    key_size = property(lambda s: s._key_size)
+
+    def __init__(self, factory, key_size, block_size=0, mode=0):
+        self._factory = factory
+        self._key_size = key_size
+        self._block_size = block_size
+        self._mode = mode
+
+    def new(self, key, **kwargs):
+        if len(key) != self._key_size:
+            raise "Some error here" # STUB
+        kwargs["mode"] = self._mode
+        return self._factory.new(key, **kwargs)
 
 # These strings are oid values derived from data found at
 # <http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/isop.html> and
@@ -41,6 +64,10 @@ hash_algs = {'\x06\x05\x2b\x0e\x03\x02\x1a'                : hashlib.sha1,
 encrypt_oids = {"aes128-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x02',
                 "aes192-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x16',
                 "aes256-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x2a',
+                }
+encrypt_algs = {encrypt_oids["aes128-CBC"] : _e_wrap(AES, 16, 16, AES.MODE_CBC),
+                encrypt_oids["aes192-CBC"] : _e_wrap(AES, 24, 16, AES.MODE_CBC),
+                encrypt_oids["aes256-CBC"] : _e_wrap(AES, 32, 16, AES.MODE_CBC),
                 }
 
 # Defined in draft26 sect 2.10.9 as 1.3.6.1.4.1.28882.1.1
