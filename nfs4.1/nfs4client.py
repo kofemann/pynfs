@@ -24,12 +24,6 @@ logging.basicConfig(level=logging.INFO,
 log_cb = logging.getLogger("nfs.client.cb")
 log_cb.setLevel(logging.DEBUG)
 
-def str_xor(a, b):
-    """xor two string which represent binary data"""
-    # Note assumes they are the same length
-    # XXX There has to be a library function somewhere that does this
-    return ''.join(map(lambda x:chr(ord(x[0])^ord(x[1])), zip(a, b)))
-
 SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
 class NFS4Client(rpc.Client):
     def __init__(self, host='localhost', port=2049, ctrl_proc=16):
@@ -291,28 +285,18 @@ class NFS4Client(rpc.Client):
             return None
 
 class ClientStateProtection(object):
-    ssv = property(lambda s: s.ssvs[0])
     def __init__(self, p_res, p_arg):
         self.type = p_res.spr_how
         if self.type == SP4_SSV:
-            self.ssv_len = p_res.spi_ssv_len
-            hash_funct_oid = p_arg.ssp_hash_algs[p_res.spi_hash_alg]
-            self.hash_funct = nfs4lib.hash_algs[hash_funct_oid]
-            self.ssvs = collections.deque()
-            self.ssvs.append('\0' * self.ssv_len)
-            self.lock = Lock("ssv")
-            self.window = p_res.spi_window
+            hash_oid = p_arg.ssp_hash_algs[p_res.spi_hash_alg]
+            hash_alg = nfs4lib.hash_algs[hash_oid]
+            encrypt_oid = p_arg.ssp_encr_algs[p_res.spi_encr_alg]
+            encrypt_alg = nfs4lib.encrypt_algs[encrypt_oid]
+            self.context = nfs4lib.SSVContext(hash_alg, encrypt_alg,
+                                              p_res.spi_window)
+            if self.context.ssv_len != p_res.spi_ssv_len:
+                raise "Some error here" # STUB
 
-    def set_ssv(self, ssv):
-        self.lock.acquire()
-        try:
-            self.ssvs.appendleft(ssv)
-            while len(self.ssvs) > self.window:
-                self.ssvs.pop()
-        finally:
-            self.lock.release()
-
-    
 class ClientRecord(object):
     def __init__(self, eir, dispatcher, cred, protect_args):
         """Takes as input result from EXCHANGE_ID"""
@@ -414,18 +398,20 @@ class SessionRecord(object):
         return op.sequence(self.sessionid, slot.get_seqid(seq_delta),
                            slot.id, slot.id, True)
 
-    def set_ssv(self, ssv, *args, **kwargs):
+    def set_ssv(self, ssv=None, *args, **kwargs):
+        protect = self.client.protect
+        if ssv is None:
+            ssv = nfs4lib.random_string(protect.context.ssv_len)
         if "credinfo" not in kwargs:
             kwargs["credinfo"] = self.cred
         seq_op = self.seq_op(kwargs.pop("slot", None))
         p = nfs4lib.FancyNFS4Packer()
         p.pack_SEQUENCE4args(seq_op.opsequence)
-        protect = self.client.protect
-        digest = hmac.new(protect.ssv, p.get_buffer(), protect.hash_funct).digest() 
+        digest =  protect.context.hmac(p.get_buffer(), SSV4_SUBKEY_MIC_I2T)
         ssv_op = op.set_ssv(ssv, digest)
         res = self.c.compound([seq_op, ssv_op], *args, **kwargs)
         # STUB - do some checking
-        protect.set_ssv(str_xor(protect.ssv, ssv))
+        protect.context.set_ssv(ssv)
         return res
         
     def compound_async(self, ops, *args, **kwargs):

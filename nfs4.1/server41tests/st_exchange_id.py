@@ -77,7 +77,7 @@ def testSSV(t, env):
     # This should fail if not using GSS?  What about E_ID?
 
     # SET_SSV
-    res = sess.set_ssv('\x5a' * 64) # Should use c.protect.ssv_len
+    res = sess.set_ssv('\x5a' * c.protect.context.ssv_len)
     print res
     
 def testNoImplId(t, env):
