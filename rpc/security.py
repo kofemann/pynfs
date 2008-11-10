@@ -59,7 +59,7 @@ class RPCReply(Exception):
                 verf = self.verf
             areply = accepted_reply(verf, data)
             return reply_body(MSG_ACCEPTED, areply=areply), msg_data
-            
+
 class SecError(Exception):
     pass
 
@@ -104,7 +104,7 @@ class AuthNone(object):
 
     def get_info(self, header):
         return Info(self.flavor)
-    
+
     def make_reply_verf(self, cred, stat):
         """Verifier sent by server with each MSG_ACCEPTED reply"""
         return _none
@@ -127,7 +127,7 @@ class AuthNone(object):
         """Take opaque_auth.body type and pack it as opaque"""
         # For auth_none, py_data==''
         return py_data
-    
+
     @staticmethod
     def unpack_cred(data):
         """Take opaque_auth.body and de-opaque it"""
@@ -163,13 +163,13 @@ class AuthSys(AuthNone):
 
     def get_info(self, py_header):
         return Info(self.flavor, py_header.cred.body)
-    
+
     @staticmethod
     def pack_cred(py_cred):
         p = RPCPacker()
         p.pack_authsys_parms(py_cred)
         return p.get_buffer()
-    
+
     @staticmethod
     def unpack_cred(cred):
         p = RPCUnpacker(cred)
@@ -188,7 +188,7 @@ class AuthSys(AuthNone):
         if gids is None:
             gids = [3, 17, 100]
         return CredInfo(self, authsys_parms(stamp, name, uid, gid, gids))
-    
+
     def make_cred(self, credinfo):
         """Create credential"""
         if credinfo is None:
@@ -255,122 +255,6 @@ class GSSContext(object):
         finally:
             self.lock.release()
 
-# Uggh - this needs to go in nfs4 dir, not rpc dir
-class SsvContext(object):
-    def __init__(self):
-        self.window = xxx
-        self.ssv_len = xxx
-        self.hash_funct = xxx
-        self.encrypt_fact = xxx
-        self.block_len = xxx
-        self.ssvs = collections.deque()
-        self.ssv_seq = 0
-        self.ssvs.append('\0' * self.ssv_len)
-        self.lock = threading.Lock()
-
-    def _get_ssv(self, seq=None):
-        self.lock.acquire()
-        try:
-            if seq is None:
-                seq = self.ssv_seq
-            if seq == 0:
-                # SET_SSV hasn't been called yet
-                raise gssapi.Error() # STUB - better error
-            try:
-                ssv = self.ssvs[self.ssv_seq - seq]
-            except IndexError:
-                raise gssapi.Error() # STUB - better error
-        finally:
-            self.lock.release()
-        return ssv, seq
-
-    def _set_ssv(self, ssv):
-        self.lock.acquire()
-        try:
-            self.ssv_seq += 1
-            self.ssvs.appendleft(ssv)
-            while len(self.ssvs) > self.window:
-                self.ssvs.pop()
-        finally:
-            self.lock.release()
-
-    def getMIC(self, data):
-        ssv, seq = self._get_ssv()
-        return self._computeMIC(data, ssv, seq)
-
-    def _computeMIC(self, data, ssv, seq):
-        input = ssv_mic_plain_tkn4(seq, data)
-        p = nfs4lib.FancyNFS4Packer()
-        p.pack_ssv_mic_plain_tkn4(input)
-        digest = hmac.new(ssv, p.get_buffer(), self.hash_funct).digest()
-        output = ssv_mic_tkn4(seq, digest)
-        p.reset()
-        p.pack_ssv_mic_tkn4(output)
-        return p.get_buffer()
-        
-    def verifyMIC(self, data, checksum):
-        p = nfs4lib.FancyNFS4Unpacker(checksum)
-        try:
-            token = p.unpack_ssv_mic_tkn4()
-            p.done()
-        except:
-            raise gssapi.Error() # STUB - better error
-        ssv, seq = self._get_ssv(token.smt_ssv_seq)
-        expect = self._computeMIC(data, ssv, seq)
-        if expect != checksum:
-            raise gssapi.Error() # STUB - better error
-        return 0 # default qop
-
-    def wrap(self, data):
-        ssv, seq = self._get_ssv()
-        p = nfs4lib.FancyNFS4Packer()
-        confounder = "stub_confounder" # STUB
-        # We need to compute pad.  Easiest (though not fastest) way
-        # is to pack w/o padding, determine padding needed, then repack.
-        input = ssv_seal_plain_tkn4(confounder, seq, data, "")
-        p.pack_ssv_seal_plain_tkn4()
-        raw_len = len(p.get_buffer())
-        pad = "\0" * (self.block_len - (raw_len % self.block_len))
-        if pad:
-            # NOTE Could do w/o above if statement, at cost of
-            # repacking when no padding is needed.
-            p.reset()
-            input = ssv_seal_plain_tkn4(confounder, seq, data, "")
-            p.pack_ssv_seal_plain_tkn4()
-        input = p.get_buffer()
-        digest = hmac.new(ssv, input, self.hash_funct).digest()
-        # BUG - draft-11 is defective in handling IV, using this
-        #     - as temp fix per Mike Eisler
-        c = self.encrypt_fact(ssv, iv=digest[:self.block_len])
-        output = ssv_seal_cipher_tkn4(seq, c.encrypt(input), digest)
-        p.reset()
-        p.pack_ssv_seal_cipher_tkn4(output)
-        return p.get_buffer()
-    
-    def unwrap(self, data):
-        p = nfs4lib.FancyNFS4Unpacker(checksum)
-        try:
-            token = p.unpack_ssv_seal_cipher_tkn4()
-            p.done()
-        except:
-            raise gssapi.Error() # STUB - better error
-        ssv, seq = self._get_ssv(token.ssct_ssv_seq)
-        # BUG - defective draft-11 IV handling
-        c = self.encrypt_fact(ssv, iv=token.ssct_hmac[:self.block_len])
-        plain_xdr = c.decrypt(token.ssct_encr_data)
-        p.reset(plain_xdr)
-        try:
-            plain = p.unpack_ssv_seal_plain_tkn4()
-            p.done()
-        except:
-            raise gssapi.Error() # STUB - better error
-        if plain.sspt_ssv_seq != seq:
-            raise gssapi.Error() # STUB - better error
-        digest = hmac.new(ssv, plain_xdr, self.hash_funct).digest()
-        if digest != token.ssct_hmac:
-            raise gssapi.Error() # STUB - better error
-        return plain.sspt_orig_plain, 0
-
 class AuthGss(AuthNone):
     flavor = RPCSEC_GSS
     name = "RPCSEC_GSS"
@@ -388,14 +272,9 @@ class AuthGss(AuthNone):
         # BUG - what if already there?  Prob need some locking
         self.contexts[handle] = GSSContext(context)
         return handle
-    
+
     def _get_context(self, handle):
         return self.contexts.get(handle, None)
-        
-##     def init_cred_ssv(self, handle):
-##         context = SsvContext()
-##         self._add_context(context, handle)
-##         return CredInfo(self, context=handle)
 
     def init_given_context(self, context, handle=None,
                            service=rpc_gss_svc_none):
@@ -458,7 +337,7 @@ class AuthGss(AuthNone):
         p = GSSPacker()
         p.pack_rpc_gss_cred_t(py_cred)
         return p.get_buffer()
-    
+
     @staticmethod
     def unpack_cred(cred):
         p = GSSUnpacker(cred)
@@ -605,7 +484,7 @@ class AuthGss(AuthNone):
             # XXX how handle gssapi.Error?
             token = self._get_context(body.cred.body.handle).getMIC(data)
             return opaque_auth(RPCSEC_GSS, token)
-        
+
     def check_call_verf(self, xid, body):
         if body.cred.body.gss_proc in (RPCSEC_GSS_INIT, RPCSEC_GSS_CONTINUE_INIT):
             return self.is_NULL(body.verf)
@@ -622,7 +501,7 @@ class AuthGss(AuthNone):
             body.cred.body.qop = qop # XXX Where store this?
             log_gss.debug("verifier checks out (qop=%i)" % qop)
             return True
-           
+
     def check_auth(self, msg, data):
         """
         msg should be a CALL header
@@ -670,13 +549,13 @@ class AuthGss(AuthNone):
         """INIT"""
         log_gss.info("Handling RPCSEC_GSS_INIT")
         self.handle_gss_init(cred, data, first=True)
-        
+
     def handle_gss_proc_2(self, cred, data):
         """CONTINUE_INIT"""
         log_gss.info("Handling RPCSEC_GSS_CONTINUE_INIT")
         # STUB - think through this more carefully
         self.handle_gss_init(cred, data, first=False)
-        
+
     def handle_gss_init(self, cred, data, first):
         p = GSSUnpacker(data)
         token = p.unpack_opaque()
@@ -716,7 +595,7 @@ class AuthGss(AuthNone):
         # It is the only time that you need msg_data to feed into it.
         verf = self.make_reply_verf(cred, major)
         raise RPCReply(msgdata=p.get_buffer(), verf=verf)
-        
+
     def make_reply_verf(self, cred, stat):
         log_gss.debug("CALL:make_reply_verf(%r, %i)" % (cred, stat))
         cred = cred.body
@@ -771,16 +650,13 @@ class AuthGss(AuthNone):
             print dir(call_cred.body)
             if qop != call_cred.body.qop:
                 raise SecError("Mismatched qop")
-            
-    
+
 ##############################################
-        
+
 supported = {AUTH_NONE:  AuthNone,
              AUTH_SYS:   AuthSys,
              RPCSEC_GSS: AuthGss,
              }
-
-
 
 def klass(flavor):
     """Importers should only refer to the classes via flavor.
