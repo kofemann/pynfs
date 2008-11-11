@@ -242,12 +242,12 @@ class ClientList(object):
         del self._data[c.ownerid]
         c.freeze = True
 
-    def add(self, arg, principal):
+    def add(self, arg, principal, security):
         """Add a new client using EXCHANGE_ID4args.
 
         Lock needs to be held.
         """
-        c = ClientRecord(self._nextid, arg, principal)
+        c = ClientRecord(self._nextid, arg, principal, security=security)
         if c.ownerid in self._data:
             raise RuntimeError("ownerid %r already in ClientList" % 
                                c.ownerid)
@@ -283,10 +283,11 @@ class VerboseDict(dict):
         
 class ClientRecord(object):
     """The server's representation of a client and its state"""
-    def __init__(self, id, arg, principal, mech=None):
+    def __init__(self, id, arg, principal, mech=None, security=None):
         self.config = ServerPerClientConfig()
         self.clientid = id
         self.mech = mech
+        self.security = security
         self.confirmed = False
         self.freeze = False # Set True if removed from ClientList
         self.update(arg, principal)
@@ -914,7 +915,7 @@ class NFS4Server(rpc.Server):
                     return encode_status(NFS4ERR_NOENT, msg="No such client")
                 else:
                     # The simple, common case 1: a new client
-                    c = self.clients.add(arg, env.principal)
+                    c = self.clients.add(arg, env.principal, self.security)
             elif not c.confirmed:
                 if update:
                     # Case 7
@@ -923,7 +924,7 @@ class NFS4Server(rpc.Server):
                 else:
                     # Case 4
                     self.clients.remove(c.clientid)
-                    c = self.clients.add(arg, env.principal)
+                    c = self.clients.add(arg, env.principal, self.security)
             else: # c.confirmed == True
                 # STUB - state protection is from draft13 - still valid???
                 # We need to do state protection tests
@@ -955,7 +956,7 @@ class NFS4Server(rpc.Server):
                     # new is confirmed
                     self.client_reboot(c) # STUB - remove state
                     self.clients.remove(c.clientid)
-                    c = self.clients.add(arg, env.principal)
+                    c = self.clients.add(arg, env.principal, self.security)
                     # QUESTION - what happens if still processing request
                     # from previous client incarnation?
                 else: # c.verifier == verf
