@@ -397,9 +397,10 @@ class AuthGss(AuthNone):
 ##         self._add_context(context, handle)
 ##         return CredInfo(self, context=handle)
 
-    def init_given_context(self, context, handle=None):
+    def init_given_context(self, context, handle=None,
+                           service=rpc_gss_svc_none):
         self._add_context(context, handle)
-        return CredInfo(self, context=handle)
+        return CredInfo(self, context=handle, service=service)
 
     def init_cred(self, call, target="nfs@jupiter", source=None, oid=None):
         # STUB - need intelligent way to set defaults

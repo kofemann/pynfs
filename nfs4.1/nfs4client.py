@@ -305,8 +305,19 @@ class ClientRecord(object):
         self.clientid = eir.eir_clientid
         self.seqid = eir.eir_sequenceid
         self.flags = eir.eir_flags
+        self._sec = rpc.security.AuthGss()
+        self.ssv_creds = []
         self.protect = ClientStateProtection(eir.eir_state_protect,
                                              protect_args)
+        if self.protect.type == SP4_SSV:
+            self._add_ssv_handles(eir.eir_state_protect.spi_handles)
+
+    def _add_ssv_handles(self, handles):
+        creds = [self._sec.init_given_context(self.protect.context, handle,
+                                              rpc.gss_const.rpc_gss_svc_privacy)
+                 for handle in handles]
+        self.ssv_creds.extend(creds)
+
     def create_session(self,
                        flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
                        fore_attrs=None, back_attrs=None, sec=None, prog=None):
