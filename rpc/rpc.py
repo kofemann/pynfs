@@ -1,10 +1,10 @@
+from __future__ import with_statement
+
 import socket, select
 import struct
-import inspect
-import time
 import threading
 import logging
-import collections
+from collections import deque as Deque
 
 import rpc_pack
 from rpc_const import *
@@ -168,7 +168,7 @@ class Alarm(object):
     def __init__(self, address):
         # XXX I don't think the locking is needed now that select counts bytes
         # self.lock = threading.Lock()
-        self.queue = collections.deque()
+        self.queue = Deque()
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setblocking(0)
         try:
@@ -196,36 +196,68 @@ class Alarm(object):
         return getattr(self.s, attr)
 
 class Pipe(object):
-    """Groups a socket with its buffers."""
-    def __init__(self, socket):
-        self.s = socket
-        self.timestamp = int(100*time.time())
+    """Groups a socket with its buffers.
+
+    We deal with records, packets, and bytes.
+
+    Records are the actual message strings that we want to send through the
+    pipe.  Records go in one end and come out the other.  However, because
+    all that *really* goes through is a stream of bytes, just sending the
+    records as is wouldn't work, since there would be no way to tell where
+    one record ends and another begins.
+
+    So record marking is used (rfc 1831 section 10), which breaks the
+    record into packets (called record fragments in the rfc), and precedes
+    each packet with a byte count and an end-of-record flag.
+
+    The raw byte stream sent is thus the packets with the interspersed
+    accounting information.
+
+    The general flow here is as follows:
+
+    server
+    The polling thread notices the Pipe has data waiting to be read.
+    So it calls recv_records, which reads the raw data and returns records.
+    The polling thread hands each record off to a worker thread.  That
+    thread, if it wishes to reply, calls push_record. This notifies the
+    polling thread, which calls pop_record to prepare for flush_pipe.
+
+    client
+    The client calls push_record, creates a DeferredData instance
+    associated with the xid, and calls its wait method.
+    Push_record notifies the polling thread, which calls pop_record to
+    prepare for flush_pipe, sending the call to the server.
+    Eventually the polling thread notices the Pipe has data waiting to be
+    read (a server reply), so it calls recv_records, which reads the raw data
+    and returns a record, which is eventually dumped into the DeferredData
+    structure via fill(), waking the original client thread
+    """
+    def __init__(self, socket, write_alarm):
+        self._s = socket
         # Note the write queue is accessed by both main and worker threads,
         # so uses thread-safe deque() struture.  The other buffers are only
         # looked at by the main thread, so no locking is required.
-        self.write_queue = collections.deque() # Records waiting to be sent out
-        # records are pulled from write_queue, record marking added, then
-        # the raw data to be written out is put here
-        self.write_buf = '' # Raw outgoing data
-        self.read_buf = '' # Raw incoming data
-        self.packet_buf = [] # Store packets read until have a whole record
-        self.lock = threading.Lock()
-        self.xid = 0
+        self._write_queue = Deque() # Records waiting to be sent out
+        self._alarm = write_alarm # Way to notify we have data to write
+        self._write_buf = '' # Raw outgoing data
+        self._read_buf = '' # Raw incoming data
+        self._packet_buf = [] # Store packets read until have a whole record
         self.pending = {} # {xid:defer}
+        self._lock = threading.Lock() # Protects _xid field
+        self._xid = 0
 
     def __getattr__(self, attr):
         """Show socket interface"""
-        return getattr(self.s, attr)
+        return getattr(self._s, attr)
 
     def connection(self):
         """Returns info uniquely identifying the connection"""
-        return self.s.fileno(), self.timestamp
+        return id(self)
 
     def get_xid(self):
-        self.lock.acquire()
-        out = self.xid
-        self.xid = inc_u32(out)
-        self.lock.release()
+        with self._lock:
+            out = self._xid
+            self._xid = inc_u32(out)
         return out
 
     def listen(self, xid, timeout=None):
@@ -235,7 +267,84 @@ class Pipe(object):
         return reply
 
     def __str__(self):
-        return "pipe-%i" % self.s.fileno()
+        return "pipe-%i" % self._s.fileno()
+
+    def recv_records(self, count):
+        """Pull up to count bytes from pipe, converting into records."""
+        # This is only called from main handler thread, so doesn't need locking
+        data = self._s.recv(count)
+        if data is None:
+            # This indicates socket has closed
+            return None
+        out = []
+        self._read_buf += data
+        while self._read_buf:
+            buf = self._read_buf
+            if len(buf) < 4:
+                # We don't even have the packet length yet, wait for more data
+                break
+            packetlen = struct.unpack('>L', buf[0:4])[0]
+            last = 0x80000000L & packetlen
+            packetlen &= 0x7fffffffL
+            packetlen += 4 # Include size of record mark
+            if len(buf) < packetlen:
+                # We don't have a full packet yet, wait for more data
+                break
+            self._packet_buf.append(buf[4:packetlen])
+            self._read_buf = buf[packetlen:]
+            if last:
+                # We have a full RPC record.  Note this does not imply that
+                # self._read_buf is empty.
+                record = ''.join(self._packet_buf)
+                self._packet_buf = []
+                out.append(record)
+        return out
+
+    def push_record(self, record):
+        """Prepares handler thread to send record.
+
+        If None is sent, no further data will be accepted, and pipe will be
+        closed once previous data is flushed.
+        """
+        # This is called from worker threads, so needs locking.
+        # However, deque is thread safe, so all is good
+        self._write_queue.appendleft(record)
+        # Notify ConnectionHandler that there is data to write
+        self._alarm.buzz(self._s.fileno())
+
+    def send_records(self, count):
+        """Flush stored records through the pipe.
+
+        It will return True if done, False if needs to be called again.
+
+        Note that due to threading, it is possible that there are stored
+        records even if we return True.  However, that's OK, since that
+        means an alarm is pending, which will cause the function to be
+        called again.
+        """
+        def add_record_marks(record, count):
+            """Given a record, convert it to actual stream to send over TCP"""
+            dlen = len(record)
+            i = last = 0
+            out = '' # FRED - use stringio here?
+            while not last:
+                chunk = record[i: i + count]
+                i += count
+                if i >= dlen:
+                    last = 0x80000000L
+                mark = struct.pack('>L', last | len(chunk))
+                out += mark + chunk
+            return out
+
+        if not self._write_buf:
+            if self._write_queue:
+                record = self._write_queue.pop()
+                self._write_buf = add_record_marks(record, count)
+            else:
+                return True
+        count = self._s.send(self._write_buf)
+        self._write_buf = self._write_buf[count:]
+        return (not self._write_buf) and (not self._write_queue)
 
 #################################################
 
@@ -310,7 +419,7 @@ class ConnectionHandler(object):
                     self._event_new_socket(list)
                 else:
                     try:
-                        data = self.sockets[fd].recv(self.rsize)
+                        data = self.sockets[fd].recv_records(self.rsize)
                     except socket.error:
                         data = None
                     if data:
@@ -324,7 +433,7 @@ class ConnectionHandler(object):
         csock, caddr = s.accept()
         csock.setblocking(0)
         fd = csock.fileno()
-        pipe = self.sockets[fd] = Pipe(csock)
+        pipe = self.sockets[fd] = Pipe(csock, self.write_alarm)
         log_p.info("got connection from %s, assigned to fd=%i" %
              (csock.getpeername(), fd))
         # Start listening for data to come in on new connection
@@ -357,73 +466,22 @@ class ConnectionHandler(object):
 
     def _event_write(self, fd):
         """Data is waiting to be written."""
-        s = self.sockets[fd]
-        if not s.write_buf:
-            # Pop record off the write queue, and format it for the wire
-            try:
-                data = s.write_queue.pop()
-                s.write_buf = self.add_record_marks(data)
-            except IndexError:
-                # NOTE that due to threading, it is possible that write_queue
-                # is no longer empty when we get here.  However, that's OK,
-                # since that means an alarm is pending, which will then
-                # add fd back to writelist.
-                self.writelist.remove(fd)
-                log_p.log(5, "Finished writing to %i" % fd)
-                return
-        log_p.log(4, "Writing to %i" % fd)
-        count = s.send(s.write_buf)
-        s.write_buf = s.write_buf[count:]
-        
-    def add_record_marks(self, data):
-        """Given a record, convert it to actual stream to send over TCP"""
-        dlen = len(data)
-        i = last = 0
-        out = '' # FRED - use stringio here?
-        while not last:
-            chunk = data[i:i+self.wsize]
-            i += self.wsize
-            if i >= dlen:
-                last = 0x80000000L
-            mark = struct.pack('>L', last | len(chunk))
-            out += mark + chunk
-        return out
-        
-    def _event_read(self, data, fd):
+        if self.sockets[fd].send_records(self.wsize):
+            self.writelist.remove(fd)
+            log_p.log(5, "Finished writing to %i" % fd)
+
+    def _event_read(self, records, fd):
         """Data is waiting to be read.
 
-        Wait until we get a full RPC record, then dispatch it to a thread.
+        For each full RPC record, then dispatch it to a thread.
         """
-        log_p.log(5, "Received data from %i" % fd)
-        log_p.log(2, repr(data))
         s = self.sockets[fd]
-        s.read_buf += data
-        while s.read_buf:
-            buf = s.read_buf
-            if len(buf) < 4:
-                # We don't even have the packet length yet, wait for more data
-                return
-            packetlen = struct.unpack('>L', buf[0:4])[0]
-            last = 0x80000000L & packetlen
-            packetlen &= 0x7fffffffL
-            packetlen += 4 # Include size of record mark
-            if len(buf) < packetlen:
-                # We don't have a full packet yet, wait for more data
-                return
-            s.packet_buf.append(buf[4:packetlen])
-            s.read_buf = buf[packetlen:]
-            if last:
-                # We finally have a full RPC record, have a thread deal with it
-                # Note this means we have the last packet of a record, it
-                # does not mean that s.read_buf is empty
-                log_p.debug("Received full record from %i" % fd)
-                record = ''.join(s.packet_buf)
-                s.packet_buf = []
-                log_p.log(3, repr(record))
-                t = threading.Thread(target=self._event_rpc_record,
-                                     args=(record, s))
-                t.setDaemon(True)
-                t.start()
+        for r in records:
+            log_p.log(5, "Received record from %i" % fd)
+            log_p.log(2, repr(r))
+            t = threading.Thread(target=self._event_rpc_record, args=(r, s))
+            t.setDaemon(True)
+            t.start()
 
     def _event_rpc_record(self, record, pipe):
         """Deal with an incoming RPC record.
@@ -634,7 +692,7 @@ class ConnectionHandler(object):
             self.bindsocket(s)
         s.connect(address)
         s.setblocking(0)
-        pipe = Pipe(s)
+        pipe = Pipe(s, self.write_alarm)
         # Tell polling loop about the new socket
         defer = DeferredData()
         self.socket_alarm.buzz((pipe, defer))
@@ -693,8 +751,7 @@ class ConnectionHandler(object):
         p = FancyRPCPacker()
         p.pack_rpc_msg(msg)
         header = p.get_buffer()
-        pipe.write_queue.appendleft(header + data)
-        self.write_alarm.buzz(pipe.fileno())
+        pipe.push_record(header + data)
 
     def send_call(self, pipe, procedure, data='', credinfo=None, program=None, version=None):
         if program is None: program = self.default_prog
