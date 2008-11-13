@@ -127,37 +127,41 @@ class FancyRPCPacker(rpc_pack.RPCPacker):
 ###################################################
 
 class DeferredData(object):
-    def __init__(self, msg=None, lock=None):
-        self.lock = threading.Condition(lock) # XXX Is this better as Event()?
+    """Wait for data to arrive.
+
+    Thread 1 does:
+    defer = DeferredData()
+    start_another_thread(defer)
+    defer.wait()
+    # Now data field is accessible or exception has been raised
+
+    Thread 2 does:
+    # Access defer.msg if needed
+    defer.fill()
+    # Thread should no longer reference defer
+    """
+    def __init__(self, msg=None):
+        self._filled = threading.Event()
         self.data = None
-        self.exception = None
-        self.filled = False
+        self._exception = None
         self.msg = msg # Data that thread calling fill might need
         
-    def wait(self, timeout=None):
+    def wait(self, timeout=10):
         """Wait for data to be filled in"""
-        self.lock.acquire()
-        if not self.filled:
-            # NOTE because lock is held, there is no race here w/ self.filled
-            self.lock.wait(timeout)
-        filled = self.filled # Make local copy before giving up lock
-        self.lock.release()
-        if not filled:
+        self._filled.wait(timeout)
+        if not self._filled.isSet():
             raise RPCTimeout
-        if self.exception is not None:
-            raise self.exception
+        if self._exception is not None:
+            raise self._exception
 
     def fill(self, data=None, exception=None):
         """Fill with data, and flag that this has been done.
 
         Caller should no longer reference the object afterwards.
         """
-        self.exception = exception
+        self._exception = exception
         self.data = data
-        self.lock.acquire()
-        self.filled = True
-        self.lock.notifyAll()
-        self.lock.release()
+        self._filled.set()
 
 class _MyDeque(collections.deque):
     # XXX Should we reimplement close?
