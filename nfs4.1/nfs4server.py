@@ -512,7 +512,6 @@ class NFS4Server(rpc.Server):
         self.opsconfig = OpsConfigServer()
         self.actions = Actions()
         self.mount(ConfigFS(self), path="/config")
-        self.default_vers = 4 # Callback version, see draft22 line 28132
         self.verifier = struct.pack('>d', time.time())
         self.recording = Recording()
         self.devid_counter = Counter(name="devid_counter")
@@ -1892,7 +1891,9 @@ class NFS4Server(rpc.Server):
         log_41.info("Sending CB_COMPOUND")
         log_41.info(repr(c4))
         p.pack_CB_COMPOUND4args(c4)
-        return self.send_call(pipe, 1, p.get_buffer(), credinfo, prog)
+        # Callback version is 4, see draft29 18.36.3:
+        # "The server MUST specify...an ONC RPC version number equal to 4"
+        return pipe.send_call(prog, 4, 1, p.get_buffer(), credinfo)
 
     def cb_compound(self, *args, **kwargs):
         xid = self.cb_compound_async(*args, **kwargs)

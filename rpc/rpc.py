@@ -241,25 +241,10 @@ class Pipe(object):
         self._write_buf = '' # Raw outgoing data
         self._read_buf = '' # Raw incoming data
         self._packet_buf = [] # Store packets read until have a whole record
-        self.pending = {} # {xid:defer}
-        self._lock = threading.Lock() # Protects _xid field
-        self._xid = 0
 
     def __getattr__(self, attr):
         """Show socket interface"""
         return getattr(self._s, attr)
-
-    def get_xid(self):
-        with self._lock:
-            out = self._xid
-            self._xid = inc_u32(out)
-        return out
-
-    def listen(self, xid, timeout=None):
-        self.pending[xid].wait(timeout)
-        reply = self.pending[xid].data
-        del self.pending[xid]
-        return reply
 
     def __str__(self):
         return "pipe-%i" % self._s.fileno()
@@ -345,6 +330,93 @@ class Pipe(object):
         count = self._s.send(self._write_buf)
         self._write_buf = self._write_buf[count:]
         return (not self._write_buf)
+
+class RpcPipe(Pipe):
+    """Hide pipe related xid handling.
+
+    The expected use is for a client thread to do:
+            xid = pipe.send_call()
+            reply = pipe.listen(xid)
+    A server thread will just do:
+            pipe.send_reply()
+    """
+    rpcversion = 2 # The RPC version that is used by default
+
+    def __init__(self, *args, **kwargs):
+        Pipe.__init__(self, *args, **kwargs)
+        self._pending = {} # {xid:defer}
+        self._lock = threading.Lock() # Protects fields below
+        self._xid = 0
+
+    def _get_xid(self):
+        with self._lock:
+            out = self._xid
+            self._xid = inc_u32(out)
+        return out
+
+    def listen(self, xid, timeout=None):
+        """Wait for a reply to a CALL."""
+        self._pending[xid].wait(timeout)
+        reply = self._pending[xid].data # This is set at end of self.rcv_reply
+        del self._pending[xid]
+        return reply
+
+    def rpc_send(self, rpc_msg, data=''):
+        """Send raw data over pipe using given rpc_msg"""
+        p = FancyRPCPacker()
+        p.pack_rpc_msg(rpc_msg)
+        header = p.get_buffer()
+        self.push_record(header + data)
+
+    def send_reply(self, xid, body, proc_response=""):
+        log_t.debug("send_reply\nbody = %r\ndata=%r" % (body, proc_response))
+        msg = rpc_msg(xid, rpc_msg_body(REPLY, rbody=body))
+        self.rpc_send(msg, proc_response)
+
+    def send_call(self, program, version, procedure, data, credinfo):
+        """Send a CALL, and store info needed to match and verify reply."""
+        sec = credinfo.sec
+        cred = sec.make_cred(credinfo)
+        body = call_body(self.rpcversion, program, version, procedure,
+                         cred, None)
+        xid = self._get_xid()
+        body.verf = sec.make_call_verf(xid, body)
+        msg = rpc_msg(xid, rpc_msg_body(CALL, body))
+        data = sec.secure_data(cred, data)
+        # Store info needed be receiving thread to match and verify reply
+        self._pending[xid] = DeferredData((cred, sec))
+        self.rpc_send(msg, data)
+        return xid
+
+    def rcv_reply(self, msg, msg_data):
+        """Do sec handling of reply, then hand it off to matching call event."""
+        try:
+            # This should match a CALL made with self.send_call
+            deferred = self._pending[msg.xid]
+        except IndexError:
+            log_t.warn("Reply with unexpected xid=%i" % msg.xid)
+            raise
+        exc = None # Exception that will be raised in calling thread
+        cred, sec = deferred.msg # This was set in self.send_call()
+        try:
+            sec.check_reply_verf(msg, cred, msg_data)
+        except Exception:
+            log_t.warn("Reply did not pass verifier checks", exc_info=True)
+            raise
+        if msg.stat == MSG_DENIED:
+            exc = RPCDeniedError(msg.rreply)
+        elif msg.reply_data.stat != SUCCESS:
+            exc = RPCAcceptError(msg.areply)
+        else:
+            try:
+                msg_data = sec.unsecure_data(cred, msg_data)
+            except Exception:
+                # Unsure what to do here.
+                # FRED - what is the point of verifier, if this can occur?
+                exc = RPCError("Failed to unsecure data in reply")
+        log_t.debug("Filling deferral %i" % msg.xid)
+        reply = (msg, msg_data) # The return value of self.listen()
+        deferred.fill(reply, exc)
 
 #################################################
 
@@ -450,7 +522,7 @@ class ConnectionHandler(object):
         csock, caddr = s.accept()
         csock.setblocking(0)
         fd = csock.fileno()
-        pipe = self.sockets[fd] = Pipe(csock, self._alarm)
+        pipe = self.sockets[fd] = RpcPipe(csock, self._alarm)
         log_p.info("got connection from %s, assigned to fd=%i" %
              (csock.getpeername(), fd))
         # Start listening for data to come in on new connection
@@ -522,32 +594,9 @@ class ConnectionHandler(object):
         msg_data is raw procedure data.
         """
         try:
-            # This should match a CALL we made, which set aside space for us
-            # (The space is set aside in self.send_raw)
-            deferred = pipe.pending[msg.xid]
-        except IndexError:
-            log_t.warn("Reply with unexpected xid=%i" % msg.xid)
-            return
-        exc = None # Exception that will be raised in calling thread
-        sec = deferred.msg.sec
-        try:
-            sec.check_reply_verf(msg, deferred.msg.body.cred, msg_data)
+            pipe.rcv_reply(msg, msg_data)
         except Exception:
-            log_t.warn("Reply did not pass verifier checks", exc_info=True)
-            return
-        if msg.stat == MSG_DENIED:
-            exc = RPCDeniedError(msg.rreply)
-        elif msg.reply_data.stat != SUCCESS:
-            exc = RPCAcceptError(msg.areply)
-        else:
-            try:
-                msg_data = sec.unsecure_data(deferred.msg.body.cred, msg_data)
-            except Exception:
-                # Unsure what to do here.
-                # FRED - what is the point of verifier, if this can occur?
-                exc = RPCError("Failed to unsecure data in reply")
-        log_t.debug("Filling deferral %i" % msg.xid)
-        deferred.fill((msg, msg_data), exc)
+            pass
 
     def _event_rpc_call(self, msg, msg_data, pipe):
         """Deal with an incoming RPC CALL.
@@ -610,7 +659,7 @@ class ConnectionHandler(object):
                 body = reply_body(MSG_ACCEPTED, areply=areply)
             except Exception:
                 body, data = rpclib.RPCUnsuccessfulReply(SYSTEM_ERR).body()
-        self.send_reply(pipe, msg.xid, body, data)
+        pipe.send_reply(msg.xid, body, data)
         if notify is not None:
             notify()
 
@@ -712,7 +761,7 @@ class ConnectionHandler(object):
             self.bindsocket(s)
         s.connect(address)
         s.setblocking(0)
-        pipe = Pipe(s, self._alarm)
+        pipe = RpcPipe(s, self._alarm)
         # Tell polling loop about the new socket
         defer = DeferredData()
         self._alarm.buzz('\x01', (pipe, defer))
@@ -761,44 +810,6 @@ class ConnectionHandler(object):
             self.sockets[s.fileno()] = s
         return s
             
-    def send_raw(self, pipe, msg, data=''):
-        """Send raw data (using record marking) over pipe using given rpc_msg.
-        """
-        if msg.body.mtype == CALL:
-            # Need to know where to store matching REPLY.
-            # NOTE - need to ensure this is created before anyone can listen
-            pipe.pending[msg.xid] = DeferredData(msg)
-        p = FancyRPCPacker()
-        p.pack_rpc_msg(msg)
-        header = p.get_buffer()
-        pipe.push_record(header + data)
-
-    def send_call(self, pipe, procedure, data='', credinfo=None, program=None, version=None):
-        if program is None: program = self.default_prog
-        if version is None: version = self.default_vers
-        if program is None or version is None:
-            raise Exception("Badness")
-        if credinfo is None:
-            credinfo = self.default_cred
-        # XXX What to do if cred not initialized?  Currently send_call
-        # does not block, but the call to init_cred will block.  Apart
-        # from that, this is a logical place to do the init.
-        sec = credinfo.sec
-        xid = pipe.get_xid()
-        # Build header
-        cred = sec.make_cred(credinfo)
-        verf = None # This needs same info as body, easier to delay
-        body = call_body(self.rpcversion, program, version, procedure,
-                         cred, verf)
-        body.verf = sec.make_call_verf(xid, body)
-        msg = rpc_msg(xid, rpc_msg_body(CALL, body))
-        msg.sec = sec # HACK to pass sec to reply handler
-        # Wrap data
-        data = sec.secure_data(cred, data)
-        # Send it off
-        self.send_raw(pipe, msg, data)
-        return xid
-
     def make_call_function(self, pipe, procedure, prog, vers):
         def call(data, credinfo, proc=None, timeout=15.0):
             if proc is None:
@@ -809,11 +820,6 @@ class ConnectionHandler(object):
             return header, data
         return call
     
-    def send_reply(self, pipe, xid, body, proc_response=""):
-        log_t.debug("send_reply\nbody = %r\ndata=%r" % (body, proc_response))
-        msg = rpc_msg(xid, rpc_msg_body(REPLY, rbody=body))
-        self.send_raw(pipe, msg, proc_response)
-
     def listen(self, pipe, xid):
         # STUB - should be overwritten by subclass
         header, data = pipe.listen(xid)
@@ -827,7 +833,6 @@ class Server(ConnectionHandler):
         ConnectionHandler.__init__(self)
         self.prog = prog
         self.versions = versions # List of supported versions of prog
-        self.rpcversion = 2
         self.security = {} # This need to be set somewhere/somehow
         # STUB
         self.security = {0: security.AuthNone(),
@@ -848,7 +853,6 @@ class Client(ConnectionHandler):
         self.default_cred = security.CredInfo()
         self.timeout = timeout
         self.secureport = secureport
-        self.rpcversion = 2
         self.prog = 0x40000000 # Callback handling prog #
         self.versions=[cb_version] # List of supported versions of CB server
         self.security = {0: security.AuthNone(),
@@ -861,7 +865,20 @@ class Client(ConnectionHandler):
         t = threading.Thread(target=self.start, name="PollingThread")
         t.setDaemon(True)
         t.start()
-        
+
+    def send_call(self, pipe, procedure, data='', credinfo=None,
+                  program=None, version=None):
+        if program is None: program = self.default_prog
+        if version is None: version = self.default_vers
+        if program is None or version is None:
+            raise Exception("Badness")
+        if credinfo is None:
+            credinfo = self.default_cred
+        # XXX What to do if cred not initialized?  Currently send_call
+        # does not block, but the call to init_cred will block.  Apart
+        # from that, this is a logical place to do the init.
+        return pipe.send_call(program, version, procedure, data, credinfo)
+
     def check_reply(self, header):
         """Looks at rpc_msg reply and raises error if necessary
 
