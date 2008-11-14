@@ -163,12 +163,6 @@ class DeferredData(object):
         self.data = data
         self._filled.set()
 
-class _MyDeque(collections.deque):
-    # XXX Should we reimplement close?
-    # Sole purpose of this is to allow attrs to be writable,
-    # which is used to implement close.
-    pass
-
 class Alarm(object):
     """A method of notifying select loop that there is data waiting"""
     def __init__(self, address):
@@ -209,7 +203,7 @@ class Pipe(object):
         # Note the write queue is accessed by both main and worker threads,
         # so uses thread-safe deque() struture.  The other buffers are only
         # looked at by the main thread, so no locking is required.
-        self.write_queue = _MyDeque() # Records waiting to be sent out
+        self.write_queue = collections.deque() # Records waiting to be sent out
         # records are pulled from write_queue, record marking added, then
         # the raw data to be written out is put here
         self.write_buf = '' # Raw outgoing data
@@ -218,7 +212,6 @@ class Pipe(object):
         self.lock = threading.Lock()
         self.xid = 0
         self.pending = {} # {xid:defer}
-        self._close_lock = threading.Lock()
 
     def __getattr__(self, attr):
         """Show socket interface"""
@@ -369,11 +362,6 @@ class ConnectionHandler(object):
             # Pop record off the write queue, and format it for the wire
             try:
                 data = s.write_queue.pop()
-                if data is None:
-                    log_p.info("Write queue is flushed for %i" % fd)
-                    # The pipe has been closed
-                    self._event_close(fd)
-                    return
                 s.write_buf = self.add_record_marks(data)
             except IndexError:
                 # NOTE that due to threading, it is possible that write_queue
@@ -705,27 +693,8 @@ class ConnectionHandler(object):
         p = FancyRPCPacker()
         p.pack_rpc_msg(msg)
         header = p.get_buffer()
-        try:
-            pipe.write_queue.appendleft(header + data)
-        except TypeError:
-            raise RPCError("Pipe is closed")
+        pipe.write_queue.appendleft(header + data)
         self.write_alarm.buzz(pipe.fileno())
-
-    def close(self, pipe):
-        log_t.info("Called close() for %i" % pipe.fileno())
-        pipe._close_lock.acquire()
-        try:
-            if pipe.write_queue.appendleft is None:
-                raise RPCError("Pipe is already closed")
-            # Solve any races by locking out further sends
-            pipe.write_queue.appendleft = None
-            # Prevent any more reads from coming in
-            # pipe.shutdown(socket.SHUT_RD)
-            # Now signal for a close once write_queue is flushed
-            collections.deque.appendleft(pipe.write_queue, None)
-            self.write_alarm.buzz(pipe.fileno())
-        finally:
-            pipe._close_lock.release()
 
     def send_call(self, pipe, procedure, data='', credinfo=None, program=None, version=None):
         if program is None: program = self.default_prog
