@@ -5,6 +5,7 @@ import struct
 import threading
 import logging
 from collections import deque as Deque
+from errno import EINPROGRESS
 
 import rpc_pack
 from rpc_const import *
@@ -166,34 +167,36 @@ class DeferredData(object):
 class Alarm(object):
     """A method of notifying select loop that there is data waiting"""
     def __init__(self, address):
-        # XXX I don't think the locking is needed now that select counts bytes
-        # self.lock = threading.Lock()
-        self.queue = Deque()
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.setblocking(0)
+        self._queue = Deque()
+        self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._s.setblocking(0)
         try:
-            self.s.connect(address)
-        except socket.error:
-            # Should get op in progress error
-            pass
-        
+            self._s.connect(address)
+        except socket.error, e:
+            if e.args[0] == EINPROGRESS:
+                # address has not yet called accept, since this is done in a
+                # single thread, so get "op in progress error".  When the
+                # receiving end calls accept, all is good.
+                pass
+            else:
+                raise
+
     def buzz(self, info):
         """Wake the polling loop, passing it info"""
-        # self.lock.acquire()
-        try:
-            self.queue.appendleft(info)
-            # Send one byte of data to wake select loop
-            # Note bytes sent are counted to determine how many items to pop
-            while (not self.s.send('\0')):
-                # Just loop here until we actually send something
-                pass
-        finally:
-            # self.lock.release()
+        self._queue.appendleft(info)
+        # Send one byte of data to wake select loop
+        # Note bytes sent are counted to determine how many items to pop
+        while (not self._s.send('\0')):
+            # Just loop here until we actually send something
             pass
+
+    def pop(self):
+        """Called by polling loop to grab the info passed in by buzz"""
+        return self._queue.pop()
 
     def __getattr__(self, attr):
         """Show socket interface"""
-        return getattr(self.s, attr)
+        return getattr(self._s, attr)
 
 class Pipe(object):
     """Groups a socket with its buffers.
@@ -407,7 +410,7 @@ class ConnectionHandler(object):
                     # data from alarm has one byte garbage per socket
                     data = self.write_alarm_poll.recv(self.rsize)
                     # Real info is the list of sockets ready to write data
-                    list = [self.write_alarm.queue.pop() for i in data]
+                    list = [self.write_alarm.pop() for i in data]
                     self.writelist |= set(list)
                 elif fd == self.socket_alarm_poll.fileno():
                     # We have initiated a client-like connection
@@ -415,7 +418,7 @@ class ConnectionHandler(object):
                     # data from alarm has one byte garbage per socket
                     data = self.socket_alarm_poll.recv(self.rsize)
                     # Real info is list of pipes to add to self.sockets
-                    list = [self.socket_alarm.queue.pop() for i in data]
+                    list = [self.socket_alarm.pop() for i in data]
                     self._event_new_socket(list)
                 else:
                     try:
