@@ -313,17 +313,15 @@ class Pipe(object):
         # However, deque is thread safe, so all is good
         self._write_queue.appendleft(record)
         # Notify ConnectionHandler that there is data to write
-        self._alarm.buzz(self._s.fileno())
+        self._alarm.buzz(self)
 
-    def send_records(self, count):
-        """Flush stored records through the pipe.
+    def pop_record(self, count):
+        """Pulls record off stack and places in write buffer.
 
-        It will return True if done, False if needs to be called again.
-
-        Note that due to threading, it is possible that there are stored
-        records even if we return True.  However, that's OK, since that
-        means an alarm is pending, which will cause the function to be
-        called again.
+        Appropriate record marking is added.  This should be called once
+        for each push_record called.  This is handled by arranging to have
+        the function called each time the the polling loop responds to
+        self._alarm.buzz.
         """
         def add_record_marks(record, count):
             """Given a record, convert it to actual stream to send over TCP"""
@@ -339,15 +337,22 @@ class Pipe(object):
                 out += mark + chunk
             return out
 
+        record = self._write_queue.pop()
+        self._write_buf += add_record_marks(record, count)
+
+    def flush_pipe(self):
+        """Try to flush the write buffer.
+
+        Return True if succeeds, False if needs to be called again.
+
+        Note this only flushes the buffer of raw bytes waiting to be sent.
+        It does not look at the waiting stack of non-marked records.
+        """
         if not self._write_buf:
-            if self._write_queue:
-                record = self._write_queue.pop()
-                self._write_buf = add_record_marks(record, count)
-            else:
-                return True
+            raise RuntimeError
         count = self._s.send(self._write_buf)
         self._write_buf = self._write_buf[count:]
-        return (not self._write_buf) and (not self._write_queue)
+        return (not self._write_buf)
 
 #################################################
 
@@ -410,8 +415,9 @@ class ConnectionHandler(object):
                     # data from alarm has one byte garbage per socket
                     data = self.write_alarm_poll.recv(self.rsize)
                     # Real info is the list of sockets ready to write data
-                    list = [self.write_alarm.pop() for i in data]
-                    self.writelist |= set(list)
+                    for pipe in [self.write_alarm.pop() for i in data]:
+                        pipe.pop_record(self.wsize)
+                        self.writelist.add(pipe.fileno())
                 elif fd == self.socket_alarm_poll.fileno():
                     # We have initiated a client-like connection
                     log_p.log(5, "Woke due to connection alarm")
@@ -469,7 +475,7 @@ class ConnectionHandler(object):
 
     def _event_write(self, fd):
         """Data is waiting to be written."""
-        if self.sockets[fd].send_records(self.wsize):
+        if self.sockets[fd].flush_pipe():
             self.writelist.remove(fd)
             log_p.log(5, "Finished writing to %i" % fd)
 
