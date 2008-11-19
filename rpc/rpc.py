@@ -366,6 +366,7 @@ class ConnectionHandler(object):
     but only through start.  Thread safety depends on this.
     """
     def __init__(self):
+        self._stopped = False
         # Set up polling lists
         self.readlist = set()
         self.writelist = set()
@@ -408,11 +409,16 @@ class ConnectionHandler(object):
         # Notify thread which created connection that it is now up
         defer.fill()
 
+    def _buzz_stop(self, data):
+        """We want to exit the start loop"""
+        self._stopped = True
+
     def start(self):
         switch = {'\x00' : self._buzz_write_ready,
                   '\x01' : self._buzz_new_socket,
+                  '\x02' : self._buzz_stop,
                   }
-        while 1:
+        while not self._stopped:
             log_p.debug("Calling select")
             log_p.log(5, "Sleeping for: %s, %s, %s" %
                  (self.readlist, self.writelist, self.errlist))
@@ -440,6 +446,11 @@ class ConnectionHandler(object):
                         self._event_read(data, fd)
                     else:
                         self._event_close(fd)
+        for s in self.sockets.values():
+            s.close()
+
+    def stop(self):
+        self._alarm.buzz('\x02', None)
 
     def _event_connect_incoming(self, fd):
         """Someone else is trying to connect to us (we act like server)."""
