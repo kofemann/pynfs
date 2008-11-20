@@ -66,10 +66,6 @@ class RPCDeniedError(RPCError):
             return "RPCError: MSG_DENIED: AUTH_ERROR: %s" % \
                    auth_stat.get(self.astat, self.astat)
 
-class CredProblem(rpc_pack.XDRError):
-    def __init__(self, data):
-        self.data = data
-
 ###################################################
 
 class FancyRPCUnpacker(rpc_pack.RPCUnpacker):
