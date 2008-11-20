@@ -594,8 +594,10 @@ class ConnectionHandler(object):
             if msg.proc == 0 and msg.cred.flavor == AUTH_NONE:
                 # RFC 1831 section 11.1 says "by convention" should allow this
                 log_t.warn("Allowing NULL proc through anyway")
-                return security.klass(AUTH_NONE)()
-            raise RPCReply(accept=False, stat=AUTH_ERROR, statdata=AUTH_FAILED)
+                sec = security.klass(AUTH_NONE)()
+            else:
+                raise RPCReply(accept=False,
+                               stat=AUTH_ERROR, statdata=AUTH_FAILED)
         # Call flavor specific authority checks
         return sec.check_auth(msg, data)
 
