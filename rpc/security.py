@@ -31,7 +31,7 @@ class RPCReply(Exception):
         if not self.accept:
             if self.stat == RPC_MISMATCH:
                 rreply = rejected_reply(self.stat,
-                                        rpc_mismatch_info(self.statdata))
+                                        rpc_mismatch_info(*self.statdata))
             else:
                 rreply = rejected_reply(self.stat, astat=self.statdata)
             return reply_body(MSG_DENIED, rreply=rreply), ''
