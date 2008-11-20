@@ -565,14 +565,20 @@ class ConnectionHandler(object):
         call_info.header_size = msg.length
         call_info.payload_size = len(msg_data)
         call_info.connection = msg.pipe
-        sec = None
         notify = None
         try:
             # Check for reasons to DENY the call
-            self._check_rpcvers(msg)
-            call_info.credinfo = self._check_auth(msg, msg_data)
-            sec = call_info.credinfo.sec
+            try:
+                self._check_rpcvers(msg)
+                call_info.credinfo = self._check_auth(msg, msg_data)
+            except rpclib.RPCFlowContol:
+                raise
+            except Exception:
+                log_t.warn("Problem with incoming call, returning AUTH_FAILED",
+                           exc_info=True)
+                raise rpclib.RPCDeniedReply(AUTH_ERROR, AUTH_FAILED)
             # Call has been ACCEPTED, now check for reasons not to succeed
+            sec = call_info.credinfo.sec
             msg_data = sec.unsecure_data(msg.body.cred, msg_data)
             self._check_program(msg)
             self._check_version(msg)
@@ -593,11 +599,17 @@ class ConnectionHandler(object):
             return
         except rpclib.RPCFlowContol, e:
             body, data = e.body()
+        except Exception:
+            log_t.warn("Unexpected exception", exc_info=True)
+            body, data = rpclib.RPCUnsuccessfulReply(SYSTEM_ERR).body()
         else:
-            data = sec.secure_data(msg.body.cred, result)
-            verf = sec.make_reply_verf(msg.body.cred, status)
-            areply = accepted_reply(verf, rpc_reply_data(status, ''))
-            body = reply_body(MSG_ACCEPTED, areply=areply)
+            try:
+                data = sec.secure_data(msg.body.cred, result)
+                verf = sec.make_reply_verf(msg.body.cred, status)
+                areply = accepted_reply(verf, rpc_reply_data(status, ''))
+                body = reply_body(MSG_ACCEPTED, areply=areply)
+            except Exception:
+                body, data = rpclib.RPCUnsuccessfulReply(SYSTEM_ERR).body()
         self.send_reply(msg.pipe, msg.xid, body, data)
         if notify is not None:
             notify()
