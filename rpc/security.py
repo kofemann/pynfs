@@ -3,7 +3,6 @@ from rpc_type import opaque_auth, authsys_parms
 from rpc_pack import RPCPacker, RPCUnpacker
 from gss_pack import GSSPacker, GSSUnpacker
 from xdrlib import Packer, Unpacker
-from rpclib import RPCReply
 import rpclib
 from gss_const import *
 import gss_type
@@ -100,7 +99,7 @@ class AuthNone(object):
         return rpclib.NULL_CRED
 
     def check_auth(self, msg, data):
-        """Server check of credentials, which can raise a RPCReply"""
+        """Server check of credentials, which can raise a RPCFlowControl"""
         # STUB
         # Check cred and verf have no XDR errors
         # Check verifier == rpclib.NULL_CRED
@@ -159,7 +158,7 @@ class AuthSys(AuthNone):
         return out
 
     def check_auth(self, msg, data):
-        """Server check of credentials, which can raise a RPCReply"""
+        """Server check of credentials, which can raise a RPCFlowControl"""
         # STUB
         # Check cred and verf have no XDR errors
         # Check verifier == rpclib.NULL_CRED
@@ -196,7 +195,7 @@ class GSSContext(object):
             diff = seqid - self.highest
             if diff <= -WINDOWSIZE:
                 # Falls outside window
-                raise RPCReply(drop=True)
+                raise rpclib.RPCDrop
             elif diff > 0:
                 # New highest seqid
                 self.highest += diff
@@ -206,7 +205,7 @@ class GSSContext(object):
             else:
                 # Within window, check for repeat
                 if (1 << (-diff)) & self.seen:
-                    raise RPCReply(drop=True)
+                    raise rpclib.RPCDrop
         finally:
             self.lock.release()
 
@@ -329,9 +328,9 @@ class AuthGss(AuthNone):
                 seq_num = p.unpack_uint()
             except:
                 log_gss.exception("unsecure_data - unpacking seq_num")
-                raise RPCReply(stat=GARBAGE_ARGS)
+                raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
             if seq_num != cred.seq_num:
-                raise RPCReply(stat=GARBAGE_ARGS)
+                raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
             return p.get_buffer()[p.get_position():]
 
         def check_gssapi(qop):
@@ -339,7 +338,7 @@ class AuthGss(AuthNone):
                 # XXX Not sure what error to give here
                 log_gss.warn("unsecure_data: mismatched qop %i != %i" %
                              (qop, cred.qop))
-                raise RPCReply(stat=GARBAGE_ARGS)
+                raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
 
         cred = cred.body
         if cred.service ==  rpc_gss_svc_none or \
@@ -356,7 +355,7 @@ class AuthGss(AuthNone):
                     p.done()
                 except:
                     log_gss.exception("unsecure_data - initial unpacking")
-                    raise RPCReply(stat=GARBAGE_ARGS)
+                    raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
                 qop = context.verifyMIC(data, checksum)
                 check_gssapi(qop)
                 data = pull_seqnum(data)
@@ -367,7 +366,7 @@ class AuthGss(AuthNone):
                     p.done()
                 except:
                     log_gss.exception("unsecure_data - initial unpacking")
-                    raise RPCReply(stat=GARBAGE_ARGS)
+                    raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
                 # data, qop, conf = context.unwrap(data)
                 data, qop = context.unwrap(data)
                 check_gssapi(qop)
@@ -377,7 +376,7 @@ class AuthGss(AuthNone):
                 log_gss.error("Unknown service %i for RPCSEC_GSS" % cred.service)
         except gssapi.Error, e:
             log_gss.warn("unsecure_data: gssapi call returned %s" % e.name)
-            raise RPCReply(stat=GARBAGE_ARGS)
+            raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
         return data
 
     def secure_data(self, cred, data):
@@ -459,7 +458,7 @@ class AuthGss(AuthNone):
         """
         def auth_error(code):
             """Return (MSG_DENIED, AUTH_ERROR, code)"""
-            raise RPCReply(accept=False, stat=AUTH_ERROR, statdata=code)
+            raise rpclib.RPCDeniedReply(AUTH_ERROR, code)
 
         log_gss.debug("check_auth called with %r" % msg)
         # Check that cred and verf had no XDR errors
@@ -475,7 +474,7 @@ class AuthGss(AuthNone):
         if cred.gss_proc != RPCSEC_GSS_DATA:
             if msg.proc != 0:
                 auth_error(AUTH_BADCRED)
-            # NOTE this will not return, instead raises an RPCReply
+            # NOTE this will not return, instead raises an RPCFlowControl
             getattr(self, "handle_gss_proc_%i" % cred.gss_proc)(msg.cred, data)
         # Check service is permitted
         # STUB
@@ -545,7 +544,7 @@ class AuthGss(AuthNone):
         # NOTE this is an annoying case for make_reply_verf.
         # It is the only time that you need msg_data to feed into it.
         verf = self.make_reply_verf(cred, major)
-        raise RPCReply(msgdata=p.get_buffer(), verf=verf)
+        raise rpclib.RPCSuccessfulReply(verf, p.get_buffer())
 
     def make_reply_verf(self, cred, stat):
         log_gss.debug("CALL:make_reply_verf(%r, %i)" % (cred, stat))

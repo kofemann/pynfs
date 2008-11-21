@@ -12,7 +12,7 @@ from rpc_const import *
 from rpc_type import *
 
 import security
-from rpclib import RPCReply
+import rpclib
 
 log_p = logging.getLogger("rpc.poll") # polling loop thread
 log_t = logging.getLogger("rpc.thread") # handler threads
@@ -583,17 +583,22 @@ class ConnectionHandler(object):
                 status, result = tuple
             else:
                 status, result, notify = tuple
+            if result is None:
+                result = ''
             # status, result = method(msg_data, call_info)
             log_t.debug("Called method, got %r, %r" % (status, result))
-            raise RPCReply(stat=status, msgdata=result)
-        except RPCReply, e:
-            if e.drop:
-                # Silently drop the request
-                log_t.warn("Dropped request")
-                return
-            else:
-                body, data = e.body(sec, msg.body.cred)
-                self.send_reply(msg.pipe, msg.xid, body, data)
+        except rpclib.RPCDrop:
+            # Silently drop the request
+            log_t.warn("Dropped request")
+            return
+        except rpclib.RPCFlowContol, e:
+            body, data = e.body()
+        else:
+            data = sec.secure_data(msg.body.cred, result)
+            verf = sec.make_reply_verf(msg.body.cred, status)
+            areply = accepted_reply(verf, rpc_reply_data(status, ''))
+            body = reply_body(MSG_ACCEPTED, areply=areply)
+        self.send_reply(msg.pipe, msg.xid, body, data)
         if notify is not None:
             notify()
 
@@ -611,28 +616,28 @@ class ConnectionHandler(object):
         if method is not None:
             return method
         log_t.warn("PROC_UNAVAIL for vers=%i, proc=%i" % (msg.vers, msg.proc))
-        raise RPCReply(stat=PROC_UNAVAIL)
+        raise rpclib.RPCUnsuccessfulReply(PROC_UNAVAIL)
 
     def _check_version(self, msg):
         """Returns True if program version is supported"""
         if msg.vers not in self.versions:
             log_t.warn("PROG_MISMATCH, do not support vers=%i" % msg.vers)
-            raise RPCReply(stat=PROG_MISMATCH,
-                           statdata=(min(self.versions), max(self.versions)))
+            raise rpclib.RPCUnsuccessfulReply(PROG_MISMATCH,
+                                       (min(self.versions), max(self.versions)))
 
     def _check_program(self, msg):
         """Returns True if call program is supported"""
         if msg.prog != self.prog:
             log_t.warn("PROG_UNAVAIL, do not support prog=%i" % msg.prog)
-            raise RPCReply(stat=PROG_UNAVAIL)
+            raise rpclib.RPCUnsuccessfulReply(PROG_UNAVAIL)
 
     def _check_rpcvers(self, msg):
         """Returns True if rpcvers is ok, otherwise sends out MSG_DENIED"""
         if msg.rpcvers not in self.rpcversions:
             log_t.warn("RPC_MISMATCH, do not support vers=%i" % msg.rpcvers)
-            raise RPCReply(accept=False, stat=RPC_MISMATCH,
-                           statdata=(min(self.rpcversions),
-                                     max(self.rpcversions)))
+            raise rpclib.RPCDeniedReply(RPC_MISMATCH,
+                                        (min(self.rpcversions),
+                                         max(self.rpcversions)))
 
     def _check_auth(self, msg, data):
         """Returns security module to use if call processing should continue,
@@ -650,8 +655,7 @@ class ConnectionHandler(object):
                 log_t.warn("Allowing NULL proc through anyway")
                 sec = security.klass(AUTH_NONE)()
             else:
-                raise RPCReply(accept=False,
-                               stat=AUTH_ERROR, statdata=AUTH_FAILED)
+                raise rpclib.RPCDeniedReply(AUTH_ERROR, AUTH_FAILED)
         # Call flavor specific authority checks
         return sec.check_auth(msg, data)
 
