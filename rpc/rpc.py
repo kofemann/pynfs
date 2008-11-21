@@ -12,7 +12,7 @@ from rpc_const import *
 from rpc_type import *
 
 import security
-from security import RPCReply
+from rpclib import RPCReply
 
 log_p = logging.getLogger("rpc.poll") # polling loop thread
 log_t = logging.getLogger("rpc.thread") # handler threads
