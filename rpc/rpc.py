@@ -530,24 +530,26 @@ class ConnectionHandler(object):
         except IndexError:
             log_t.warn("Reply with unexpected xid=%i" % msg.xid)
             return
-        header = msg.body
+        exc = None # Exception that will be raised in calling thread
+        sec = deferred.msg.sec
         try:
-            if header.mtype != REPLY:
-                raise RPCError("Msg was not a REPLY")
-            if header.stat == MSG_DENIED:
-                raise RPCDeniedError(header.rreply)
-            sec = deferred.msg.sec
-            # BUG - how handle exception from check_reply_verf?
             sec.check_reply_verf(msg, deferred.msg.body.cred, msg_data)
-            if header.reply_data.stat != SUCCESS:
-                raise RPCAcceptError(header.areply)
-            msg_data = sec.unsecure_data(deferred.msg.body.cred, msg_data)
-        except RPCError, e:
-            log_t.warn("Filling deferral %i with an exception" % msg.xid)
-            deferred.fill((msg, msg_data), e)
+        except Exception:
+            log_t.warn("Reply did not pass verifier checks", exc_info=True)
             return
+        if msg.stat == MSG_DENIED:
+            exc = RPCDeniedError(msg.rreply)
+        elif msg.reply_data.stat != SUCCESS:
+            exc = RPCAcceptError(msg.areply)
+        else:
+            try:
+                msg_data = sec.unsecure_data(deferred.msg.body.cred, msg_data)
+            except Exception:
+                # Unsure what to do here.
+                # FRED - what is the point of verifier, if this can occur?
+                exc = RPCError("Failed to unsecure data in reply")
         log_t.debug("Filling deferral %i" % msg.xid)
-        deferred.fill((msg, msg_data))
+        deferred.fill((msg, msg_data), exc)
 
     def _event_rpc_call(self, msg, msg_data):
         """Deal with an incoming RPC CALL.

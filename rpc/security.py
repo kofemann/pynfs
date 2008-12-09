@@ -1,4 +1,5 @@
-from rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL
+from rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL, \
+    MSG_ACCEPTED
 from rpc_type import opaque_auth, authsys_parms
 from rpc_pack import RPCPacker, RPCUnpacker
 from gss_pack import GSSPacker, GSSUnpacker
@@ -106,7 +107,7 @@ class AuthNone(object):
         return CredInfo(self)
 
     def check_reply_verf(self, msg, call_cred, data):
-        if not self.is_NULL(msg.body.verf):
+        if msg.stat == MSG_ACCEPTED and not self.is_NULL(msg.body.verf):
             raise SecError("Bad reply verifier - expected NULL verifier")
 
     def is_NULL(self, cred):
@@ -566,6 +567,8 @@ class AuthGss(AuthNone):
         return opaque_auth(RPCSEC_GSS, token)
 
     def check_reply_verf(self, msg, call_cred, data):
+        if msg.stat != MSG_ACCEPTED:
+            return
         verf = msg.rbody.areply.verf
         if msg.rbody.areply.reply_data.stat != SUCCESS:
             if not self.is_NULL(verf):
