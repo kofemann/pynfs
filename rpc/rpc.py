@@ -498,8 +498,6 @@ class ConnectionHandler(object):
             p = FancyRPCUnpacker(record)
             msg = p.unpack_rpc_msg() # RPC header
             msg_data = record[p.get_position():] # RPC payload
-            # Remember which connection msg was received on
-            msg.pipe = pipe
             # Remember length of the header
             msg.length = p.get_position()
         except (rpc_pack.XDRError, EOFError), e:
@@ -509,24 +507,24 @@ class ConnectionHandler(object):
         log_t.debug("MSG = %s" % str(msg))
         log_t.debug("data = %r" % msg_data)
         if msg.mtype == REPLY:
-            self._event_rpc_reply(msg, msg_data)
+            self._event_rpc_reply(msg, msg_data, pipe)
         elif msg.mtype == CALL:
-            self._event_rpc_call(msg, msg_data)
+            self._event_rpc_call(msg, msg_data, pipe)
         else:
             # Shouldn't get here, but doesn't hurt
             log_t.error("Received rpc_record with msg.type=%i" % msg.type)
         return
 
-    def _event_rpc_reply(self, msg, msg_data):
+    def _event_rpc_reply(self, msg, msg_data, pipe):
         """Deal with an incoming RPC REPLY.
 
-        msg is unpacked header, with pipe field added.
+        msg is unpacked header,
         msg_data is raw procedure data.
         """
         try:
             # This should match a CALL we made, which set aside space for us
             # (The space is set aside in self.send_raw)
-            deferred = msg.pipe.pending[msg.xid]
+            deferred = pipe.pending[msg.xid]
         except IndexError:
             log_t.warn("Reply with unexpected xid=%i" % msg.xid)
             return
@@ -551,10 +549,10 @@ class ConnectionHandler(object):
         log_t.debug("Filling deferral %i" % msg.xid)
         deferred.fill((msg, msg_data), exc)
 
-    def _event_rpc_call(self, msg, msg_data):
+    def _event_rpc_call(self, msg, msg_data, pipe):
         """Deal with an incoming RPC CALL.
         
-        msg is unpacked header, with pipe and length fields added.
+        msg is unpacked header, with length fields added.
         msg_data is raw procedure data.
         """
         """Given an RPC record, returns appropriate reply
@@ -566,7 +564,7 @@ class ConnectionHandler(object):
         call_info = XXX() # Store various info we need to pass to procedure
         call_info.header_size = msg.length
         call_info.payload_size = len(msg_data)
-        call_info.connection = msg.pipe
+        call_info.connection = pipe
         notify = None
         try:
             # Check for reasons to DENY the call
@@ -612,7 +610,7 @@ class ConnectionHandler(object):
                 body = reply_body(MSG_ACCEPTED, areply=areply)
             except Exception:
                 body, data = rpclib.RPCUnsuccessfulReply(SYSTEM_ERR).body()
-        self.send_reply(msg.pipe, msg.xid, body, data)
+        self.send_reply(pipe, msg.xid, body, data)
         if notify is not None:
             notify()
 
