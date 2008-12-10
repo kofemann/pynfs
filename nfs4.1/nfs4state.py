@@ -722,7 +722,7 @@ class DelegEntry(StateTableEntry):
             self.status = D_INVALID
             return
         # All sorts of STUBBINESS here
-        pipe = dispatcher.sockets[session.channel_back.connections[0][0]]
+        pipe = session.channel_back.connections[0]
         xid = dispatcher.cb_compound_async([seq_op, recall_op], 
                                            session.cb_prog, pipe=pipe)
         # Note it is possible that self.invalid is True, but don't 

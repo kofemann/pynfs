@@ -253,10 +253,6 @@ class Pipe(object):
         """Show socket interface"""
         return getattr(self._s, attr)
 
-    def connection(self):
-        """Returns info uniquely identifying the connection"""
-        return id(self)
-
     def get_xid(self):
         with self._lock:
             out = self._xid
@@ -572,7 +568,7 @@ class ConnectionHandler(object):
         call_info = XXX() # Store various info we need to pass to procedure
         call_info.header_size = msg.length
         call_info.payload_size = len(msg_data)
-        call_info.connection = msg.pipe.connection() # XXX Use just msg.pipe?
+        call_info.connection = msg.pipe
         sec = None
         notify = None
         try:
