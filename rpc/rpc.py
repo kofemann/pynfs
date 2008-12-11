@@ -578,6 +578,7 @@ class ConnectionHandler(object):
         except (rpc_pack.XDRError, EOFError), e:
             log_t.warn("XDRError: %s, dropping packet" % e)
             log_t.debug("unpacking raised the following error", exc_info=True)
+            self._notify_drop()
             return # Drop incorrectly encoded packets
         log_t.debug("MSG = %s" % str(msg))
         log_t.debug("data = %r" % msg_data)
@@ -588,7 +589,7 @@ class ConnectionHandler(object):
         else:
             # Shouldn't get here, but doesn't hurt
             log_t.error("Received rpc_record with msg.type=%i" % msg.type)
-        return
+            self._notify_drop()
 
     def _event_rpc_reply(self, msg, msg_data, pipe):
         """Deal with an incoming RPC REPLY.
@@ -599,7 +600,7 @@ class ConnectionHandler(object):
         try:
             pipe.rcv_reply(msg, msg_data)
         except Exception:
-            pass
+            self._notify_drop()
 
     def _event_rpc_call(self, msg, msg_data, pipe):
         """Deal with an incoming RPC CALL.
@@ -658,7 +659,7 @@ class ConnectionHandler(object):
             log_t.debug("Called method, got %r, %r" % (status, result))
         except rpclib.RPCDrop:
             # Silently drop the request
-            log_t.warn("Dropped request")
+            self._notify_drop()
             return
         except rpclib.RPCFlowContol, e:
             body, data = e.body()
@@ -676,6 +677,10 @@ class ConnectionHandler(object):
         pipe.send_reply(msg.xid, body, data)
         if notify is not None:
             notify()
+
+    def _notify_drop(self):
+        """Debugging hook called when a request is dropped."""
+        log_t.warn("Dropped request")
 
     def _find_method(self, msg):
         """Returns function that should handle an incoming call.
