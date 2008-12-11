@@ -1,6 +1,8 @@
 from rpc_const import *
 from rpc_type import *
 
+NULL_CRED = opaque_auth(AUTH_NONE, '')
+
 class RPCReply(Exception):
     """Not really an error, but used abort processing and send a reply."""
     def __init__(self, accept=True, stat=SUCCESS, statdata=None,

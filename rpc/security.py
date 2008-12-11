@@ -4,6 +4,7 @@ from rpc_pack import RPCPacker, RPCUnpacker
 from gss_pack import GSSPacker, GSSUnpacker
 from xdrlib import Packer, Unpacker
 from rpclib import RPCReply
+import rpclib
 from gss_const import *
 import gss_type
 from gss_type import rpc_gss_init_res
@@ -14,7 +15,6 @@ import logging
 log_gss = logging.getLogger("rpc.sec.gss")
 log_gss.setLevel(logging.DEBUG)
 
-_none = opaque_auth(AUTH_NONE, '') # Frequently used value
 WINDOWSIZE = 8 # STUB, curently just a completely random number
 
 class SecError(Exception):
@@ -64,10 +64,10 @@ class AuthNone(object):
 
     def make_reply_verf(self, cred, stat):
         """Verifier sent by server with each MSG_ACCEPTED reply"""
-        return _none
+        return rpclib.NULL_CRED
 
     def make_call_verf(self, xid, body):
-        return _none
+        return rpclib.NULL_CRED
 
     def unsecure_data(self, cred, data):
         """Remove any security cruft from data"""
@@ -97,13 +97,13 @@ class AuthNone(object):
 
     def make_cred(self, credinfo):
         """Create credential"""
-        return _none
+        return rpclib.NULL_CRED
 
     def check_auth(self, msg, data):
         """Server check of credentials, which can raise a RPCReply"""
         # STUB
         # Check cred and verf have no XDR errors
-        # Check verifier == _none
+        # Check verifier == rpclib.NULL_CRED
         return CredInfo(self)
 
     def check_reply_verf(self, msg, call_cred, data):
@@ -162,7 +162,7 @@ class AuthSys(AuthNone):
         """Server check of credentials, which can raise a RPCReply"""
         # STUB
         # Check cred and verf have no XDR errors
-        # Check verifier == _none
+        # Check verifier == rpclib.NULL_CRED
         # print "**********"
         # print msg.cred.body
         return CredInfo(self, msg.cred.body)
@@ -435,7 +435,7 @@ class AuthGss(AuthNone):
 
     def make_call_verf(self, xid, body):
         if body.cred.body.gss_proc in (RPCSEC_GSS_INIT, RPCSEC_GSS_CONTINUE_INIT):
-            return _none
+            return rpclib.NULL_CRED
         else:
             data = self.partially_packed_header(xid, body)
             # XXX how handle gssapi.Error?
@@ -559,7 +559,7 @@ class AuthGss(AuthNone):
         if stat:
             # Return trivial verf on error
             # NOTE this relies on GSS_S_COMPLETE == rpc.SUCCESS == 0
-            return _none
+            return rpclib.NULL_CRED
         elif cred.gss_proc in (RPCSEC_GSS_INIT, RPCSEC_GSS_CONTINUE_INIT):
             # init requires getMIC(seq_window)
             i = WINDOWSIZE
