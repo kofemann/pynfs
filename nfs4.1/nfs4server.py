@@ -911,7 +911,7 @@ class NFS4Server(rpc.Server):
                     return encode_status(NFS4ERR_NOENT, msg="No such client")
                 else:
                     # The simple, common case 1: a new client
-                    c = self.clients.add(arg, env.principal, self.security)
+                    c = self.clients.add(arg, env.principal, self.sec_flavors)
             elif not c.confirmed:
                 if update:
                     # Case 7
@@ -920,7 +920,7 @@ class NFS4Server(rpc.Server):
                 else:
                     # Case 4
                     self.clients.remove(c.clientid)
-                    c = self.clients.add(arg, env.principal, self.security)
+                    c = self.clients.add(arg, env.principal, self.sec_flavors)
             else: # c.confirmed == True
                 # STUB - state protection is from draft13 - still valid???
                 # We need to do state protection tests
@@ -952,7 +952,7 @@ class NFS4Server(rpc.Server):
                     # new is confirmed
                     self.client_reboot(c) # STUB - remove state
                     self.clients.remove(c.clientid)
-                    c = self.clients.add(arg, env.principal, self.security)
+                    c = self.clients.add(arg, env.principal, self.sec_flavors)
                     # QUESTION - what happens if still processing request
                     # from previous client incarnation?
                 else: # c.verifier == verf

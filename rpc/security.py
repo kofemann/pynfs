@@ -612,5 +612,11 @@ def klass(flavor):
     """
     return supported[flavor]
 
+def instances():
+    out = {}
+    for flavor, auth in supported.items():
+        out[flavor] = auth()
+    return out
+
 def instance(flavor, *args, **kwargs):
     return klass(flavor)(*args, **kwargs)

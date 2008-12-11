@@ -455,6 +455,9 @@ class ConnectionHandler(object):
         self.wsize = 4098 # Read data in chunks of this size
         self.rpcversions = (2,) # Supported RPC versions
 
+        # Dictionary {flavor: handler} used for server-side authentication
+        self.sec_flavors = security.instances()
+
     def _buzz_write_ready(self, pipe):
         """Pipe has data ready to be sent out"""
         pipe.pop_record(self.wsize)
@@ -708,7 +711,7 @@ class ConnectionHandler(object):
         """
         # Check that flavor is supported
         try:
-            sec = self.security[msg.cred.flavor]
+            sec = self.sec_flavors[msg.cred.flavor]
         except KeyError:
             log_t.warn("AUTH_ERROR: Unsupported flavor %i" % msg.cred.flavor)
             if msg.proc == 0 and msg.cred.flavor == AUTH_NONE:
@@ -833,14 +836,6 @@ class Server(ConnectionHandler):
         ConnectionHandler.__init__(self)
         self.prog = prog
         self.versions = versions # List of supported versions of prog
-        self.security = {} # This need to be set somewhere/somehow
-        # STUB
-        self.security = {0: security.AuthNone(),
-                         1: security.AuthSys(), #authsys_parms(3, "server",
-                         #          0,0,[1,2,3,4])),
-                         6: security.AuthGss(),
-                         }
-        
         self.default_cred = security.CredInfo()
         self.expose((interface, port), False)
         
@@ -855,11 +850,6 @@ class Client(ConnectionHandler):
         self.secureport = secureport
         self.prog = 0x40000000 # Callback handling prog #
         self.versions=[cb_version] # List of supported versions of CB server
-        self.security = {0: security.AuthNone(),
-                         1: security.AuthSys(), #authsys_parms(3, "server",
-                         #          0,0,[1,2,3,4])),
-                         6: security.AuthGss(),
-                         }
 
         # Start polling
         t = threading.Thread(target=self.start, name="PollingThread")
