@@ -639,7 +639,11 @@ class ConnectionHandler(object):
             if not (low <= msg.vers <= hi):
                 log_t.warn("PROG_MISMATCH, do not support vers=%i" % msg.vers)
                 raise rpclib.RPCUnsuccessfulReply(PROG_MISMATCH, (low, hi))
-            method = self.find_method(msg)
+            method = self._find_method(msg)
+            if method is None:
+                log_t.warn("PROC_UNAVAIL for vers=%i, proc=%i" %
+                           (msg.vers, msg.proc))
+                raise rpclib.RPCUnsuccessfulReply(PROC_UNAVAIL)
             # Everything looks good at this layer, time to do the call
             tuple = method(msg_data, call_info)
             if len(tuple) == 2:
@@ -648,6 +652,8 @@ class ConnectionHandler(object):
                 status, result, notify = tuple
             if result is None:
                 result = ''
+            if not isinstance(result, basestring):
+                raise TypeError("Expected string")
             # status, result = method(msg_data, call_info)
             log_t.debug("Called method, got %r, %r" % (status, result))
         except rpclib.RPCDrop:
@@ -671,21 +677,13 @@ class ConnectionHandler(object):
         if notify is not None:
             notify()
 
-    def find_method(self, msg):
-        """Returns RPC function to call
+    def _find_method(self, msg):
+        """Returns function that should handle an incoming call.
 
-        We look for self.handle_<proc>.  If that does not exist
-        we look for self.handle_<proc>_v<vers>.  If that does not exist,
-        we send an RPC error and return None.
+        Returns None if no handler can be found.
+        Needs to be implemented by subclass if will be used as server.
         """
-        method = getattr(self, 'handle_%i' % msg.proc, None)
-        if method is not None:
-            return method
-        method = getattr(self, 'handle_%i_v%i' % (msg.proc, msg.vers), None)
-        if method is not None:
-            return method
-        log_t.warn("PROC_UNAVAIL for vers=%i, proc=%i" % (msg.vers, msg.proc))
-        raise rpclib.RPCUnsuccessfulReply(PROC_UNAVAIL)
+        raise NotImplementedError
 
     def _version_range(self, prog):
         """Returns pair of min and max supported versions for given program.
@@ -852,6 +850,13 @@ class Server(ConnectionHandler):
     def _version_range(self, prog):
         return (min(self.versions), max(self.versions))
 
+    def _find_method(self, msg):
+        method = getattr(self, 'handle_%i' % msg.proc, None)
+        if method is not None:
+            return method
+        method = getattr(self, 'handle_%i_v%i' % (msg.proc, msg.vers), None)
+        return method
+
 class Client(ConnectionHandler):
     def __init__(self, program=None, version=None,
                  timeout=15.0, secureport=False, cb_version=1):
@@ -887,6 +892,13 @@ class Client(ConnectionHandler):
 
     def _version_range(self, prog):
         return (min(self.versions), max(self.versions))
+
+    def _find_method(self, msg):
+        method = getattr(self, 'handle_%i' % msg.proc, None)
+        if method is not None:
+            return method
+        method = getattr(self, 'handle_%i_v%i' % (msg.proc, msg.vers), None)
+        return method
 
     def check_reply(self, header):
         """Looks at rpc_msg reply and raises error if necessary
