@@ -13,7 +13,7 @@ import threading
 import logging
 
 log_gss = logging.getLogger("rpc.sec.gss")
-log_gss.setLevel(logging.DEBUG)
+log_gss.setLevel(logging.INFO)
 
 WINDOWSIZE = 8 # STUB, curently just a completely random number
 
@@ -163,8 +163,6 @@ class AuthSys(AuthNone):
         # STUB
         # Check cred and verf have no XDR errors
         # Check verifier == rpclib.NULL_CRED
-        # print "**********"
-        # print msg.cred.body
         return CredInfo(self, msg.cred.body)
 
 class GSSContext(object):
@@ -276,13 +274,11 @@ class AuthGss(AuthNone):
             proc = RPCSEC_GSS_CONTINUE_INIT
             p.reset()
             p.pack_opaque(token)
-            print " *******Call******"
             header, reply = call(p.get_buffer(), credinfo)
             up.reset(reply)
             res = up.unpack_rpc_gss_init_res()
             up.done()
             # res now holds relevent output from target's acceptSecContext call
-            print res
             if res.gss_major not in good_major:
                 raise gssapi.Error(res.gss_major, res.gss_minor)
             handle = res.handle # Should not change between calls
@@ -372,8 +368,6 @@ class AuthGss(AuthNone):
                 except:
                     log_gss.exception("unsecure_data - initial unpacking")
                     raise RPCReply(stat=GARBAGE_ARGS)
-                print repr(context.ptr)
-                print repr(data)
                 # data, qop, conf = context.unwrap(data)
                 data, qop = context.unwrap(data)
                 check_gssapi(qop)
@@ -517,7 +511,7 @@ class AuthGss(AuthNone):
         p = GSSUnpacker(data)
         token = p.unpack_opaque()
         p.done()
-        print "***ACCEPTSECCONTEXT***"
+        log_gss.debug("***ACCEPTSECCONTEXT***")
         if first:
             context = gssapi.Context()
         else:
@@ -574,7 +568,6 @@ class AuthGss(AuthNone):
 
     def check_reply_verf(self, msg, call_cred, data):
         verf = msg.rbody.areply.verf
-        print msg.rbody.reply_data
         if msg.rbody.areply.reply_data.stat != SUCCESS:
             if not self.is_NULL(verf):
                 raise SecError("Bad reply verifier - expected NULL verifier")
@@ -600,11 +593,6 @@ class AuthGss(AuthNone):
             p = Packer()
             p.pack_uint(call_cred.body.seq_num)
             qop = call_cred.context.verifyMIC(p.get_buffer(), verf.body)
-            print call_cred
-            print dir(call_cred)
-            print "*******"
-            print call_cred.body
-            print dir(call_cred.body)
             if qop != call_cred.body.qop:
                 raise SecError("Mismatched qop")
 
