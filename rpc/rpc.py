@@ -632,8 +632,13 @@ class ConnectionHandler(object):
             # Call has been ACCEPTED, now check for reasons not to succeed
             sec = call_info.credinfo.sec
             msg_data = sec.unsecure_data(msg.body.cred, msg_data)
-            self._check_program(msg)
-            self._check_version(msg)
+            if not self._check_program(msg.prog):
+                log_t.warn("PROG_UNAVAIL, do not support prog=%i" % msg.prog)
+                raise rpclib.RPCUnsuccessfulReply(PROG_UNAVAIL)
+            low, hi = self._version_range(msg.prog)
+            if not (low <= msg.vers <= hi):
+                log_t.warn("PROG_MISMATCH, do not support vers=%i" % msg.vers)
+                raise rpclib.RPCUnsuccessfulReply(PROG_MISMATCH, (low, hi))
             method = self.find_method(msg)
             # Everything looks good at this layer, time to do the call
             tuple = method(msg_data, call_info)
@@ -682,18 +687,20 @@ class ConnectionHandler(object):
         log_t.warn("PROC_UNAVAIL for vers=%i, proc=%i" % (msg.vers, msg.proc))
         raise rpclib.RPCUnsuccessfulReply(PROC_UNAVAIL)
 
-    def _check_version(self, msg):
-        """Returns True if program version is supported"""
-        if msg.vers not in self.versions:
-            log_t.warn("PROG_MISMATCH, do not support vers=%i" % msg.vers)
-            raise rpclib.RPCUnsuccessfulReply(PROG_MISMATCH,
-                                       (min(self.versions), max(self.versions)))
+    def _version_range(self, prog):
+        """Returns pair of min and max supported versions for given program.
 
-    def _check_program(self, msg):
-        """Returns True if call program is supported"""
-        if msg.prog != self.prog:
-            log_t.warn("PROG_UNAVAIL, do not support prog=%i" % msg.prog)
-            raise rpclib.RPCUnsuccessfulReply(PROG_UNAVAIL)
+        We assume that all versions between min and max ARE supported.
+        Needs to be implemented by subclass if will be used as server.
+        """
+        raise NotImplementedError
+
+    def _check_program(self, prog):
+        """Returns True if call program is supported, False otherwise.
+
+        Needs to be implemented by subclass if will be used as server.
+        """
+        raise NotImplementedError
 
     def _check_rpcvers(self, msg):
         """Returns True if rpcvers is ok, otherwise sends out MSG_DENIED"""
@@ -838,7 +845,13 @@ class Server(ConnectionHandler):
         self.versions = versions # List of supported versions of prog
         self.default_cred = security.CredInfo()
         self.expose((interface, port), False)
-        
+
+    def _check_program(self, prog):
+        return (self.prog == prog)
+
+    def _version_range(self, prog):
+        return (min(self.versions), max(self.versions))
+
 class Client(ConnectionHandler):
     def __init__(self, program=None, version=None,
                  timeout=15.0, secureport=False, cb_version=1):
@@ -868,6 +881,12 @@ class Client(ConnectionHandler):
         # does not block, but the call to init_cred will block.  Apart
         # from that, this is a logical place to do the init.
         return pipe.send_call(program, version, procedure, data, credinfo)
+
+    def _check_program(self, prog):
+        return (self.prog == prog)
+
+    def _version_range(self, prog):
+        return (min(self.versions), max(self.versions))
 
     def check_reply(self, header):
         """Looks at rpc_msg reply and raises error if necessary
