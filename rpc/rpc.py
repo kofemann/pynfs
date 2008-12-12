@@ -863,16 +863,12 @@ class Server(ConnectionHandler):
         return method
 
 class Client(ConnectionHandler):
-    def __init__(self, program=None, version=None,
-                 timeout=15.0, secureport=False, cb_version=1):
+    def __init__(self, program=None, version=None, secureport=False):
         ConnectionHandler.__init__(self)
         self.default_prog = program
         self.default_vers = version
         self.default_cred = security.CredInfo()
-        self.timeout = timeout
         self.secureport = secureport
-        self.prog = 0x40000000 # Callback handling prog #
-        self.versions=[cb_version] # List of supported versions of CB server
 
         # Start polling
         t = threading.Thread(target=self.start, name="PollingThread")
@@ -892,53 +888,4 @@ class Client(ConnectionHandler):
         # from that, this is a logical place to do the init.
         return pipe.send_call(program, version, procedure, data, credinfo)
 
-    def _check_program(self, prog):
-        return (self.prog == prog)
-
-    def _version_range(self, prog):
-        return (min(self.versions), max(self.versions))
-
-    def _find_method(self, msg):
-        method = getattr(self, 'handle_%i' % msg.proc, None)
-        if method is not None:
-            return method
-        method = getattr(self, 'handle_%i_v%i' % (msg.proc, msg.vers), None)
-        return method
-
-    def check_reply(self, header):
-        """Looks at rpc_msg reply and raises error if necessary
-
-        xid has already been checked
-        """
-        # STUB - xid needs checking somewhere
-        if header.mtype != REPLY:
-            raise RPCError("Msg was not a REPLY")
-        if header.stat == MSG_DENIED:
-            # Do more here
-            raise RPCDeniedError(header.rreply)
-        elif header.rbody.reply_data.stat != SUCCESS:
-            raise RPCAcceptError(header.areply)
-        # STUB - need to check verifier, which requires more info
-        pass
-
-    def set_cred(self, credinfo):
-        # Needed for credinfo
-        # AUTH_NONE : None
-        # AUTH_SYS  : uid, gid, name, stamp, gids
-        # RPCSEC_GSS: target, source(username)=None, oid=None, pipe=None,
-        #             service, qop
-        
-        # Needed for init
-        # AUTH_NONE : None
-        # AUTH_SYS  : uid, gid, name, stamp, gids
-        # RPCSEC_GSS: target, source(username)=None, oid=None, pipe=None,
-        #             service, qop
-
-        # NOTE - XXX need to think through threading issues
-        self.default_cred = credinfo
-
 #################################################
-    
-if __name__ == "__main__":
-    S = RPCServer(prog=2049, versions=[4], port=54321)
-    S.run()

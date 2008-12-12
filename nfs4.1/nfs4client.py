@@ -25,10 +25,12 @@ log_cb = logging.getLogger("nfs.client.cb")
 log_cb.setLevel(logging.DEBUG)
 
 SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
-class NFS4Client(rpc.Client):
+class NFS4Client(rpc.Client, rpc.Server):
     def __init__(self, host='localhost', port=2049, ctrl_proc=16):
-        # cb_version==4 per draft25 18.36.3
-        rpc.Client.__init__(self, 100003, 4, cb_version = 4)
+        rpc.Client.__init__(self, 100003, 4)
+        self.prog = 0x40000000
+        self.versions = [4] # List of supported versions of prog
+
         self.minorversion = 1
         self.minor_versions = [1]
         self.tag = "default tag"
@@ -39,6 +41,9 @@ class NFS4Client(rpc.Client):
         self.c1 = self.connect(self.server_address)
         self.sessions = {} # XXX Really, this should be per server
         self.ctrl_proc = ctrl_proc
+
+    def set_cred(self, credinfo):
+        self.default_cred = credinfo
 
     def control_async(self, data=""):
         p = SCTRLPacker()
