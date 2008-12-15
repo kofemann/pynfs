@@ -276,10 +276,7 @@ class SSVContext(object):
         self.encrypt = encrypt_factory
         self.window = window
         self.local = client # True for client, False for server
-        # Per draft 26:
-        # "The length of SSV MUST be equal to the length of the key used by
-        # the negotiated encryption algorithm."
-        self.ssv_len = encrypt_factory.key_size
+        self.ssv_len = hash_funct().digest_size
         self.ssvs = collections.deque()
         self.ssv_seq = 0 # This basically counts the number of SET_SSV calls
         self.lock = Lock("ssv")
