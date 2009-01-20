@@ -60,7 +60,7 @@ gss_OID_desc krb5oid = {
 		int stat;
 		stat = PyString_AsStringAndSize($input, 
 						(char **) &temp.value, 
-						(int *) &temp.length);
+						(Py_ssize_t *) &temp.length);
 
 		if (stat == -1)
 			return NULL;
