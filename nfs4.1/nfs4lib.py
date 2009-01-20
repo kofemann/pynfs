@@ -12,6 +12,11 @@ try:
     from Crypto.Cipher import AES
 except ImportError:
     class AES(object):
+        """Create a fake class to use as a placeholder.
+
+        This will give an error only if actually used.
+        """
+        MODE_CBC = 0
         def new(self, *args, **kwargs):
             raise NotImplementedError("could not import Crypto.Cipher")
 
