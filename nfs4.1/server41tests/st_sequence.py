@@ -266,3 +266,19 @@ def testReplayCache005(t, env):
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
+def testReplayCache006(t, env):
+    """Send two solo sequence compounds with same seqid
+
+    FLAGS: sequence all
+    CODE: SEQ9f
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess = c.create_session()
+    res1 = sess.compound([])
+    check(res1)
+    res2 = sess.compound([], seq_delta=0)
+    check(res2)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
+
