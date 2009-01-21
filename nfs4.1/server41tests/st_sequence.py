@@ -282,3 +282,20 @@ def testReplayCache006(t, env):
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
+def testReplayCache007(t, env):
+    """Send two successful non-idempotent compounds with same seqid and False cache_this
+
+    FLAGS: sequence all
+    CODE: SEQ10b
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+    res = create_file(sess1, "%s_1" % env.testname(t))
+    check(res)
+    ops = env.home + [op.savefh(),\
+          op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
+    res1 = sess1.compound(ops, cache_this=False)
+    check(res1, NFS4_OK)
+    res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
+    check(res2, NFS4ERR_RETRY_UNCACHED_REP)
+
