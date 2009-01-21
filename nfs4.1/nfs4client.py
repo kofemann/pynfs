@@ -405,14 +405,14 @@ class SessionRecord(object):
         self.back_channel = RecvChannel(csr.csr_back_chan_attrs)
         # STUB - and other stuff
 
-    def seq_op(self, slot=None, seq_delta=1):
+    def seq_op(self, slot=None, seq_delta=1, cache_this=True):
         if slot is None:
             slot = self.fore_channel.choose_slot()
         else:
             slot = self.fore_channel.slots[slot]
         # STUB, need to properly set highest
         return op.sequence(self.sessionid, slot.get_seqid(seq_delta),
-                           slot.id, slot.id, True)
+                           slot.id, slot.id, cache_this)
 
     def set_ssv(self, ssv=None, *args, **kwargs):
         protect = self.client.protect
@@ -434,7 +434,8 @@ class SessionRecord(object):
         if "credinfo" not in kwargs:
             kwargs["credinfo"] = self.cred
         seq_op = self.seq_op(kwargs.pop("slot", None),
-                             kwargs.pop("seq_delta", 1))
+                             kwargs.pop("seq_delta", 1),
+                             kwargs.pop("cache_this", True))
         return self.c.compound_async([seq_op] + ops, *args, **kwargs)
         
     def compound(self, ops, *args, **kwargs):
