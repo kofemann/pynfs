@@ -379,7 +379,10 @@ class RPCClient(object):
             rdata = reply[p.get_position():]
             try:
                 # BUG?, should use rhead credentials?
-                rdata = self.security.unsecure_data(rdata, list[rxid].cred)
+                # This conditional is gss specific code that should be hidden
+                if rhead.rbody.stat == MSG_ACCEPTED and \
+                        rhead.areply.reply_data.stat == SUCCESS:
+                    rdata = self.security.unsecure_data(rdata, list[rxid].cred)
             except:
                 if 0:
                     # need for servers that don't add gss checksum to errors
