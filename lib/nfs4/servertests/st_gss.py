@@ -3,6 +3,7 @@ from environment import check
 from socket import timeout
 import rpc
 import rpc.rpcsec.gss_const as gss
+from rpc.rpcsec.gss_type import rpc_gss_cred_t
 
 def _using_gss(t, env):
     if 'gss' not in rpc.supported:
@@ -50,9 +51,14 @@ def testInconsistentGssSeqnum(t, env):
     """
     c = env.c1
     orig_funct = c.security.secure_data
-    def bad_secure_data(data, seqnum):
+    def bad_secure_data(data, cred):
         # Mess up gss_seq_num
-        return orig_funct(data, seqnum + 1)
+        gss_cred = c.security._gss_cred_from_opaque_auth(cred)
+        gss_cred.seq_num += 1
+        p = c.security.getpacker()
+        p.reset()
+        p.pack_rpc_gss_cred_t(rpc_gss_cred_t(1, gss_cred))
+        return orig_funct(data, rpc.opaque_auth(6, p.get_buffer()))
 
     try:
         c.security.secure_data = bad_secure_data
@@ -144,6 +150,7 @@ def testBadVersion(t, env):
     DEPEND: _using_gss
     CODE: GSS5
     """
+    t.fail("Test needs to be updated to new API")
     c = env.c1
     orig_funct = c.security._make_cred_gss
     def bad_version(handle, service, gss_proc=0, seq=0):
@@ -162,6 +169,7 @@ def testBadVersion(t, env):
         bad_versions = [0, 2, 3, 1024]
         for version in bad_versions:
             try:
+                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
@@ -209,6 +217,7 @@ def testBadProcedure(t, env):
     DEPEND: _using_gss
     CODE: GSS7
     """
+    t.fail("Test needs to be updated to new API")
     c = env.c1
     orig_funct = c.security._make_cred_gss
     def bad_proc(handle, service, gss_proc=0, seq=0):
@@ -227,6 +236,7 @@ def testBadProcedure(t, env):
         bad_procss = [4, 5, 1024]
         for proc in bad_procss:
             try:
+                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
@@ -251,6 +261,7 @@ def testBadService(t, env):
     DEPEND: _using_gss
     CODE: GSS8
     """
+    t.fail("Test needs to be updated to new API")
     c = env.c1
     orig_funct = c.security._make_cred_gss
     def bad_service(handle, ignore_service, gss_proc=0, seq=0):
@@ -269,6 +280,7 @@ def testBadService(t, env):
         bad_services = [0, 4, 5, 1024]
         for service in bad_services:
             try:
+                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
