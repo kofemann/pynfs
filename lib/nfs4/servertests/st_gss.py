@@ -5,6 +5,48 @@ import rpc
 import rpc.rpcsec.gss_const as gss
 from rpc.rpcsec.gss_type import rpc_gss_cred_t
 
+class BadGssHeader(object):
+    """Screw up gss cred.
+
+    Since we expect code to error out before dealing with secure/unsecure,
+    have to make sure sending does *something* other than raise error.
+    """
+
+    def __init__(self, sec, bad_cred_funct):
+        self.__sec = sec
+        self._make_cred_gss = bad_cred_funct
+
+    def make_cred(self):
+        # We copy code so "self" refers here, not to self.__sec
+        # There's got to be a better way to do this
+        if self.init == 1: # first call in context creation
+            cred = self._make_cred_gss('', rpc_gss_svc_none, RPCSEC_GSS_INIT)
+        elif self.init > 1: # subsequent calls in context creation
+            cred = self._make_cred_gss('', rpc_gss_svc_none,
+                                  RPCSEC_GSS_CONTINUE_INIT)
+        else: # data transfer calls
+            self.lock.acquire()
+            self.gss_seq_num += 1 # FRED - check for overflow
+            self.lock.release()
+            cred = self._make_cred_gss(self.gss_handle, self.service,
+                                       seq=self.gss_seq_num)
+        return rpc.opaque_auth(RPCSEC_GSS, cred)
+
+
+    def secure_data(self, data, cred):
+        return data
+
+    def unsecure_data(self, data, cred):
+        return data
+
+    def __getattr__(self, attr):
+        """Use overridden functions if they exist.
+
+        Otherwise pass through to original security object.
+        """
+        return getattr(self.__sec, attr)
+    
+    
 def _using_gss(t, env):
     if 'gss' not in rpc.supported:
         return False
@@ -150,9 +192,8 @@ def testBadVersion(t, env):
     DEPEND: _using_gss
     CODE: GSS5
     """
-    t.fail("Test needs to be updated to new API")
     c = env.c1
-    orig_funct = c.security._make_cred_gss
+    orig = c.security
     def bad_version(handle, service, gss_proc=0, seq=0):
         # Mess up version in credential
         p = c.security.getpacker()
@@ -165,11 +206,10 @@ def testBadVersion(t, env):
         return p.get_buffer()
 
     try:
-        c.security._make_cred_gss = bad_version
+        c.security = BadGssHeader(orig, bad_version)
         bad_versions = [0, 2, 3, 1024]
         for version in bad_versions:
             try:
-                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
@@ -183,7 +223,7 @@ def testBadVersion(t, env):
                        "should return AUTH_BADCRED, instead got %s" %
                        (version, e))
     finally:
-        c.security._make_cred_gss = orig_funct
+        c.security = orig
 
 def testHighSeqNum(t, env):
     """GSS: a seq_num over MAXSEQ should return RPCSEC_GSS_CTXPROBLEM
@@ -217,9 +257,8 @@ def testBadProcedure(t, env):
     DEPEND: _using_gss
     CODE: GSS7
     """
-    t.fail("Test needs to be updated to new API")
     c = env.c1
-    orig_funct = c.security._make_cred_gss
+    orig = c.security
     def bad_proc(handle, service, gss_proc=0, seq=0):
         # Mess up procedure number in credential
         p = c.security.getpacker()
@@ -232,11 +271,10 @@ def testBadProcedure(t, env):
         return p.get_buffer()
 
     try:
-        c.security._make_cred_gss = bad_proc
+        c.security = BadGssHeader(orig, bad_proc)
         bad_procss = [4, 5, 1024]
         for proc in bad_procss:
             try:
-                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
@@ -250,7 +288,7 @@ def testBadProcedure(t, env):
                        "should return AUTH_BADCRED, instead got %s" %
                        (proc, e))
     finally:
-        c.security._make_cred_gss = orig_funct
+        c.security = orig
 
 def testBadService(t, env):
     """GSS: bad service number should return AUTH_BADCRED
@@ -261,11 +299,10 @@ def testBadService(t, env):
     DEPEND: _using_gss
     CODE: GSS8
     """
-    t.fail("Test needs to be updated to new API")
     c = env.c1
-    orig_funct = c.security._make_cred_gss
+    orig = c.security
     def bad_service(handle, ignore_service, gss_proc=0, seq=0):
-        # Mess up procedure number in credential
+        # Mess up service number in credential
         p = c.security.getpacker()
         p.reset()
         p.pack_uint(1)
@@ -276,11 +313,10 @@ def testBadService(t, env):
         return p.get_buffer()
 
     try:
-        c.security._make_cred_gss = bad_service
+        c.security = BadGssHeader(orig, bad_service)
         bad_services = [0, 4, 5, 1024]
         for service in bad_services:
             try:
-                # BUG here, during secure_data, tries to decode cred and barfs
                 res = c.compound([c.putrootfh_op()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
@@ -294,4 +330,4 @@ def testBadService(t, env):
                        "should return AUTH_BADCRED, instead got %s" %
                        (service, e))
     finally:
-        c.security._make_cred_gss = orig_funct
+        c.security = orig
