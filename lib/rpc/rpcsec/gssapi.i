@@ -29,11 +29,13 @@ gss_OID_desc krb5oid = {
 
 /* Typemaps */
 
+#ifdef SWIGPYTHON
+
 /* Used for routines that take input directly from user, as opposed
  * to other gssapi routines.
  */
 
-%typemap(python, in) gss_buffer_t INPUT (gss_buffer_desc temp) {
+%typemap(in) gss_buffer_t INPUT (gss_buffer_desc temp) {
 	printfred;
 	if ($input == Py_None) {
 		/* Allow None as equivalent to "" */
@@ -45,7 +47,7 @@ gss_OID_desc krb5oid = {
 		int stat;
 		stat = PyString_AsStringAndSize($input, 
 						(char **) &temp.value, 
-						(int *) &temp.length);
+						(Py_ssize_t *) &temp.length);
 
 		if (stat == -1)
 			return NULL;
@@ -55,7 +57,7 @@ gss_OID_desc krb5oid = {
 }
 
 #if 0
-%typemap(python, in) gss_buffer_t INPUT (gss_buffer_desc temp) {
+%typemap(in) gss_buffer_t INPUT (gss_buffer_desc temp) {
 	printfred;
 	if (SWIG_ConvertPtr($input, &temp, $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
 		/* Assume is a python string */
@@ -68,12 +70,12 @@ gss_OID_desc krb5oid = {
 }
 #endif
 
-%typemap(python, in, numinputs=0) gss_buffer_t OUTPUT (gss_buffer_desc temp) {
+%typemap(in, numinputs=0) gss_buffer_t OUTPUT (gss_buffer_desc temp) {
 	printfred;
 	$1 = &temp;
 }
 
-%typemap(python, argout) gss_buffer_t OUTPUT {
+%typemap(argout) gss_buffer_t OUTPUT {
 	PyObject *o;
 	printdict;
 	o = PyString_FromStringAndSize($1->value, $1->length);
@@ -84,11 +86,11 @@ gss_OID_desc krb5oid = {
 }
 
 #if 0
-%typemap(python, in, numinputs=0) gss_name_t *OUTPUT (gss_name_t temp) {
+%typemap(in, numinputs=0) gss_name_t *OUTPUT (gss_name_t temp) {
 	printfred;
 	$1 = &temp;
 }
-%typemap(python, argout) gss_name_t *OUTPUT {
+%typemap(argout) gss_name_t *OUTPUT {
 	PyObject *o;
 	printdict;
 	o = PyString_FromStringAndSize(*($1), strlen(*($1)) + 1);
@@ -98,7 +100,7 @@ gss_OID_desc krb5oid = {
 	if (PyDict_SetItemString($result, "$1_name", o) == -1)
 		return NULL;
 }
-%typemap(python, in) gss_name_t INPUT {
+%typemap(in) gss_name_t INPUT {
 	printfred;
 	$1 = PyString_AsString($input);
 	if (!$1)
@@ -106,12 +108,12 @@ gss_OID_desc krb5oid = {
 }
 #endif
 	
-%typemap(python, in, numinputs=0) void **OUTPUT (void *temp) {
+%typemap(in, numinputs=0) void **OUTPUT (void *temp) {
 	printfred;
 	$1 = ($1_ltype) &temp;
 }
 
-%typemap(python, argout)  void **OUTPUT {
+%typemap(argout)  void **OUTPUT {
 	/* returns a (void *) */
 	printdict;
 	if (PyDict_SetItemString($result, "$1_name", 
@@ -119,7 +121,7 @@ gss_OID_desc krb5oid = {
 		return NULL;
 }
 
-%typemap(python, in) void *INPUT {
+%typemap(in) void *INPUT {
 	printfred;
 	if (SWIG_ConvertPtr($input, &$1, $1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
 		/* Assume is a python string */
@@ -133,7 +135,7 @@ gss_OID_desc krb5oid = {
 	}
 }
 
-%typemap(python, in) void **INOUT (void *temp) {
+%typemap(in) void **INOUT (void *temp) {
 	/* $input is a (void *) */
 	printfred;
 	if (SWIG_ConvertPtr($input, &temp, $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
@@ -149,14 +151,14 @@ gss_OID_desc krb5oid = {
 	$1 = ($1_ltype) &temp;
 }
 
-%typemap(python, default) void **INOUT (void *temp=NULL) {
+%typemap(default) void **INOUT (void *temp=NULL) {
 	$1 = ($1_ltype) &temp; /* correctly set default to NULL */
 }
 
 #if 1
-%typemap(python, argout) void **INOUT = void **OUTPUT;
+%typemap(argout) void **INOUT = void **OUTPUT;
 #else
-%typemap(python, argout) void **INOUT {
+%typemap(argout) void **INOUT {
 	PyObject *o;
 	printdict;
 	if (!*$1) {
@@ -177,7 +179,7 @@ gss_OID_desc krb5oid = {
 /*
  * All functions return OM_uint32, which corresponds to major.
  */
-%typemap(python, out) OM_uint32 {
+%typemap(out) OM_uint32 {
 	/* Returns {"major":$1} */
 	$result = PyDict_New();
 	if (!$result ||
@@ -185,17 +187,19 @@ gss_OID_desc krb5oid = {
 		return NULL;
 }
 
-%typemap(python, in, numinputs=0) OM_uint32 *OUTPUT ($*1_type temp=0) {
+%typemap(in, numinputs=0) OM_uint32 *OUTPUT ($*1_type temp=0) {
 	printfred;
 	$1 = &temp;
 }
 
-%typemap(python, argout) OM_uint32 *OUTPUT {
+%typemap(argout) OM_uint32 *OUTPUT {
 	/* FRED - int *OUTPUT */
 	printdict;
 	if (PyDict_SetItemString($result, "$1_name", PyLong_FromUnsignedLong((unsigned long)*$1)) == -1)
 		return NULL;
 }
+
+#endif /* SWIGPYTHON */
 
 %apply OM_uint32 *OUTPUT {OM_uint32 *minor};
 
@@ -233,9 +237,10 @@ extern gss_OID GSS_C_NT_HOSTBASED_SERVICE;
 
 typedef unsigned int OM_uint32;
 typedef OM_uint32 gss_qop_t;
-typedef void * gss_name_t;
-typedef void * gss_cred_id_t;
-typedef void * gss_ctx_id_t;
+typedef struct gss_name_struct * gss_name_t;
+typedef struct gss_cred_id_struct * gss_cred_id_t;
+typedef struct gss_ctx_id_struct * gss_ctx_id_t;
+
 /***********************************/
 
 /* Function declarations */
@@ -398,8 +403,8 @@ OM_uint32 gss_verify_mic
 OM_uint32 reordered_gss_wrap
 (OM_uint32 *minor,		/* minor_status */
 	    gss_ctx_id_t ctx,		/* context_handle IN */
-	    int conf_req,		/* conf_req_flag IN */
 	    gss_buffer_t in_msg,	/* input_message_buffer IN*/
+	    int conf_req,		/* conf_req_flag IN */
 	    gss_qop_t qop,		/* qop_req IN=0*/
 	    int *confidential,		/* conf_state OUT*/
 	    gss_buffer_t msg		/* output_message_buffer OUT*/
@@ -408,13 +413,13 @@ OM_uint32 reordered_gss_wrap
 }
 %}
 %apply gss_buffer_t INPUT {gss_buffer_t in_msg};
-%apply int *OUTPUT {int *confidential};
+%apply OM_uint32 *OUTPUT {int *confidential};
 %apply gss_buffer_t OUTPUT {gss_buffer_t msg};
 OM_uint32 reordered_gss_wrap
 (OM_uint32 *minor,		/* minor_status */
 	    gss_ctx_id_t INPUT,		/* context_handle IN */
-	    int conf_req,		/* conf_req_flag IN */
 	    gss_buffer_t in_msg,	/* input_message_buffer IN*/
+	    int conf_req=1,		/* conf_req_flag IN */
 	    gss_qop_t qop=0,		/* qop_req IN=0*/
 	    int *confidential,		/* conf_state OUT*/
 	    gss_buffer_t msg		/* output_message_buffer OUT*/
@@ -425,7 +430,7 @@ OM_uint32 reordered_gss_wrap
 
 %rename (unwrap) gss_unwrap;
 %apply gss_buffer_t OUTPUT {gss_buffer_t msg};
-%apply int *OUTPUT {int *confidential};
+%apply OM_uint32 *OUTPUT {int *confidential};
 %apply OM_uint32 *OUTPUT {gss_qop_t *qop};
 OM_uint32 gss_unwrap
 (OM_uint32 *minor,		/* minor_status */
