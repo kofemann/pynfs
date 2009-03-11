@@ -949,7 +949,7 @@ class NFS4Server(rpc.RPCServer):
 
 def startup(host, port):
     rootfh = nfs4state.VirtualHandle()
-    server = NFS4Server(rootfh, port=port, host=host)
+    server = NFS4Server(rootfh, port=port, host=host, pubfh=rootfh)
     try:
         import rpc.portmap as portmap
         if not portmap.set(NFS4_PROGRAM, NFS_V4, portmap.IPPROTO_TCP, port):
