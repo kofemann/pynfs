@@ -131,7 +131,8 @@ class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
 # STUB
 class CBServer(rpc.RPCServer):
     def __init__(self, client):
-        self.prog = 512345
+        # Add 12345 to reveal servers that hardcode their program number
+        self.prog = 0x40000000 + 12345 # Use transient
         self.port = 0
         self.client = client
         rpc.RPCServer.__init__(self, prog=self.prog, vers=1, port=self.port)
