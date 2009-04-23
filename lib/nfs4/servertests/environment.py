@@ -316,11 +316,10 @@ def makeStaleId(stateid):
     to the CITI linux server.  All tests which use this function have
     the flag 'staleid'
     """
-    boottime = stateid.other[0:4]
-    if ord(boottime[0]):
-        staletime = "\0" + boottime[1:4]
-    else:
-        staletime = "a" + boottime[1:4]
+    # The first 4 bytes of the linux stateid correspond to a time.
+    # Choose a value older than any reasonable time, without
+    # risking the chance of conflict with the zero-stateid.
+    staletime = "\0\0\0\1"
     stale = stateid4(stateid.seqid , staletime+"\0\0\0\0\0\0\0\0")
     return stale
 
