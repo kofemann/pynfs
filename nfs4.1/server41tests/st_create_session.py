@@ -108,6 +108,54 @@ def testReplay1(t, env):
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
+def testReplay1a(t, env):
+    """Replay a successful CREATE_SESSION with a SEQUENCE from a different session
+
+    FLAGS: create_session all
+    CODE: CSESS5a
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    sess1 = c.create_session()
+    # another CREATE_SESSION
+    c.seqid = 2
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    res1 = create_session(c.c, c.clientid, c.seqid)
+    check(res1)
+    # REPLAY first CREATE_SESSION with SEQUENCE from 2nd session
+    cs_op = op.create_session(c.clientid, c.seqid, 0,
+                              chan_attrs, chan_attrs, c.c.prog, [])
+    res2 = sess1.compound([cs_op])
+    check(res2)
+    # Test results are equal (ignoring tags)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
+
+def testReplay1b(t, env):
+    """Replay a successful SEQUENCE:CREATE_SESSION without a preceeding SEQUENCE
+
+    FLAGS: create_session all
+    CODE: CSESS5b
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    sess1 = c.create_session()
+    # another CREATE_SESSION with SEQUENCE from first session
+    c.seqid = 2
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    cs_op = op.create_session(c.clientid, c.seqid, 0,
+                              chan_attrs, chan_attrs, c.c.prog, [])
+    res1 = sess1.compound([cs_op])
+    check(res1)
+    # REPLAY second CREATE_SESSION without SEQUENCE
+    res2 = create_session(c.c, c.clientid, c.seqid)
+    check(res2)
+    # Test results are equal (ignoring tags)
+    res1.tag = res2.tag = ""
+    if not nfs4lib.test_equal(res1, res2):
+        fail("Replay results not equal")
+
 def testReplay2(t, env):
     """Replay a unsuccessful CREATE_SESSION
     
