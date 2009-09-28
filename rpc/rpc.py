@@ -5,7 +5,7 @@ import struct
 import threading
 import logging
 from collections import deque as Deque
-from errno import EINPROGRESS
+from errno import EINPROGRESS, EWOULDBLOCK
 
 import rpc_pack
 from rpc_const import *
@@ -169,7 +169,7 @@ class Alarm(object):
         try:
             self._s.connect(address)
         except socket.error, e:
-            if e.args[0] == EINPROGRESS:
+            if e.args[0] in [EINPROGRESS, EWOULDBLOCK]:
                 # address has not yet called accept, since this is done in a
                 # single thread, so get "op in progress error".  When the
                 # receiving end calls accept, all is good.
@@ -448,7 +448,8 @@ class ConnectionHandler(object):
         # NOTE that there are TWO sockets associated with alarm, one
         # for each end of the connection.  Nasty bugs creep in here.
         self._alarm = Alarm(self.s.getsockname())
-        self._alarm_poll = self._event_connect_incoming(self.s.fileno())
+        self._alarm_poll = self._event_connect_incoming(self.s.fileno(),
+                                                        internal=True)
 
         # Set up some constants that effect general behavior
         self.rsize = 4096 # Read data in chunks of this size
@@ -519,10 +520,18 @@ class ConnectionHandler(object):
     def stop(self):
         self._alarm.buzz('\x02', None)
 
-    def _event_connect_incoming(self, fd):
+    def _event_connect_incoming(self, fd, internal=False):
         """Someone else is trying to connect to us (we act like server)."""
         s = self.sockets[fd]
-        csock, caddr = s.accept()
+        if internal:
+            # We are accepting from the same thread that tried to connect.
+            # In linux this works, but in Windows it raises EWOULDBLOCK
+            # if we don't do this
+            s.setblocking(1)
+            csock, caddr = s.accept()
+            s.setblocking(0)
+        else:
+            csock, caddr = s.accept()
         csock.setblocking(0)
         fd = csock.fileno()
         pipe = self.sockets[fd] = RpcPipe(csock, self._alarm)
