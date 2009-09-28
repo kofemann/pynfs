@@ -5,6 +5,8 @@ cwd = os.getcwd()
 if True or cwd not in sys.path:
     head, tail = split(cwd)
     dirs = [ join(head, "gssapi"),
+             join(head, "xdr"),
+             join(head, "ply"),
              join(head), # rpc
              cwd,
              ]

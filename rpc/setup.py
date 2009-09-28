@@ -11,7 +11,11 @@ Add stuff here.
 from distutils.command.build_py import build_py as _build_py
 import os
 from glob import glob
-import xdrgen
+try:
+    import xdrgen
+except ImportError:
+    import use_local
+    import xdrgen
 
 class build_py(_build_py):
     """Specialized Python source builder that scans for .x files"""
