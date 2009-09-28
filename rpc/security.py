@@ -8,7 +8,11 @@ import rpclib
 from gss_const import *
 import gss_type
 from gss_type import rpc_gss_init_res
-import gssapi
+try:
+    import gssapi
+except ImportError:
+    print("Could not find gssapi module, proceeding without")
+    gssapi = None
 import threading
 import logging
 
@@ -602,8 +606,10 @@ class AuthGss(AuthNone):
 
 supported = {AUTH_NONE:  AuthNone,
              AUTH_SYS:   AuthSys,
-             RPCSEC_GSS: AuthGss,
              }
+
+if gssapi is not None:
+    supported[RPCSEC_GSS] = AuthGss
 
 def klass(flavor):
     """Importers should only refer to the classes via flavor.

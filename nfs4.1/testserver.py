@@ -317,6 +317,13 @@ def main():
     # flavor has changed from class to int
     opt.flavor, opt.service = tempd[opt.security]
 
+    if opt.flavor not in rpc.security.supported:
+        if opt.flavor == rpc.RPCSEC_GSS:
+            p.error("RPCSEC_GSS not supported,"
+                    " could not find compile gssapi module")
+        else:
+            p.error("Unsupported security flavor")
+
     # Make sure args are valid
     opt.args = []
     for a in args:
