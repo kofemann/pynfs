@@ -407,7 +407,7 @@ class ByteState(FileStateTyped):
                     return True
             return False
         for e in self._tree.itervalues():
-            if match(key_template, key):
+            if match(key_template, e.key):
                 # Ignore locks in subtree indicated by key
                 continue
             for lock in e.locks:
@@ -420,7 +420,7 @@ class ByteState(FileStateTyped):
                         dlength = 0xffffffffffffffff
                     else:
                         dlength = lock.end + 1 - lock.start
-                    owner = lockowner4(e.key[0], e.key[-1])
+                    owner = lock_owner4(e.key[0].clientid, e.key[-1])
                     lock_denied = LOCK4denied(lock.start, dlength,
                                               lock.type, owner)
                     raise NFS4Error(NFS4ERR_DENIED, lock_denied=lock_denied)
