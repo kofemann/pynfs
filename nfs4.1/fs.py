@@ -1,6 +1,6 @@
 from nfs4state import FileState
 from nfs4_const import *
-from nfs4_type import fsid4, layout4, layout_content4
+from nfs4_type import fsid4, layout4, layout_content4, nfsv4_1_file_layout4
 import nfs4lib
 from nfs4lib import NFS4Error
 import struct
@@ -8,6 +8,7 @@ import logging
 from locking import Lock, RWLock
 from cStringIO import StringIO
 import time
+from nfs4_pack import NFS4Packer
 
 log_o = logging.getLogger("fs.obj")
 log_fs = logging.getLogger("fs")
@@ -1306,6 +1307,79 @@ class BlockLayoutFS(FileSystem):
         if kind != LAYOUT4_BLOCK_VOLUME:
             return []
         return [self.volume]
+
+class FSLayoutFSObj(FSObject):
+    def _get_layout(self, arg):
+        """Needs to support striping
+        """
+        # STUB: make nflutil a control variable
+        nflutil = NFL4_UFLG_STRIPE_UNIT_SIZE_MASK & 0x4000
+        # STUB: Return the layout_content4 for pnfs-files
+        # This works only with one dataserver
+        id = self.fs.dsdevice.devid
+        # This work only when MDS==DS
+        file_layout = nfsv4_1_file_layout4(id, nflutil, 0, 0, [self.fh])
+        p = NFS4Packer()
+        p.pack_nfsv4_1_file_layout4(file_layout)
+
+        # Try to give out whatever the client asked for
+        offset = arg.loga_offset
+        len = arg.loga_length
+        mode = arg.loga_iomode
+        type = arg.loga_layout_type
+        self.current_layout = (type, offset, len, mode)
+        return layout4(offset, len, mode, layout_content4(type, p.get_buffer()))
+
+    def _commit_layout(self, arg):
+        # STUB:
+        new_sz = arg.loca_last_write_offset + 1
+        if new_sz >= self.fattr4_size:
+            self.fattr4_size = new_sz
+            return new_sz
+        return None
+
+class FileLayoutFS(FileSystem):
+    """Exports a filesystem using a simple file layout pfs protocol
+    """
+    def __init__(self, fsid, dsdevice):
+        self._nextid = 0
+        self.dsdevice = dsdevice
+        FileSystem.__init__(self, objclass=FSLayoutFSObj)
+        self.fsid = (2, fsid)
+        self.fattr4_fs_layout_type = [LAYOUT4_NFSV4_1_FILES]
+        self.fattr4_supported_attrs |= 1 << FATTR4_FS_LAYOUT_TYPE
+        self.fattr4_maxwrite = 32768
+        self.fattr4_maxread = 32768
+        self.fattr4_supported_attrs |= 1 << FATTR4_MAXWRITE
+        self.fattr4_supported_attrs |= 1 << FATTR4_MAXREAD
+        self.sync(self.root, FILE_SYNC4)
+
+    def attach_to_server(self, server):
+        server.assign_deviceid(self.dsdevice)
+
+    def alloc_id(self):
+        """Alloc disk space for an FSObject, and return an identifier
+        that will allow us to find the disk space later.
+        """
+        self._nextid += 1
+        return self._nextid
+
+    def dealloc_id(self, id):
+        """Free up disk space associated with id. """
+        return
+
+    def sync(self, obj, how):
+        return FILE_SYNC4
+
+    def delegation_options(self):
+        # Never grant a delegation, since we don't want to deal with
+        # conflicts with layouts
+        return 0
+
+    def get_devicelist(self, kind, verf):
+        raise NotImplementedError
+
+
 ################################################
 
 """
