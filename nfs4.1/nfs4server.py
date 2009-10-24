@@ -1578,8 +1578,8 @@ class NFS4Server(rpc.Server):
             attrvals = self.get_attributes(env.cfh, attrreq.keys(), ignore=False)
         except NFS4Error, e:
             return encode_status(e.code)
-        if attrvals == attrreq:
-            return encode_status(NFS4ERR_SAME)
+        if attrvals != attrreq:
+            return encode_status(NFS4ERR_NOT_SAME)
         else:
             return encode_status(NFS4_OK)
 
