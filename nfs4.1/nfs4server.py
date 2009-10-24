@@ -507,6 +507,7 @@ class NFS4Server(rpc.Server):
         setattr(self, "handle_%i" % ctrl_proc, self._handle_ctrl)
         # Call rpc.Server with appropriate defaults
         port = kwargs.pop("port", NFS4_PORT)
+        self.is_mds = kwargs.pop("is_mds", False)
         rpc.Server.__init__(self, prog=NFS4_PROGRAM, versions=[4], port=port,
                             **kwargs)
         self.root = RootFS().root # Root of exported filesystem tree
@@ -964,8 +965,12 @@ class NFS4Server(rpc.Server):
                 else: # c.verifier == verf
                     # Case 2
                     pass
-        # STUB - we are ignoring arg.eia_flags for the moment
-        flags = EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS
+        # STUB - we are mostly ignoring arg.eia_flags for the moment
+        flags = 0
+        if self.is_mds:
+            flags |= EXCHGID4_FLAG_USE_PNFS_MDS
+        else:
+            flags |= EXCHGID4_FLAG_USE_NON_PNFS
         if c.confirmed:
             flags |= EXCHGID4_FLAG_CONFIRMED_R
             seq = 0 # value must be ignored by client per draft22 line 27043
@@ -1958,7 +1963,8 @@ if __name__ == "__main__":
     if opts.debug_locks:
         import locking
         locking.DEBUG = True
-    S = NFS4Server(port=opts.port)
+    S = NFS4Server(port=opts.port,
+                   is_mds=opts.use_block)
     read_exports(S, opts)
     if True:
         S.start()
