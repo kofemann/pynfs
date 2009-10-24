@@ -1,5 +1,5 @@
-from fs import StubFS_Mem, StubFS_Disk, BlockLayoutFS
-
+from fs import StubFS_Mem, StubFS_Disk, BlockLayoutFS, FileLayoutFS
+from dataserver import DSDevice
 
 def mount_stuff(server, opts):
     """Mount some filesystems to the server"""
@@ -14,6 +14,12 @@ def mount_stuff(server, opts):
         dev = _create_simple_block_dev()
         E = BlockLayoutFS(5, backing_device=dev)
         server.mount(E, path="/block")
+    if opts.use_files:
+        dservers = _load_dataservers(opts.dataservers)
+        if dservers is None:
+            return
+        F = FileLayoutFS(6, dservers)
+        server.mount(F, path="/files")
 
 def _create_simple_block_dev():
     from block import Simple, Slice, Concat, Stripe, BlockVolume
@@ -26,3 +32,9 @@ def _create_simple_block_dev():
     s3 = Slice(v1, 2*length, length)
     c1 = Concat([s3, s1])
     return BlockVolume(c1)
+
+def _load_dataservers(file):
+    dss = DSDevice()
+    if dss.load(file) is None:
+        return None
+    return dss;

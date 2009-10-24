@@ -1941,9 +1941,13 @@ def scan_options():
                  help="Reset and clear any disk-based filesystems")
     p.add_option("--use_block", action="store_true", default=False,
                  help="Mount a block-pnfs fs")
+    p.add_option("--use_files", action="store_true", default=False,
+                 help="mount a file-pnfs fs")
     p.add_option("--exports", default="server_exports.py",
                  help="File used to determine server exports, "
                  "similar to /etc/exports")
+    p.add_option("--dataservers", default="dataservers.conf",
+                 help="File used to determine dataserver addresses")
     p.add_option("--port", type="int", default=2049,
                  help="Set port to listen on (2049)")
 
@@ -1964,7 +1968,7 @@ if __name__ == "__main__":
         import locking
         locking.DEBUG = True
     S = NFS4Server(port=opts.port,
-                   is_mds=opts.use_block)
+                   is_mds=opts.use_block or opts.use_files)
     read_exports(S, opts)
     if True:
         S.start()
