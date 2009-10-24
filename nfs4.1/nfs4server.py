@@ -1778,7 +1778,6 @@ class NFS4Server(rpc.Server):
             # STUB do state locking and check on iomode,offset,length triple
             pass
             layout = env.cfh.get_layout(arg)
-            print "FRED"
             print layout
             # STUB revise state management based on returned iomode,offset,length
             pass
