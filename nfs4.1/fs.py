@@ -364,8 +364,15 @@ class FSObject(object):
         # STUB
         return self.type == NF4DIR
 
-    # Dont support execute by default
-    # def access4_execute(self, principal):
+    # Per draft-29, sect 18.1.13, this really should be undefined.
+    # However, the linux client needs it to execute a file from
+    # the NFS directory.
+    #
+    # "If the server does not support execute permission bits or some
+    # other method for denoting executability, it MUST NOT set
+    # ACCESS4_EXECUTE in the reply's supported and access fields"
+    def access4_execute(self, principal):
+        return True
 
     #######################
     # These all assume is a directory
