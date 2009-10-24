@@ -508,6 +508,7 @@ class NFS4Server(rpc.Server):
         # Call rpc.Server with appropriate defaults
         port = kwargs.pop("port", NFS4_PORT)
         self.is_mds = kwargs.pop("is_mds", False)
+        self.is_ds = kwargs.pop("is_ds", False)
         rpc.Server.__init__(self, prog=NFS4_PROGRAM, versions=[4], port=port,
                             **kwargs)
         self.root = RootFS().root # Root of exported filesystem tree
@@ -971,6 +972,8 @@ class NFS4Server(rpc.Server):
             flags |= EXCHGID4_FLAG_USE_PNFS_MDS
         else:
             flags |= EXCHGID4_FLAG_USE_NON_PNFS
+        if self.is_ds:
+            flags |= EXCHGID4_FLAG_USE_PNFS_DS
         if c.confirmed:
             flags |= EXCHGID4_FLAG_CONFIRMED_R
             seq = 0 # value must be ignored by client per draft22 line 27043
@@ -1189,15 +1192,20 @@ class NFS4Server(rpc.Server):
         env.cfh.verify_file()
         if arg.offset + len(arg.data) > 0x3ffffffe: # STUB - arbitrary value
             return encode_status(NFS4ERR_INVAL)
-        with find_state(env, arg.stateid) as state:
-            state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
-            state.mark_writing()
-        try:
+        # STUB if server is pNFS DS don't validate state
+        if not self.is_ds:
+            with find_state(env, arg.stateid) as state:
+                state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
+                state.mark_writing()
+                try:
+                    count = env.cfh.write(arg.data, arg.offset, env.principal)
+                    # BUG - need to fix fs locking
+                    how = env.cfh.sync(arg.stable)
+                finally:
+                    state.mark_done_writing()
+        else:
             count = env.cfh.write(arg.data, arg.offset, env.principal)
-            # BUG - need to fix fs locking
             how = env.cfh.sync(arg.stable)
-        finally:
-            state.mark_done_writing()
         res = WRITE4resok(count, how, self.verifier)
         return encode_status(NFS4_OK, res)
 
@@ -1205,16 +1213,20 @@ class NFS4Server(rpc.Server):
         check_session(env)
         check_cfh(env)
         env.cfh.verify_file()
-        with find_state(env, arg.stateid, allow_bypass= \
-                    env.session.client.config.allow_stateid1) as state:
-            state.has_permission(OPEN4_SHARE_ACCESS_READ)
-            state.mark_reading()
-        try:
-            # BUG - need to fix fs locking
+        if not self.is_ds:
+            with find_state(env, arg.stateid, allow_bypass= \
+                                env.session.client.config.allow_stateid1) as state:
+                state.has_permission(OPEN4_SHARE_ACCESS_READ)
+                state.mark_reading()
+                try:
+                    # BUG - need to fix fs locking
+                    data = env.cfh.read(arg.offset, arg.count, env.principal)
+                    eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
+                finally:
+                    state.mark_done_reading()
+        else:
             data = env.cfh.read(arg.offset, arg.count, env.principal)
             eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
-        finally:
-            state.mark_done_reading()
         res = READ4resok(eof, data)
         return encode_status(NFS4_OK, res)
 
@@ -1943,6 +1955,8 @@ def scan_options():
                  help="Mount a block-pnfs fs")
     p.add_option("--use_files", action="store_true", default=False,
                  help="mount a file-pnfs fs")
+    p.add_option("--is_ds", action="store_true", default=False,
+                 help="act as a dataserver")
     p.add_option("--exports", default="server_exports.py",
                  help="File used to determine server exports, "
                  "similar to /etc/exports")
@@ -1968,7 +1982,8 @@ if __name__ == "__main__":
         import locking
         locking.DEBUG = True
     S = NFS4Server(port=opts.port,
-                   is_mds=opts.use_block or opts.use_files)
+                   is_mds=opts.use_block or opts.use_files,
+                   is_ds = opts.is_ds)
     read_exports(S, opts)
     if True:
         S.start()
