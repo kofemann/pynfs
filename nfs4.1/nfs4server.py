@@ -366,8 +366,9 @@ class ClientRecord(object):
 
     def find_active_cb_session(self):
         """Find and return a session that has a usable callback channel"""
-        # STUB
-        return self.sessions[0]
+        for sess in self.sessions:
+            if sess.has_backchannel():
+                return sess
 
 class SessionRecord(object):
     """The server's representation of a session and its state"""
@@ -396,6 +397,11 @@ class SessionRecord(object):
             nonce = random.randint(0, 0xffffffffffffffff)
         self.nonce[connection] = (nonce, client_nonce)
         return nonce
+
+    def has_backchannel(self):
+        if len(self.channel_back.connections) > 0:
+            return True
+        return False
 
 class Channel(object):
     def __init__(self, attrs, config=None):
