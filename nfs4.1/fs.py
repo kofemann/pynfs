@@ -1348,8 +1348,8 @@ class FileLayoutFS(FileSystem):
         self.fsid = (2, fsid)
         self.fattr4_fs_layout_type = [LAYOUT4_NFSV4_1_FILES]
         self.fattr4_supported_attrs |= 1 << FATTR4_FS_LAYOUT_TYPE
-        self.fattr4_maxwrite = 32768
-        self.fattr4_maxread = 32768
+        self.fattr4_maxwrite = 8192
+        self.fattr4_maxread = 8192
         self.fattr4_supported_attrs |= 1 << FATTR4_MAXWRITE
         self.fattr4_supported_attrs |= 1 << FATTR4_MAXREAD
         self.sync(self.root, FILE_SYNC4)
