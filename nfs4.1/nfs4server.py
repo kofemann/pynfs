@@ -404,6 +404,7 @@ class SessionRecord(object):
         return False
 
 class Channel(object):
+    #STUB: need to fix slot management for the backchannel
     def __init__(self, attrs, config=None):
         self.connections = [] # communication info
         self.maxrequestsize = attrs.ca_maxrequestsize
@@ -843,11 +844,19 @@ class NFS4Server(rpc.Server):
         back_attrs = cb_channel.get_attrs()
         # Bind connection
         channel.connections.append(connection)
-        if arg.csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN:
-            cb_channel.connections.append(connection)
         session.cb_prog = arg.csa_cb_program
         # STUB - setting flags
-        flags = arg.csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN
+        # Establish backchannel if the client asked for one
+        flags = 0
+        if arg.csa_flags & CREATE_SESSION4_FLAG_CONN_BACK_CHAN:
+            try:
+                self.cb_null(session.cb_prog, connection, credinfo=None)
+                flags |= CREATE_SESSION4_FLAG_CONN_BACK_CHAN
+                cb_channel.connections.append(connection)
+            except rpc.RPCError, e:
+                log_41.warn("cb_null failed with %r, no backchannel created", e)
+                # STUB: backchannel is down: set sequence bits, disable layouts, etc.
+                pass
         # Attach to global lists
         c.sessions.append(session) # XXX Is this needed?
         self.sessions[session.sessionid] = session
@@ -1932,7 +1941,30 @@ class NFS4Server(rpc.Server):
         log_41.info(data)
         return data
     
-        
+    def cb_null_listen(self, xid, pipe, timeout=5.0):
+        header, data = pipe.listen(xid, timeout)
+        log_41.info("Received CB_NULL reply")
+        log_41.info(header)
+        if data:
+            # log but ignore the problem
+            log_41.error("Unexpected data in cb_null reply")
+
+    def cb_null_async(self, prog, credinfo, pipe):
+        log_41.info("*" * 20)
+        log_41.info("Sending CB_NULL")
+        return pipe.send_call(prog, 1, 0, "", credinfo)
+
+    def cb_null(self, prog, pipe, credinfo=None):
+        """ Sends bc_null."""
+        if pipe is None:
+            # BUG
+            raise RuntimeError
+        if credinfo is None:
+            credinfo = self.default_cred
+        xid = self.cb_null_async(prog, credinfo, pipe)
+        return self.cb_null_listen(xid, pipe)
+
+
 ##################################################
 # The actual script handling
 ##################################################
