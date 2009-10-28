@@ -67,6 +67,9 @@ Server
       Has some very basic facilities for handling block layouts
       Currently functions, as long as client behaves
 
+  PNFS-files:
+      Support for pnfs-files has been added (--use_files, --is_ds flags).
+
   Client-testing:
       More difficult, since control over what RPCs are sent is so indirect.
       Write to /config/ files, changes server behavior
