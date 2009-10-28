@@ -417,6 +417,21 @@ class Channel(object):
         self.maxrequests = attrs.ca_maxrequests
         self.adjust_attrs(config)
         self.slots = [Slot(i) for i in range(self.maxrequests)]
+        self.lock = Lock("Channel")
+
+    def choose_slot(self):
+        """ Used by the backchannel client"""
+        with self.lock:
+            for slot in self.slots:
+                if not slot.inuse:
+                    slot.inuse = True
+                    return slot
+        raise RuntimeError("Out of slots")
+
+    def free_slot(self, slotid):
+        """ Used by the backchannel client"""
+        with self.lock:
+            self.slots[slotid].inuse = False
 
     def adjust_attrs(self, config):
         """Take (client suggested) attrs, and adjust downwards"""
@@ -525,6 +540,10 @@ class NFS4Server(rpc.Server):
         self.recording = Recording()
         self.devid_counter = Counter(name="devid_counter")
         self.devids = {} # {devid: device}
+        # default cred for the backchannel -- currently supports only AUTH_SYS
+        rpcsec = rpc.security.instance(rpc.AUTH_SYS)
+        self.default_cred = rpcsec.init_cred(uid=4321,gid=42,name="mystery")
+
 
     def start(self):
         """Cause the server to start listening on the previously bound port"""

@@ -711,10 +711,9 @@ class DelegEntry(StateTableEntry):
         # NOTE that we come in w/o state lock...when should we grab it?
         # ANSWER - we care about self.status, which can be set to 
         # D_INVALID anytime by deleg_return
-        slot_id = 0
-        slot = session.channel_back.slots[slot_id]
+        slot = session.channel_back.choose_slot()
         seq_op = op.cb_sequence(session.sessionid, slot.get_seqid(),
-                                slot_id, slot_id, True, []) # STUB
+                                slot.get_id(), slot.get_id(), True, []) # STUB
         recall_op = op.cb_recall(self.get_id(cb=True), False, self.file.fh)
         if self.invalid:
             # Race here doesn't matter, but would like to avoid the
@@ -729,6 +728,7 @@ class DelegEntry(StateTableEntry):
         # want to take the lock
         self.status = D_CB_SENT
         res = dispatcher.cb_listen(xid, pipe)
+        session.channel_back.free_slot(slot.get_id())
         with self.lock:
             if res.status != NFS4_OK:
                 # NOTE - this could 'legit' occur if client sends DELEG_RETURN
