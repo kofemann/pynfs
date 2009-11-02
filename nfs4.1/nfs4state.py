@@ -565,7 +565,7 @@ class StateTableEntry(object):
 
     def delete(self):
         """Remove this entry from self.file.state table"""
-        invalid = True
+        self.invalid = True
         del self._state._tree[self.key]
         del self.key[0].state[self.other]
 
