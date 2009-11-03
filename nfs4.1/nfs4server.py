@@ -1826,14 +1826,15 @@ class NFS4Server(rpc.Server):
             if arg.loga_length != 0xffffffffffffffff:
                 if arg.loga_length + arg.loga_offset > 0xffffffffffffffff:
                      return encode_status(NFS4_INVAL, msg="offset+length too big")
+            if not env.session.has_backchannel:
+                raise NFS4Error(NFS4ERR_LAYOUTTRYLATER)
             # STUB do state locking and check on iomode,offset,length triple
-            pass
-            layout = env.cfh.get_layout(arg)
-            print layout
-            # STUB revise state management based on returned iomode,offset,length
-            pass
-            res = LAYOUTGET4resok(False, nfs4lib.state00, [layout])
-            return encode_status(NFS4_OK, res)
+            with find_state(env, arg.loga_stateid, allow_0=False) as state:
+                layout, entry = env.cfh.state.grant_layout(state, arg)
+                # STUB at some point make the decision below dynamic
+                return_on_close = False
+                res = LAYOUTGET4resok(return_on_close, entry.get_id(), [layout])
+                return encode_status(NFS4_OK, res)
         except NFS4Error, e:
             # LAYOUTGET failure does not encode just status
             if e.status == NFS4ERR_LAYOUTTRYLATER:

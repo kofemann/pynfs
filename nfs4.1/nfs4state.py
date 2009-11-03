@@ -433,11 +433,24 @@ class ByteState(FileStateTyped):
         return self.grab_entry(key, ByteEntry)
 
 class LayoutState(FileStateTyped):
-    # STUB
     type = LAYOUT
+
     def __init__(self, *args, **kwargs):
         kwargs["depth"] = 1 # key = (client,)
         FileStateTyped.__init__(self, *args, **kwargs)
+
+    def grant_layout(self, state, layoutargs):
+        # FIXME
+        #if self.waiting > 0 or self.outstanding > 0:
+        ## Don't grant layouts while anyone is waiting for a recall
+        #   return None
+        if self.file.layout_options() & layoutargs.loga_layout_type:
+            entry = self.grab_entry(state.key[:1], LayoutEntry)
+            layout = self.file.get_layout(layoutargs)
+            entry.populate(layout)
+            log.debug("GRANTING layout: %s" % layout)
+            return layout, entry
+        raise NFS4Error(NFS4ERR_LAYOUTUNAVAILABLE)
 
 class FileState(object):
     """Holds all state for a file."""
@@ -456,6 +469,7 @@ class FileState(object):
         self.grant_delegation = self.types[DELEG].grant_delegation
         self._create_lockowner = self.types[BYTE]._create_lockowner
         #self.delegreturn = self.types[DELEG].delegreturn
+        self.grant_layout = self.types[LAYOUT].grant_layout
 
     def __enter__(self):
         self.lock.acquire()
@@ -816,3 +830,13 @@ class ByteEntry(StateTableEntry):
 #             elif end < lock.start:
 #                 break
 #         self.locklist = new
+
+class LayoutEntry(StateTableEntry):
+    type = LAYOUT
+
+    def __init__(self, other, state, key):
+        super(LayoutEntry, self).__init__(other, state, key)
+
+    def populate(self, layout):
+        # Need to record here what we have handed out so far
+        pass

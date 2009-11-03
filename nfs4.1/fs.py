@@ -207,6 +207,12 @@ class FSObject(object):
         else:
             return self.fs.delegation_options()
 
+    def layout_options(self):
+        if self.type != NF4REG:
+            return 0
+        else:
+            return self.fs.layout_options()
+
     def close(self):
         self.sync(FILE_SYNC4)
 
@@ -548,6 +554,9 @@ class FileSystem(object):
     def delegation_options(self):
         # Possible delegations fs supports on regular files
         return OPEN_DELEGATE_READ
+
+    def layout_options(self):
+        return 0
 
     def find(self, id):
         """ Returns a FSObject with given id
@@ -1301,6 +1310,9 @@ class BlockLayoutFS(FileSystem):
         # conflicts with layouts
         return 0
 
+    def layout_options(self):
+        return LAYOUT4_BLOCK_VOLUME
+
     def get_devicelist(self, kind, verf):
         """Returns list of deviceid's of type kind, using verf for caching."""
         # STUB - not dealing with verf caching
@@ -1375,6 +1387,9 @@ class FileLayoutFS(FileSystem):
         # Never grant a delegation, since we don't want to deal with
         # conflicts with layouts
         return 0
+
+    def layout_options(self):
+        return LAYOUT4_NFSV4_1_FILES
 
     def get_devicelist(self, kind, verf):
         raise NotImplementedError
