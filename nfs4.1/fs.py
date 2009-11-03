@@ -1334,13 +1334,15 @@ class FSLayoutFSObj(FSObject):
         p = NFS4Packer()
         p.pack_nfsv4_1_file_layout4(file_layout)
 
-        # Try to give out whatever the client asked for
-        offset = arg.loga_offset
-        len = arg.loga_length
-        mode = arg.loga_iomode
-        type = arg.loga_layout_type
-        self.current_layout = (type, offset, len, mode)
-        return layout4(offset, len, mode, layout_content4(type, p.get_buffer()))
+        # STUB: we ony support whole file RW layouts for the moment
+        # as it facilitates commits, returns, recalls etc.
+        l_offset = 0
+        l_len = NFS4_UINT64_MAX
+        l_mode = LAYOUTIOMODE4_RW
+        l_type = LAYOUT4_NFSV4_1_FILES
+        self.current_layout = (l_type, l_offset, l_len, l_mode)
+        return layout4(l_offset, l_len, l_mode,
+                       layout_content4(l_type, p.get_buffer()))
 
     def _commit_layout(self, arg):
         # STUB:
