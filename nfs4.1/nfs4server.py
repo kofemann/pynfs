@@ -1971,7 +1971,9 @@ class NFS4Server(rpc.Server):
     def cb_null_async(self, prog, credinfo, pipe):
         log_41.info("*" * 20)
         log_41.info("Sending CB_NULL")
-        return pipe.send_call(prog, 1, 0, "", credinfo)
+        # Callback version is 4, see draft29 18.36.3:
+        # "The server MUST specify...an ONC RPC version number equal to 4"
+        return pipe.send_call(prog, 4, 0, "", credinfo)
 
     def cb_null(self, prog, pipe, credinfo=None):
         """ Sends bc_null."""
