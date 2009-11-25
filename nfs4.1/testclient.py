@@ -66,6 +66,9 @@ def unixpath2comps(str, pathcomps=None):
             pathcomps.append(component)
     return pathcomps
 
+def parse_useparams(str):
+    return str.split(':')
+
 def scan_options(p):
     """Parse command line options
 
@@ -172,6 +175,13 @@ def scan_options(p):
                  help="Use SERVER:/OBJPATH as directory")
     g.add_option("--userofs", default=None, metavar="DIRPATH",
                  help="Use SERVER:/DIRPATH for ROFS tests")
+    g.add_option("--useparams", default=None, metavar="PARAMETERS",
+                 help="Use parameters [OPERATION:Messagetype:Value:Value]. "
+                      "The testTwoValueSetupOrCleanup client test uses the "
+                      "ERROR messagetype as follows; "
+                      "[OPERATION:ERROR:NFS4ERR_code:CEILING] which "
+                      "tells the server to return the NFS4ERR_code on "
+                      "every CEILING number of OPERATION processings")
     g.add_option("--usefh", default=None, metavar="FH",
                  help="Use FH for certain specialized tests")
     p.add_option_group(g)
@@ -272,7 +282,9 @@ def main():
 
     # Check --use* options are valid
     for attr in dir(opt):
-        if attr.startswith('use') and attr != "usefh":
+        if attr == 'useparams':
+            opt.useparams = parse_useparams(opt.useparams)
+        elif attr.startswith('use') and attr != "usefh":
             path = getattr(opt, attr)
             #print attr, path
             if path is None:

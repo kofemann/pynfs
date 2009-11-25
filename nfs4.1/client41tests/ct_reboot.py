@@ -169,6 +169,7 @@ def testSessionReset(t, env):
     fd.close()
     # cd $ROOT - test session recovery for root export
     os.chdir(env.root)
+    env.clear_two_values("sequence")
     if  read != data:
         fail("'cat foo' = %r, expected %r" % (read, data))
 
@@ -190,3 +191,33 @@ def testSessionReset2(t, env):
     env.set_error_wait_lease("sequence", "NFS4ERR_BADSESSION")
     # cd $ROOT check session is reset...
     os.chdir(env.root)
+    env.clear_two_values("sequence")
+
+def testTwoValueSetupOrCleanup(t, env):
+    """Requires --userparams. Write the MessageType and two values to the OPERATION configuration file on the server.
+
+    FLAGS: sequence all
+    CODE: TWO_VALUE_SETUP_OR_CLEANUP
+    """
+    """
+    cd $HOME
+    echo "Messagetype value value" > $CONFIG/ops/<operation>
+
+    """
+    #print 'env.opts.useparams ', env.opts.useparams
+    if len(env.opts.useparams) != 4:
+        print 'TWO_VALUE_SETUP_OR_CLEANUP requires '
+        print 'testclient.py --useparams'
+        print 'Example: --useparams=sequence:ERROR:NFS4ERR_SEQ_MISORDERED:50 '
+        print 'which returns NFS4ERR_SEQ_MISORDERED every 50th sequence op'
+        fail("Bad Input to test")
+
+    operation = env.opts.useparams[0]
+    messagetype = env.opts.useparams[1]
+    value1 = env.opts.useparams[2]
+    value2 = env.opts.useparams[3]
+
+    # cd $HOME
+    os.chdir(env.home)
+    # Set operation to return error every ceiling times it's processed
+    env.set_two_values(operation, messagetype, value1, value2)

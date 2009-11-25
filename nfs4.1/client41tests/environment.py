@@ -125,14 +125,16 @@ class Environment(testmod.Environment):
         fd.write("1")
         fd.close()
 
+    # Message-type ERROR has the form "ERROR" NFS4ERR_XXX ceiling
     def set_error(self, opname, code):
-        # STUB - API will change
+        data = "ERROR %s %i" % (code, 0)
         path = os.path.join(self.root, "config", "ops", opname)
         fd = open(path, "w")
-        fd.write(str(code))
+        fd.write(data)
         fd.close()
 
     def set_error_wait_lease(self, opname, code):
+        data = "ERROR %s %i" % (code, 0)
         path = os.path.join(self.root, "config", "serverwide", "lease_time")
         fd = open(path, "r")
         lease = fd.readlines()
@@ -140,12 +142,28 @@ class Environment(testmod.Environment):
         time.sleep(1)
         path = os.path.join(self.root, "config", "ops", opname)
         fd = open(path, "w")
-        fd.write(str(code))
+        fd.write(data)
         print "wait for leasetime: ", lease[1], "seconds"
         fd.close()
         time.sleep(int(lease[1]))
 
+    def set_two_values(self, opname, messagetype, value1, value2):
+        # Write the messagetype and values
+        path = os.path.join(self.root, "config", "ops", opname)
+        fd = open(path, "w")
+        data = "%s %s %s" % (messagetype, value1, value2)
+        fd.write(data)
+        fd.close()
         
+    def clear_two_values(self, opname):
+        # Return server to normal operation.
+        # Write default values
+        path = os.path.join(self.root, "config", "ops", opname)
+        fd = open(path, "w")
+        data = "ERROR %i %i" % (0, 0)
+        fd.write(data)
+        fd.close()
+
     def init(self):
         """Run once before any test is run"""
         pass
