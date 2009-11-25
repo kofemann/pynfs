@@ -543,7 +543,7 @@ class NFS4Server(rpc.Server):
         # default cred for the backchannel -- currently supports only AUTH_SYS
         rpcsec = rpc.security.instance(rpc.AUTH_SYS)
         self.default_cred = rpcsec.init_cred(uid=4321,gid=42,name="mystery")
-
+        self.err_inc_dict = self.init_err_inc_dict()
 
     def start(self):
         """Cause the server to start listening on the previously bound port"""
@@ -694,19 +694,49 @@ class NFS4Server(rpc.Server):
         self.recording.add(data, reply)
         return rpc.SUCCESS, reply
 
+    def init_err_inc_dict(self):
+        seq = []
+        for name in nfs_opnum4.values():
+            seq.append(name.lower()[3:])
+        dic = dict.fromkeys(seq, 0)
+        return dic
+
+    def increment_error_count(self, opname, ceiling):
+        value = self.err_inc_dict[opname]
+        value = value + 1
+        if value >= ceiling:
+            value = 0
+        self.err_inc_dict[opname] = value;
+        return value
+
     def check_opsconfig(self, env, opname):
         log_cfg.debug("FRED - in opsconfig")
         config = self.opsconfig
-        # STUB - the API should change here.  instead of a single value,
-        # use something like a stack
-        value = getattr(config, opname)
-        log_cfg.debug("value=%r" % value)
-        if value == NFS4_OK:
-            # Proceed with normal processing
-            return
+        # API is a list whose first element is a string determining messagetype
+        # Subsequent list values are determined by messagetype
+        l = getattr(config, opname)
+        if l[0] == "ERROR":
+            # Format is ["ERROR", code, freq]
+            # Interrupts normal processing to return 'code' every 'freq' calls
+            # Special case for freq==0 is to return 'code a single time
+            error, ceiling = l[1:]
+            if error == NFS4_OK:
+                # Proceed with normal processing
+                return
+            if ceiling == 0:
+                # Special case, trigger the error once then return to normal
+                log_41.debug("ERROR: check_opsconfig RESET to NORMAL")
+                setattr(config, opname, ["ERROR", 0, 0])
+                raise NFS4Error(error)
+            else:
+                inc = self.increment_error_count(opname, ceiling)
+                log_41.debug("ERROR: %d check_opsconfig incrementor: %d "
+                             "ceiling:%d)" % (error, inc, ceiling))
+                if inc == 0:
+                    raise NFS4Error(error)
         else:
-            setattr(config, opname, 0) # Reset to normal
-            raise NFS4Error(value)
+            # This shouldn't happen
+            raise RuntimeError("Unknown config messagetype")
 
     def check_utf8str_cs(self, str):
         # STUB - raises NFS4Error if appropriate.

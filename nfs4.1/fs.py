@@ -667,7 +667,10 @@ class ConfigObj(FSObject):
     def _reset(self):
         self.file = StringIO()
         self.file.write("# %s\n" % self.configline.comment)
-        self.file.write("%r\n" % self.configline.value)
+        if type(value) is list:
+            self.file.write(" ".join([str(i) for i in self.configline.value]))
+        else:
+            self.file.write("%r\n" % self.configline.value)
         self.change_data()
         self.dirty = False
 

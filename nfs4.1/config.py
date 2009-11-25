@@ -7,6 +7,12 @@ from copy import deepcopy
 class ConfigAction(Exception):
     pass
 
+#### verifiers ####
+
+# All verifiers take a string representation and convert it into
+# the desired representation, after error checking.  They may also
+# accept non-string 'native' representation
+
 def _action(value):
     raise ConfigAction
 
@@ -26,6 +32,7 @@ def _bool(value):
         return bool(value)
 
 def _statcode(value):
+    """ Accept either the string or its corresponding value."""
     try:
         return int(value)
     except ValueError:
@@ -34,6 +41,33 @@ def _statcode(value):
             raise
         else:
             return rv
+
+def _opline(value):
+    """ Accept lines of form: message-type [value] [value]
+
+    message-type of error has this form: "ERROR NFS4ERR_code ceiling"
+    new message types and more values can be added
+    """
+    print '**************** OPLINE typevalue ', type(value)
+    if type(value) is str:
+        l = value.strip().split()
+    elif type(value) is list:
+        l = value
+    else:
+        print '                 OPLINE type ', type(value)
+        raise TypeError, 'Only type list or str accepted'
+    if l[0] == "ERROR":
+        if not len(l) == 3:
+            print '                 OPLINE length ', len
+            raise ValueError("ERROR messages only accepts 3 entries")
+        print 'OPLINE len ', len(l)
+        value = [l[0], _statcode(l[1]), int(l[2])]
+    else:
+        raise ValueError("Only message-type ERROR accepted")
+    print '**************** OPLINE return ', value
+    return value
+
+###################################################
 
 class ConfigLine(object):
     def _set_value(self, value):
@@ -142,7 +176,8 @@ _invalid_ops = [
 
 class OpsConfigServer(object):
     __metaclass__ = MetaConfig
-    attrs = [ConfigLine(name.lower()[3:], 0, "Generic comment", _statcode)
+    value = ['ERROR', 0, 0] # Note must have value == _opline(value)
+    attrs = [ConfigLine(name.lower()[3:], value, "Generic comment", _opline)
              for name in nfs_opnum4.values()]
 
 class Actions(object):
