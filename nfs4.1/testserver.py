@@ -83,6 +83,7 @@ def scan_options(p):
     .noinit    = (False)
     .nocleanup = (False)
     .outfile   = (None)
+    .xmlout    = (None)
     .debug_fail = (False)
     
     .security = (sys)
@@ -118,6 +119,8 @@ def scan_options(p):
                  help="Skip final cleanup of test directory")
     p.add_option("--outfile", "--out", default=None, metavar="FILE",
                  help="Store test results in FILE [%default]")
+    p.add_option("--xmlout", "--xml", default=None, metavar="FILE",
+                 help="Store test results in xml format [%default]")
     p.add_option("--debug_fail", action="store_true", default=False,
                  help="Force some checks to fail")
 
@@ -380,6 +383,9 @@ def main():
     testmod.printresults(tests, opt)
     if fail:
         print "\nWARNING: could not clean testdir due to:\n%s\n" % str(e)
+
+    if opt.xmlout is not None:
+        testmod.xml_printresults(tests, opt.xmlout)
 
 if __name__ == "__main__":
     main()

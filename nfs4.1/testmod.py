@@ -9,7 +9,10 @@
 import nfs4lib
 import re
 import sys
+import time
 from traceback import format_exception, print_exc
+import xml.dom.minidom
+import datetime
 
 if 'sum' not in __builtins__:
     def sum(seq, start=0):
@@ -105,6 +108,7 @@ class Test(object):
         #self.doc = function.__doc__.strip()
         self.result = Result()
         self._read_docstr(function.__doc__)
+        self.time_taken = 0
 
     def _read_docstr(self, s):
         """Searches s for 'keyword: list' and stores resulting lists"""
@@ -208,6 +212,7 @@ class Test(object):
         """Run self.runtest, storing result"""
         #print "*********Running test %s (%s)" % (self.name, self.code)
         self.result = self._run_result
+        start_time = time.time()
         if verbose:
             print repr(self)
         try:
@@ -231,6 +236,10 @@ class Test(object):
         except StandardError, e:
             self.result = Result(TEST_FAIL, '', sys.exc_info())
             self.result.msg = self.result.tb[-1]
+
+        stop_time = time.time()
+        self.time_taken = stop_time - start_time
+
         if verbose:
             print repr(self)
 
@@ -424,3 +433,34 @@ def printresults(tests, opts, file=None):
               (sum(count[SKIP:]), len(tests))
     print >> file, "Of those: %i Skipped, %i Failed, %i Warned, %i Passed" % \
           (count[SKIP], count[FAIL], count[WARN], count[PASS])
+
+def xml_printresults(tests, file_name, suite='all'):
+    with open(file_name, 'w') as fd:
+        failures = 0
+        total_time = 0
+        doc = xml.dom.minidom.Document()
+        testsuite = doc.createElement("testsuite")
+        testsuite.setAttribute("tests", str(len(tests)))
+        testsuite.setAttribute("errors", "0")
+        testsuite.setAttribute("timestamp", str(datetime.datetime.now()))
+        testsuite.setAttribute("name", suite)
+        doc.appendChild(testsuite)
+        for t in tests:
+            testcase = doc.createElement("testcase")
+            testsuite.appendChild(testcase)
+            testcase.setAttribute("name", str(t))
+            testcase.setAttribute("classname", suite)
+            testcase.setAttribute("time", str(t.time_taken))
+
+            total_time += t.time_taken
+            if t.result not in (TEST_PASS, TEST_WARN):
+                failures += 1
+                failure = doc.createElement("failure")
+                failure.setAttribute("message", t.result.msg)
+                err = doc.createCDATASection(''.join(t.result.tb))
+                failure.appendChild(err)
+                testcase.appendChild(failure)
+
+        testsuite.setAttribute("failures", str(failures))
+        testsuite.setAttribute("time", str(total_time))
+        fd.write(doc.toprettyxml(indent="  "))
