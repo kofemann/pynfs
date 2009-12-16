@@ -1,11 +1,12 @@
 # testmod.py - run tests from a suite
 #
-# Requires python 2.3
+# Requires python 2.5
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
 #                    Information Technology Integration
 #
+from __future__ import with_statement
 import nfs4lib
 import re
 import sys
