@@ -1309,6 +1309,12 @@ class NFS4Server(rpc.Server):
                                                        env.principal,
                                                        NF4REG, {})
                     existing.createverf = arg.openhow.createverf
+                elif arg.openhow.mode == EXCLUSIVE4_1:
+                    existing, bitmask = env.cfh.create(arg.claim.file,
+                                                       env.principal,
+                                                       NF4REG,
+                                                       arg.openhow.cva_attrs)
+                    existing.createverf = arg.openhow.cva_verf
                 else:
                     existing, bitmask = env.cfh.create(arg.claim.file,
                                                        env.principal,
