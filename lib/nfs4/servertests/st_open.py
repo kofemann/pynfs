@@ -347,27 +347,6 @@ def testShareConflict1(t, env):
           "Trying to open a file with deny=WRITE "
           "that was already opened with access=WRITE")
 
-# FRED - is this right response? or should it be allowed?
-def testShareConflict2(t, env):
-    """OPEN with deny=write when don't have write permissions
-
-    FLAGS: open all
-    DEPEND: MKFILE MODE
-    CODE: OPEN19
-    """
-    c1 = env.c1
-    c1.init_connection()
-    c1.create_confirm(t.code, attrs={FATTR4_MODE:0644},
-                      access=OPEN4_SHARE_ACCESS_READ,
-                      deny=OPEN4_SHARE_DENY_NONE)
-    c2 = env.c2
-    c2.init_connection()
-    res = c2.open_file(t.code, access=OPEN4_SHARE_ACCESS_READ,
-                       deny=OPEN4_SHARE_DENY_WRITE)
-    check(res, NFS4ERR_ACCESS,
-          "Trying to deny write permissions to others when "
-          "don't have write permissions")
-
 def testFailedOpen(t, env):
     """MULTIPLE: failed open should not mess up other clients' filehandles
 
