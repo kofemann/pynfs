@@ -808,16 +808,32 @@ class NFS4Server(rpc.Server):
         log_41.info("Replying.  Status %s (%d)" % (nfsstat4[status], status))
         return env
 
+    def delete_session(self, session, sessionid):
+        log_41.info("delete_session REMOVE SESSION")
+        del self.sessions[sessionid]
+        session.client.sessions.remove(session)
+
+    def error_set_session(self, session, sessionid, err):
+        if (err == NFS4ERR_BADSESSION or err == NFS4ERR_DEADSESSION):
+            self.delete_session(session, sessionid)
+        raise NFS4Error(err)
+
     def op_sequence(self, arg, env):
         """
         See draft22 2.10.4
         """
-        self.check_opsconfig(env, "sequence")
         if env.index != 0:
             return encode_status(NFS4ERR_SEQUENCE_POS)
         session = self.sessions.get(arg.sa_sessionid, None)
         if session is None:
             return encode_status(NFS4ERR_BADSESSION)
+
+        # We have a session. Check for injected errors
+        try:
+            self.check_opsconfig(env, "sequence")
+        except NFS4Error, e:
+            self.error_set_session(session, arg.sa_sessionid, e.status)
+
         # Check connection binding
         # XXX This is from old draft, needs to be checked
         connection = env.connection
