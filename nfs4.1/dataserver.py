@@ -4,6 +4,7 @@ import nfs4lib
 from nfs4_type import netaddr4, nfsv4_1_file_layout_ds_addr4
 from nfs4_pack import NFS4Packer
 from nfs4_const import *
+import time
 import logging
 import nfs4client
 import sys
@@ -38,6 +39,28 @@ class DataServer(object):
 
     def disconnect(self):
         self.sess.destroy()
+
+    def execute(self, ops, exceptions=[], delay=5, maxretries=3):
+        """ execute the NFS call
+        If an error code is specified in the exceptions it means that the
+        caller wants to handle the error himself
+        """
+        retry_errors = [NFS4ERR_DELAY, NFS4ERR_GRACE]
+        state_errors = [NFS4ERR_STALE_CLIENTID, NFS4ERR_BADSESSION,
+                        NFS4ERR_BADSLOT, NFS4ERR_DEADSESSION]
+        while True:
+            res = self.sess.compound(ops)
+            if res.status == NFS4_OK or res.status in exceptions:
+                return res
+            elif res.status in retry_errors and maxretries > 0:
+                maxretries -= 1
+                time.sleep(delay)
+            elif res.status in state_errors:
+                self.disconnect()
+                self.connect()
+            else:
+                log.error("Communication error with DS %s" % self.server)
+                raise Exception("Dataserver communication error")
 
     def get_netaddr4(self):
         # STUB server multipathing not supported yet
