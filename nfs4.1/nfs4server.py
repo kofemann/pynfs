@@ -351,14 +351,11 @@ class ClientRecord(object):
         # Erase share and record lock state
         for key, state in self.state.items():
             try:
-                state.acquire()
-                try:
+                with state.lock:
                     if state.type in (SHARE, BYTE):
                         state.delete()
                     # STUB - what about LAYOUT?
-                    # STUB - config whether DELEG OK or noy
-                finally:
-                    state.release()
+                    # STUB - config whether DELEG OK or not
             except StandardError, e:
                 log_41.exception("Ignoring problem during state removal")
         self.state = {}
