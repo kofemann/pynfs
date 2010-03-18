@@ -183,3 +183,10 @@ class DSDevice(object):
         for d in self.list:
             if d.active:
                 d.close_file(mds_fh)
+
+    def get_ds_filehandles(self, mds_fh):
+        if self.mdsds:
+            return [mds_fh]
+        else:
+            # XXX handle exceptions
+            return [d.filehandles[mds_fh][0] for d in self.list if d.active]

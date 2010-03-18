@@ -1343,10 +1343,10 @@ class FSLayoutFSObj(FSObject):
         # STUB: make nflutil a control variable
         nflutil = NFL4_UFLG_STRIPE_UNIT_SIZE_MASK & 0x4000
         # STUB: Return the layout_content4 for pnfs-files
-        # This works only with one dataserver
+        # This works only with one device id
         id = self.fs.dsdevice.devid
-        # This work only when MDS==DS
-        file_layout = nfsv4_1_file_layout4(id, nflutil, 0, 0, [self.fh])
+        fhs = self.fs.dsdevice.get_ds_filehandles(self.fh)
+        file_layout = nfsv4_1_file_layout4(id, nflutil, 0, 0, fhs)
         p = NFS4Packer()
         p.pack_nfsv4_1_file_layout4(file_layout)
 
