@@ -18,7 +18,7 @@ log.setLevel(10)
 POSIXLOCK = False
 
 SHARE, BYTE, DELEG, LAYOUT, ANON = range(5) # State types
-D_NORMAL, D_CB_INIT, D_CB_SENT, D_CB_RECEIVED, D_INVALID = range(5) # delegation states
+NORMAL, CB_INIT, CB_SENT, CB_RECEIVED, INVALID = range(5) # delegation/layout states
 
 @contextmanager
 def find_state(env, stateid, allow_0=True, allow_bypass=False):
@@ -292,8 +292,8 @@ class DelegState(FileStateTyped):
             return
         # Recall everything
         for e in self._tree.itervalues():
-            if e.status == D_NORMAL:
-                e.status = D_CB_INIT
+            if e.status == NORMAL:
+                e.status = CB_INIT
                 t = threading.Thread(target=e.initiate_recall,
                                      args=(dispatcher,))
                 t.setDaemon(True)
@@ -689,10 +689,10 @@ class DelegEntry(StateTableEntry):
     def __init__(self, other, state, key):
         super(DelegEntry, self).__init__(other, state, key)
         self.deleg_type = OPEN_DELEGATE_READ
-        self.status = D_NORMAL
+        self.status = NORMAL
 
     def delegreturn(self):
-        self.status = D_INVALID
+        self.status = INVALID
         self.delete()
 
     def has_permission(self, access):
@@ -724,7 +724,7 @@ class DelegEntry(StateTableEntry):
             raise RuntimeError
         # NOTE that we come in w/o state lock...when should we grab it?
         # ANSWER - we care about self.status, which can be set to 
-        # D_INVALID anytime by deleg_return
+        # INVALID anytime by deleg_return
         slot = session.channel_back.choose_slot()
         seq_op = op.cb_sequence(session.sessionid, slot.get_seqid(),
                                 slot.id, slot.id, True, []) # STUB
@@ -732,7 +732,7 @@ class DelegEntry(StateTableEntry):
         if self.invalid:
             # Race here doesn't matter, but would like to avoid the
             # RPC if possible.
-            self.status = D_INVALID
+            self.status = INVALID
             return
         # All sorts of STUBBINESS here
         pipe = session.channel_back.connections[0]
@@ -740,7 +740,7 @@ class DelegEntry(StateTableEntry):
                                            session.cb_prog, pipe=pipe)
         # Note it is possible that self.invalid is True, but don't 
         # want to take the lock
-        self.status = D_CB_SENT
+        self.status = CB_SENT
         res = dispatcher.cb_listen(xid, pipe)
         session.channel_back.free_slot(slot.id)
         with self.lock:
@@ -751,7 +751,7 @@ class DelegEntry(StateTableEntry):
                 # time server sends CB_RECALL
                 # STUB - now what???
                 raise RuntimeError
-            self.status = (D_CB_RECEIVED if not self.invalid else D_INVALID)
+            self.status = (CB_RECEIVED if not self.invalid else INVALID)
 
 class ByteEntry(StateTableEntry):
     type = BYTE
