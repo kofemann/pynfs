@@ -5,11 +5,10 @@ from nfs4_type import netaddr4, nfsv4_1_file_layout_ds_addr4
 from nfs4_pack import NFS4Packer
 from nfs4_const import *
 import logging
+import nfs4client
+import sys
 
 log = logging.getLogger("Dataserver Manager")
-
-# STUB for now we support only MDS==DS
-# One can simulate multiple DSs by adding virtual interfaces and exposing them as DSs
 
 class DataServer(object):
     def __init__(self, server, port=2049, proto="tcp", flavor=rpc.AUTH_SYS, active=True):
@@ -17,20 +16,28 @@ class DataServer(object):
         self.server = server
         self.port = int(port)
         self.active = active
-        s1 = rpc.security.instance(flavor)
-        if flavor == rpc.AUTH_NONE:
-            self.cred1 = s1.init_cred()
-        elif flavor == rpc.AUTH_SYS:
-            self.cred1 = s1.init_cred(uid=4321, gid=42, name="mystery")
-        else:
-            #STUB: GSS
-            pass
+        if active:
+            self.up()
 
     def up(self):
         self.active = True
+        self.connect()
 
     def down(self):
         self.active = False
+
+    def connect(self):
+        # only support root with AUTH_SYS for now
+        s1 = rpc.security.instance(rpc.AUTH_SYS)
+        self.cred1 = s1.init_cred(uid=0, gid=0)
+        self.c1 = nfs4client.NFS4Client(self.server, self.port)
+        self.c1.set_cred(self.cred1)
+        self.c1.null()
+        c = self.c1.new_client("DS.init_%s" % self.server)
+        self.sess = c.create_session()
+
+    def disconnect(self):
+        self.sess.destroy()
 
     def get_netaddr4(self):
         # STUB server multipathing not supported yet
@@ -69,7 +76,10 @@ class DSDevice(object):
                     log.info("Adding dataserver ip:%s port:%s" % (ds.server, ds.port))
                 self.list.append(ds)
             except:
-                pass # probably the conf file has a newline
+                log.critical("cannot connect to dataserver(s)")
+                log.critical("check for blank lines in dataservers.conf")
+                log.critical("or check dataserver status")
+                sys.exit(1)
         self.address_body = self._get_address_body()
         return 0
 
