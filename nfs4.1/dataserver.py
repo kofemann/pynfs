@@ -112,6 +112,13 @@ class DataServer(object):
             else:
                 raise RuntimeError
 
+    def close_file(self, mds_fh):
+        """close the given file"""
+        seqid=0 #FIXME: seqid must be !=0
+        fh, stateid = self.filehandles[mds_fh]
+        ops = [op.putfh(fh)] + [op.close(seqid, stateid)]
+        res = self.execute(ops)
+
 class DSDevice(object):
     def __init__(self, mdsds):
         self.list = [] # list of DataServer instances
@@ -169,3 +176,10 @@ class DSDevice(object):
         for d in self.list:
             if d.active:
                 d.open_file(mds_fh)
+
+    def close_ds_file(self, mds_fh):
+        if self.mdsds:
+            return
+        for d in self.list:
+            if d.active:
+                d.close_file(mds_fh)

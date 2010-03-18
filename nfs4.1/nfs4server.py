@@ -1619,6 +1619,8 @@ class NFS4Server(rpc.Server):
         with find_state(env, arg.open_stateid, allow_0=False) as state:
             # BUG - need to fix fs locking
             env.cfh.close()
+            if self.is_mds:
+                env.cfh.layout_close_hook()
             state.close()
             id = state.get_id()
         return encode_status(NFS4_OK, id)
