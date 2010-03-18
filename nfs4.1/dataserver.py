@@ -7,6 +7,7 @@ from nfs4_const import *
 import time
 import logging
 import nfs4client
+import hashlib
 import sys
 import nfs4_ops as op
 
@@ -22,6 +23,7 @@ class DataServer(object):
         self.port = int(port)
         self.active = active
         self.path = [DS_PATH]
+        self.filehandles = {}
         if active:
             self.up()
 
@@ -84,6 +86,32 @@ class DataServer(object):
         self.execute(cr_ops, exceptions=[NFS4ERR_EXIST])
         # XXX clean DS directory
 
+    def fh_to_name(self, mds_fh):
+        return hashlib.sha1("%r" % mds_fh).hexdigest()
+
+    def open_file(self, mds_fh, seqid=0,
+                  access=OPEN4_SHARE_ACCESS_BOTH, deny=OPEN4_SHARE_DENY_NONE,
+                  attrs={FATTR4_MODE: 0777}, owner = "mds", mode=GUARDED4):
+        verifier = self.sess.c.verifier
+        openflag = openflag4(OPEN4_CREATE, createhow4(mode, attrs, verifier))
+        name = self.fh_to_name(mds_fh)
+        while True:
+            if mds_fh in self.filehandles:
+                return
+            open_op = op.open(seqid, access, deny,
+                              open_owner4(self.sess.client.clientid, owner),
+                              openflag, open_claim4(CLAIM_NULL, name))
+            res = self.execute(nfs4lib.use_obj(self.path) + [open_op, op.getfh()], exceptions=[NFS4ERR_EXIST])
+            if res.status == NFS4_OK:
+                 ds_fh = res.resarray[-1].opgetfh.resok4.object
+                 ds_openstateid = stateid4(0, res.resarray[-2].stateid.other)
+                 self.filehandles[mds_fh] = (ds_fh, ds_openstateid)
+                 return
+            elif res.status == NFS4ERR_EXIST:
+                 openflag = openflag4(OPEN4_NOCREATE)
+            else:
+                raise RuntimeError
+
 class DSDevice(object):
     def __init__(self, mdsds):
         self.list = [] # list of DataServer instances
@@ -135,3 +163,9 @@ class DSDevice(object):
         p.pack_nfsv4_1_file_layout_ds_addr4(addr)
         return p.get_buffer()
 
+    def open_ds_file(self, mds_fh):
+        if self.mdsds:
+            return
+        for d in self.list:
+            if d.active:
+                d.open_file(mds_fh)

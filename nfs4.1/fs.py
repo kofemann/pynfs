@@ -307,6 +307,12 @@ class FSObject(object):
                 self.change_meta()
         return bitmap
 
+    def layout_open_hook(self):
+        """Called when a file is about to be opened"""
+        # STUB - this is used currently for filelayout, but input/output
+        # need to be better thought through
+        return
+
     def get_layout(self, arg):
         """Takes as input LAYOUTGET4args, returns layout4,
 
@@ -1355,6 +1361,9 @@ class FSLayoutFSObj(FSObject):
             self.fattr4_size = new_sz
             return new_sz
         return None
+
+    def layout_open_hook(self):
+        self.fs.dsdevice.open_ds_file(mds_fh=self.fh)
 
 class FileLayoutFS(FileSystem):
     """Exports a filesystem using a simple file layout pfs protocol

@@ -1437,6 +1437,11 @@ class NFS4Server(rpc.Server):
             open_state = file.state.add_share(client, owner.owner, access, deny)
             sid = open_state.get_id()
             deleg = self.grant_delegation(open_state, file, access)
+            # STUB - this needs to be thought through
+            # what should it return, how should it interact with delegations,
+            # where should it be in relation to above code?
+            if self.is_mds:
+                file.layout_open_hook()
         return sid, deleg, 0
 
     def get_attributes(self, obj, attrs, ignore=True):
