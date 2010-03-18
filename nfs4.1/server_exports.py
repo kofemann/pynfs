@@ -15,7 +15,7 @@ def mount_stuff(server, opts):
         E = BlockLayoutFS(5, backing_device=dev)
         server.mount(E, path="/block")
     if opts.use_files:
-        dservers = _load_dataservers(opts.dataservers)
+        dservers = _load_dataservers(opts.dataservers, server.is_ds and server.is_mds)
         if dservers is None:
             return
         F = FileLayoutFS(6, dservers)
@@ -33,8 +33,8 @@ def _create_simple_block_dev():
     c1 = Concat([s3, s1])
     return BlockVolume(c1)
 
-def _load_dataservers(file):
-    dss = DSDevice()
+def _load_dataservers(file, connect_to_ds=False):
+    dss = DSDevice(connect_to_ds)
     if dss.load(file) is None:
         return None
     return dss;

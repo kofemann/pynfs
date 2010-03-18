@@ -15,7 +15,8 @@ DS_PATH="pynfs_mds"
 log = logging.getLogger("Dataserver Manager")
 
 class DataServer(object):
-    def __init__(self, server, port=2049, proto="tcp", flavor=rpc.AUTH_SYS, active=True):
+    def __init__(self, server, port=2049, proto="tcp", flavor=rpc.AUTH_SYS, active=True, mdsds=True):
+        self.mdsds = mdsds
         self.proto = proto
         self.server = server
         self.port = int(port)
@@ -26,7 +27,8 @@ class DataServer(object):
 
     def up(self):
         self.active = True
-        self.connect()
+        if not self.mdsds:
+            self.connect()
 
     def down(self):
         self.active = False
@@ -83,12 +85,13 @@ class DataServer(object):
         # XXX clean DS directory
 
 class DSDevice(object):
-    def __init__(self):
+    def __init__(self, mdsds):
         self.list = [] # list of DataServer instances
         # STUB only one data group supported for now
         self.devid = 0
         self.active = 0
         self.address_body = None # set by load()
+        self.mdsds = mdsds # if you are both the DS and the MDS we are the only server
 
     def load(self, filename):
         """ Read dataservers from configuration file:
@@ -105,12 +108,12 @@ class DSDevice(object):
             try:
                 dsopts = conf[0].partition(":")
                 if not dsopts[2] or dsopts[2] == "":
-                    ds = DataServer(dsopts[0])
+                    ds = DataServer(dsopts[0], mdsds=self.mdsds)
                 else:
-                    ds = DataServer(server=dsopts[0], port=dsopts[2])
+                    ds = DataServer(server=dsopts[0], port=dsopts[2], mdsds=self.mdsds)
                     log.info("Adding dataserver ip:%s port:%s" % (ds.server, ds.port))
                 self.list.append(ds)
-            except:
+            except IOError:
                 log.critical("cannot connect to dataserver(s)")
                 log.critical("check for blank lines in dataservers.conf")
                 log.critical("or check dataserver status")
