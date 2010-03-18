@@ -1,13 +1,16 @@
 import csv
 import rpc
 import nfs4lib
-from nfs4_type import netaddr4, nfsv4_1_file_layout_ds_addr4
+from nfs4_type import *
 from nfs4_pack import NFS4Packer
 from nfs4_const import *
 import time
 import logging
 import nfs4client
 import sys
+import nfs4_ops as op
+
+DS_PATH="pynfs_mds"
 
 log = logging.getLogger("Dataserver Manager")
 
@@ -17,6 +20,7 @@ class DataServer(object):
         self.server = server
         self.port = int(port)
         self.active = active
+        self.path = [DS_PATH]
         if active:
             self.up()
 
@@ -36,6 +40,7 @@ class DataServer(object):
         self.c1.null()
         c = self.c1.new_client("DS.init_%s" % self.server)
         self.sess = c.create_session()
+        self.make_root()
 
     def disconnect(self):
         self.sess.destroy()
@@ -69,6 +74,13 @@ class DataServer(object):
                           str(self.port >> 8),
                           str(self.port & 0xff)])
         return [netaddr4(self.proto, uaddr)]
+
+    def make_root(self, attrs={FATTR4_MODE:0777}):
+        kind = createtype4(NF4DIR)
+        cr_ops = nfs4lib.use_obj(self.path[:-1]) + \
+            [op.create(kind, self.path[-1], attrs)]
+        self.execute(cr_ops, exceptions=[NFS4ERR_EXIST])
+        # XXX clean DS directory
 
 class DSDevice(object):
     def __init__(self):
