@@ -16,6 +16,7 @@ import rpc
 import nfs4client
 import os
 import nfs4lib
+from nfs4lib import use_obj
 import logging
 import struct
 from rpc.security import AuthSys, AuthGss
@@ -427,17 +428,6 @@ def do_readdir(sess, file, cookie=0, cookieverf='', attrs=0L,
         cookieverf = res.resarray[-1].cookieverf
     log.info("do_readdir() = %r" % entries)
     return entries
-
-def use_obj(file):
-    """File is either None, a fh, or a list of path components"""
-    if file is None or file == [None]:
-        return []
-    elif type(file) is str:
-        return [op.putfh(file)]
-    else:
-        return [op.putrootfh()] + [op.lookup(comp) for comp in file]
-
-        return self.getattr_op(list2bitmap(attrlist))
 
 def do_getattrdict(sess, file, attrlist):
     """file can be either a fh or a path"""

@@ -2,6 +2,7 @@ from __future__ import with_statement
 import nfs4_const
 import nfs4_pack
 import nfs4_type
+import nfs4_ops as op
 import time
 import collections
 import hmac
@@ -523,6 +524,15 @@ def check(res, expect=nfs4_const.NFS4_OK, msg=None):
     msg = "%s should return %s, instead got %s" % \
           (failedop_name, desired, received)
     raise NFS4Error(res.status, check_msg=msg)
+
+def use_obj(file):
+    """File is either None, a fh, or a list of path components"""
+    if file is None or file == [None]:
+        return []
+    elif type(file) is str:
+        return [op.putfh(file)]
+    else:
+        return [op.putrootfh()] + [op.lookup(comp) for comp in file]
 
 ###############################################
 # Attribute information
