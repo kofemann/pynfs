@@ -197,7 +197,7 @@ class NFS4Proxy(rpc.Server):
             # look for functions implemented by the proxy
             # that override communication
             funct = getattr(self, opname.lower(), None)
-            if funct is not None:
+            if funct is not None and callable(funct):
                 try:
                     result = funct(arg, cred, direction=0)
                 except Exception:
@@ -254,6 +254,14 @@ class NFS4Proxy(rpc.Server):
         for arg in res.resarray:
             opname = nfs_opnum4.get(arg.resop, 'op_illegal')
             log.info("*** %s (%d) ***" % (opname, arg.resop))
+            # look for functions implemented by the proxy
+            # that override communication
+            funct = getattr(self, opname.lower(), None)
+            if funct is not None and callable(funct):
+                try:
+                    result = funct(arg, cred, direction=1)
+                except Exception:
+                    log.error("Function override %s failed" % opname.lower())
         # state 6: repack and return XDR data to client
         packer = nfs4lib.FancyNFS4Packer()
         if callback:
