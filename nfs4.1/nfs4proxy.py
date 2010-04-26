@@ -26,18 +26,35 @@ log.setLevel(logging.CRITICAL)
 class NFS4Proxy(rpc.Server):
     """Implement an NFS(v4.x) proxy."""
     class ProxyClient(rpc.Client):
-        def __init__(self, prog, version, server, port):
+        def __init__(self, prog, version, cb_version, server, port, pipe):
             rpc.Client.__init__(self, prog, version)
+            self.proxy = None
             self.prog = prog
             self.version = version
             self.dserver = server
             self.dport = port
             self.cb_prog = None
-            self.cb_versions = [1, 4]
+            self.cb_versions = [cb_version]
             # currently support only root (? fix ? )
             rpcsec = rpc.security.instance(rpc.AUTH_SYS)
             self.default_cred = rpcsec.init_cred(uid=0,gid=0,name="root")
-            self.pipe = self.connect_to_server()
+            if pipe: #reuse connection
+                self.pipe = pipe
+            else:
+                self.pipe = self.connect_to_server()
+
+        def _check_program(self, prog):
+            if self.cb_prog is not None:
+                return (prog == self.cb_prog)
+
+        def _version_range(self, prog):
+            return (min(self.cb_versions), max(self.cb_versions))
+
+        def _find_method(self, msg):
+            method = getattr(self.proxy, 'handle_cb_%i' % msg.proc, None)
+            if method is not None:
+                return method
+            return None
 
         def connect_to_server(self, delay=5, retries=3):
             while True:
@@ -60,7 +77,7 @@ class NFS4Proxy(rpc.Server):
 
         def make_call(self, proc, data, timeout=15.0):
                 xid = self.pipe.send_call(self.prog, self.version,
-                                proc, data, self.default_cred)
+                                          proc, data, self.default_cred)
                 header, data = self.pipe.listen(xid, timeout)
                 return data
 
@@ -68,14 +85,17 @@ class NFS4Proxy(rpc.Server):
         port = kwargs.pop("port")
         dport = kwargs.pop("dport")
         dserver = kwargs.pop("dserver")
-        self.prog = NFS4_PROGRAM
-        self.versions = [4]
-        self.minor_versions = [0] + [1]
+        self.program = kwargs.pop("program", NFS4_PROGRAM)
+        self.version = kwargs.pop("version", 4)
+        self.cb_version = kwargs.pop("cb_version", 1)
         self.tag = "proxy tag"
-        rpc.Server.__init__(self, prog=self.prog, versions=self.versions,
+        self.client_pipe = None
+        rpc.Server.__init__(self, prog=self.program, versions=[self.version],
                             port=port, **kwargs)
-        self.client = self.ProxyClient(self.prog, self.versions[0],
-                                       dserver, dport)
+        self.client = self.ProxyClient(self.prog, self.version,
+                                       self.cb_version,
+                                       dserver, dport,
+                                       self.client_pipe)
 
     def start(self):
         """Cause the server to start listening on the previously bound port"""
@@ -85,10 +105,17 @@ class NFS4Proxy(rpc.Server):
             import sys
             sys.exit()
 
-    def forward_call(self, calldata, procedure=1,  timeout=15.0, retries=3):
+    def start_cb_proxy(self, program, version, client_pipe):
+        self.client.cb_prog = program
+        self.client.proxy = self
+        self.cb_client = self.ProxyClient(program, version, None, None, None, client_pipe)
+        self.cb_client.proxy = self
+
+    def forward_call(self, client, calldata, procedure=1,
+                     timeout=15.0, retries=3):
         while True:
             try:
-                data = self.client.make_call(procedure, calldata)
+                data = client.make_call(procedure, calldata)
                 return data
             except rpc.RPCTimeout:
                 log.critical('-'*60)
@@ -100,24 +127,42 @@ class NFS4Proxy(rpc.Server):
                     continue
                 raise rpc.RPCTimeout
 
-    def handle_0(self, data, cred):
+    def handle_cb_0(self, data, cred):
+        return self.handle_0(data, cred, callback=True)
+
+    def handle_cb_1(self, data, cred):
+        return self.handle_1(data, cred, callback=True)
+
+    def handle_0(self, data, cred, callback=False):
         """NULL procedure"""
         log.debug("*" * 20)
+        if callback:
+            log.debug("** CALLBACK **")
+            client = self.cb_client
         log.debug("Handling NULL")
+        if not callback:
+            # XXX: we currently support only one client at a time
+            self.client_pipe = cred.connection
+            client = self.client
         try:
-            self.forward_call(calldata="", procedure=0)
+            self.forward_call(client, calldata="", procedure=0)
             return rpc.SUCCESS, ''
         except rpc.RPCTimeout:
             log.critical("Error: cannot connect to destination server")
             return rpc.GARBAGE_ARGS, None
 
-    def handle_1(self, data, cred):
+    def handle_1(self, data, cred, callback=False):
         """COMPOUND procedure"""
         log.debug("*" * 40)
+        if callback:
+            log.debug("** CALLBACK **")
         log.debug("Handling COMPOUND")
         # stage 1: data in XDR as received from the client
         unpacker = nfs4lib.FancyNFS4Unpacker(data)
-        args = unpacker.unpack_COMPOUND4args()
+        if callback:
+            args = unpacker.unpack_CB_COMPOUNDargs()
+        else:
+            args = unpacker.unpack_COMPOUND4args()
         log.debug("Client sent:")
         log.debug(repr(args))
         unpacker.done()
@@ -133,18 +178,24 @@ class NFS4Proxy(rpc.Server):
                 result = funct(arg)
         #stage 3: repack the data and forward to server
         packer = nfs4lib.FancyNFS4Packer()
-        packer.pack_COMPOUND4args(args)
+        if callback:
+            packer.pack_CB_COMPOUND4args(args)
+        else:
+            packer.pack_COMPOUND4args(args)
         log.debug("Proxy sent:")
         log.debug(repr(args))
         calldata = packer.get_buffer()
         try:
-            ret_data = self.forward_call(calldata)
+            ret_data = self.forward_call(self.client, calldata)
         except rpc.RPCTimeout:
             log.critical("Error: cannot connect to destination server")
             return rpc.GARBAGE_ARGS, None
         # stage 4: data in XDR as returned by the server
         unpacker = nfs4lib.FancyNFS4Unpacker(ret_data)
-        res = unpacker.unpack_COMPOUND4res()
+        if callback:
+            res = unpacker.unpack_CB_COMPOUND4res()
+        else:
+            res = unpacker.unpack_COMPOUND4res
         log.debug("Server returned:")
         log.debug(repr(res))
         unpacker.done()
@@ -155,11 +206,20 @@ class NFS4Proxy(rpc.Server):
             log.info("*** %s (%d) ***" % (opname, arg.resop))
         # state 6: repack and return XDR data to client
         packer = nfs4lib.FancyNFS4Packer()
-        packer.pack_COMPOUND4res(res)
+        if callback:
+            packer.pack_CB_COMPOUND4res(res)
+        else:
+            packer.pack_COMPOUND4res(res)
         log.debug("Proxy returned:")
         log.debug(repr(res))
         reply = packer.get_buffer()
         return rpc.SUCCESS, reply
+
+    def op_create_session(self, arg, callback=False):
+        if not callback: # client->proxy
+            self.start_cb_proxy(arg.opcreate_session.csa_cb_program,
+                                version=1,
+                                client_pipe=self.client_pipe)
 
 def scan_options():
     from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
