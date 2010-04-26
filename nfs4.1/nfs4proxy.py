@@ -99,13 +99,14 @@ class NFS4Proxy(rpc.Server):
         self.tag = "proxy tag"
         self.fchannel = self.Channel(34000, 34000, 1200, 8, 8)
         self.bchannel = self.Channel(4096, 4096, 0, 2, 1)
-        self.client_pipe = None
         rpc.Server.__init__(self, prog=self.program, versions=[self.version],
                             port=port, **kwargs)
-        self.client = self.ProxyClient(self.prog, self.version,
+        # we support only one server connection
+        self.client = self.ProxyClient(self.program, self.version,
                                        self.cb_version,
                                        dserver, dport,
-                                       self.client_pipe)
+                                       None)
+        self.client.proxy = self
 
     def start(self):
         """Cause the server to start listening on the previously bound port"""
@@ -116,15 +117,21 @@ class NFS4Proxy(rpc.Server):
             sys.exit()
 
     def start_cb_proxy(self, program, version, client_pipe):
+        # FIXME: we support only one client at a time (at least with backchannel)
         self.client.cb_prog = program
-        self.client.proxy = self
-        self.cb_client = self.ProxyClient(program, version, None, None, None, client_pipe)
+        self.cb_client = self.ProxyClient(program, version, None, None,
+                                          None, client_pipe)
         self.cb_client.proxy = self
 
-    def forward_call(self, client, calldata, procedure=1,
+    def forward_call(self, calldata, callback=False, procedure=1,
                      timeout=15.0, retries=3):
+        def get_client(callback):
+            if callback:
+                return self.cb_client
+            return self.client
         while True:
             try:
+                client = get_client(callback)
                 data = client.make_call(procedure, calldata)
                 return data
             except rpc.RPCTimeout:
@@ -148,14 +155,9 @@ class NFS4Proxy(rpc.Server):
         log.debug("*" * 20)
         if callback:
             log.debug("** CALLBACK **")
-            client = self.cb_client
         log.debug("Handling NULL")
-        if not callback:
-            # XXX: we currently support only one client at a time
-            self.client_pipe = cred.connection
-            client = self.client
         try:
-            self.forward_call(client, calldata="", procedure=0)
+            self.forward_call(calldata="", callback=callback, procedure=0)
             return rpc.SUCCESS, ''
         except rpc.RPCTimeout:
             log.critical("Error: cannot connect to destination server")
@@ -185,7 +187,10 @@ class NFS4Proxy(rpc.Server):
             # that override communication
             funct = getattr(self, opname.lower(), None)
             if funct is not None:
-                result = funct(arg, direction=0)
+                try:
+                    result = funct(arg, cred, direction=0)
+                except Exception:
+                    log.error("Function override %s failed" % opname.lower())
         #stage 3: repack the data and forward to server
         packer = nfs4lib.FancyNFS4Packer()
         if callback:
@@ -195,8 +200,8 @@ class NFS4Proxy(rpc.Server):
         log.debug("Proxy sent:")
         log.debug(repr(args))
         calldata = packer.get_buffer()
-        try:
-            ret_data = self.forward_call(self.client, calldata)
+        try:    
+            ret_data = self.forward_call(calldata, callback)
         except rpc.RPCTimeout:
             log.critical("Error: cannot connect to destination server")
             return rpc.GARBAGE_ARGS, None
@@ -205,7 +210,7 @@ class NFS4Proxy(rpc.Server):
         if callback:
             res = unpacker.unpack_CB_COMPOUND4res()
         else:
-            res = unpacker.unpack_COMPOUND4res
+            res = unpacker.unpack_COMPOUND4res()
         log.debug("Server returned:")
         log.debug(repr(res))
         unpacker.done()
@@ -228,7 +233,7 @@ class NFS4Proxy(rpc.Server):
 # FUNCTION OVERRIDING START
 # just define a function called "op_<name>(self, arg, callback)"
 
-    def op_create_session(self, arg, direction=0):
+    def op_create_session(self, arg, cred, direction=0):
             def _adjust_channel_values(attrs, chan):
                 if chan.maxrequestsize < attrs.ca_maxrequestsize:
                     attrs.ca_maxrequestsize = chan.maxrequestsize
@@ -241,8 +246,9 @@ class NFS4Proxy(rpc.Server):
                 if chan.maxrequests < attrs.ca_maxrequests:
                     attrs.ca_maxrequests = chan.maxrequests
             if direction is 0: # client to proxy
+                # XXX: this might be buggy with more than one clients (?)
                 self.start_cb_proxy(arg.opcreate_session.csa_cb_program,
-                                    version=1, client_pipe=self.client_pipe)
+                                    version=1, client_pipe=cred.connection)
                 _adjust_channel_values(arg.opcreate_session.csa_fore_chan_attrs,
                                        self.fchannel)
                 _adjust_channel_values(arg.opcreate_session.csa_back_chan_attrs,
