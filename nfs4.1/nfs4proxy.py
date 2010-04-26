@@ -25,6 +25,14 @@ log.setLevel(logging.CRITICAL)
 
 class NFS4Proxy(rpc.Server):
     """Implement an NFS(v4.x) proxy."""
+    class Channel(object):
+        def __init__(self, maxreqsz, maxrespsz, maxrespszc, maxops, maxreqs):
+            self.maxrequestsize = maxreqsz
+            self.maxresponsesize = maxrespsz
+            self.maxresponsesize_cached = maxrespszc
+            self.maxoperations = maxops
+            self.maxrequests = maxreqs
+
     class ProxyClient(rpc.Client):
         def __init__(self, prog, version, cb_version, server, port, pipe):
             rpc.Client.__init__(self, prog, version)
@@ -89,6 +97,8 @@ class NFS4Proxy(rpc.Server):
         self.version = kwargs.pop("version", 4)
         self.cb_version = kwargs.pop("cb_version", 1)
         self.tag = "proxy tag"
+        self.fchannel = self.Channel(34000, 34000, 1200, 8, 8)
+        self.bchannel = self.Channel(4096, 4096, 0, 2, 1)
         self.client_pipe = None
         rpc.Server.__init__(self, prog=self.program, versions=[self.version],
                             port=port, **kwargs)
@@ -175,7 +185,7 @@ class NFS4Proxy(rpc.Server):
             # that override communication
             funct = getattr(self, opname.lower(), None)
             if funct is not None:
-                result = funct(arg)
+                result = funct(arg, direction=0)
         #stage 3: repack the data and forward to server
         packer = nfs4lib.FancyNFS4Packer()
         if callback:
@@ -215,11 +225,31 @@ class NFS4Proxy(rpc.Server):
         reply = packer.get_buffer()
         return rpc.SUCCESS, reply
 
-    def op_create_session(self, arg, callback=False):
-        if not callback: # client->proxy
-            self.start_cb_proxy(arg.opcreate_session.csa_cb_program,
-                                version=1,
-                                client_pipe=self.client_pipe)
+# FUNCTION OVERRIDING START
+# just define a function called "op_<name>(self, arg, callback)"
+
+    def op_create_session(self, arg, direction=0):
+            def _adjust_channel_values(attrs, chan):
+                if chan.maxrequestsize < attrs.ca_maxrequestsize:
+                    attrs.ca_maxrequestsize = chan.maxrequestsize
+                if chan.maxresponsesize < attrs.ca_maxresponsesize:
+                    attrs.ca_maxresponsesize = chan.maxresponsesize
+                if chan.maxresponsesize_cached < attrs.ca_maxresponsesize_cached:
+                    attrs.ca_maxresposnesize_cached = chan.maxresponsesize_cached
+                if chan.maxoperations < attrs.ca_maxoperations:
+                    attrs.ca_maxoperations = chan.maxoperations
+                if chan.maxrequests < attrs.ca_maxrequests:
+                    attrs.ca_maxrequests = chan.maxrequests
+            if direction is 0: # client to proxy
+                self.start_cb_proxy(arg.opcreate_session.csa_cb_program,
+                                    version=1, client_pipe=self.client_pipe)
+                _adjust_channel_values(arg.opcreate_session.csa_fore_chan_attrs,
+                                       self.fchannel)
+                _adjust_channel_values(arg.opcreate_session.csa_back_chan_attrs,
+                                       self.bchannel)
+            elif direction is 1: # proxy to client
+                pass
+#FUNCTION OVERRIDING END
 
 def scan_options():
     from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
