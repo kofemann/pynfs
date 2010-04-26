@@ -126,6 +126,11 @@ class NFS4Proxy(rpc.Server):
         for arg in args.argarray:
             opname = nfs_opnum4.get(arg.argop, 'op_illegal')
             log.info("*** %s (%d) ***" % (opname, arg.argop))
+            # look for functions implemented by the proxy
+            # that override communication
+            funct = getattr(self, opname.lower(), None)
+            if funct is not None:
+                result = funct(arg)
         #stage 3: repack the data and forward to server
         packer = nfs4lib.FancyNFS4Packer()
         packer.pack_COMPOUND4args(args)
