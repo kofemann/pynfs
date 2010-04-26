@@ -16,12 +16,13 @@ import random
 import struct
 import collections
 import logging
-from nfs4commoncode import CompoundState, encode_status, encode_status_by_name
+from nfs4commoncode import CBCompoundState, CompoundState, encode_status, encode_status_by_name
 import nfs4client
 import sys, traceback
+from errorparser import ErrorDesc, ErrorParser
 
 log = logging.getLogger("nfs.proxy")
-log.setLevel(logging.CRITICAL)
+log.setLevel(logging.INFO)
 
 class NFS4Proxy(rpc.Server):
     """Implement an NFS(v4.x) proxy."""
@@ -68,6 +69,7 @@ class NFS4Proxy(rpc.Server):
             while True:
                 try:
                     server_address = (self.dserver, self.dport)
+                    print server_address
                     pipe = self.connect(server_address)
                 except:
                     traceback.print_exc(file=sys.stdout)
@@ -100,13 +102,16 @@ class NFS4Proxy(rpc.Server):
         self.fchannel = self.Channel(34000, 34000, 1200, 8, 8)
         self.bchannel = self.Channel(4096, 4096, 0, 2, 1)
         rpc.Server.__init__(self, prog=self.program, versions=[self.version],
-                            port=port, **kwargs)
+                            port=port)
         # we support only one server connection
         self.client = self.ProxyClient(self.program, self.version,
                                        self.cb_version,
                                        dserver, dport,
                                        None)
         self.client.proxy = self
+        # load error description file
+        errfile = kwargs.pop("errorfile", None)
+        self.errorhandler = ErrorParser(errfile)
 
     def start(self):
         """Cause the server to start listening on the previously bound port"""
@@ -180,7 +185,13 @@ class NFS4Proxy(rpc.Server):
         unpacker.done()
         # stage 2: pre-processing - data in COMPOUND4args
         # XXX: check operation, alter stuff, delay etc. etc.
+        args.req_size = len(data) # BUG, need to use cred.payload_size
+        if callback:
+            env = CBCompoundState(args, cred)
+        else:
+            env = CompoundState(args, cred)
         for arg in args.argarray:
+            env.index += 1
             opname = nfs_opnum4.get(arg.argop, 'op_illegal')
             log.info("*** %s (%d) ***" % (opname, arg.argop))
             # look for functions implemented by the proxy
@@ -191,6 +202,30 @@ class NFS4Proxy(rpc.Server):
                     result = funct(arg, cred, direction=0)
                 except Exception:
                     log.error("Function override %s failed" % opname.lower())
+            # handle error condition if specified
+            error = None
+            if self.errorhandler is not None:
+                error = self.errorhandler.get_error(opname.lower()[3:],
+                                                    arg, env)
+            if error is not None:
+                result = encode_status_by_name(opname.lower()[3:],
+                                            int(error),
+                                            msg="Proxy Rewrite Error")
+                env.results.append(result)
+                p = nfs4lib.FancyNFS4Packer()
+                if callback:
+                    res = CB_COMPOUND4res(env.results.reply.status,
+                                          env.results.reply.tag,
+                                          env.results.reply.results)
+                    p.pack_CB_COMPOUND4res(res)
+                else:
+                    res = COMPOUND4res(env.results.reply.status,
+                                       env.results.reply.tag,
+                                       env.results.reply.results)
+                    p.pack_COMPOUND4res(res)
+                log.info(repr(res))
+                reply = p.get_buffer()
+                return rpc.SUCCESS, reply
         #stage 3: repack the data and forward to server
         packer = nfs4lib.FancyNFS4Packer()
         if callback:
@@ -273,7 +308,7 @@ def scan_options():
 
 if __name__ == "__main__":
     opts = scan_options()
-    S = NFS4Proxy(port=opts.port, dserver=opts.dserver, dport=opts.dport)
+    S = NFS4Proxy(port=opts.port, dserver=opts.dserver, dport=opts.dport, errorfile="error.xml")
     if True:
         S.start()
     else:
