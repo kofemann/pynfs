@@ -13,6 +13,7 @@ from rpc_type import *
 
 import security
 import rpclib
+import random
 
 log_p = logging.getLogger("rpc.poll") # polling loop thread
 log_t = logging.getLogger("rpc.thread") # handler threads
@@ -350,7 +351,7 @@ class RpcPipe(Pipe):
         Pipe.__init__(self, *args, **kwargs)
         self._pending = {} # {xid:defer}
         self._lock = threading.Lock() # Protects fields below
-        self._xid = 0
+        self._xid = random.randint(0, 0x7fffffffL)
 
     def _get_xid(self):
         with self._lock:
