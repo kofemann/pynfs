@@ -444,7 +444,7 @@ class LayoutState(FileStateTyped):
         #if self.waiting > 0 or self.outstanding > 0:
         ## Don't grant layouts while anyone is waiting for a recall
         #   return None
-        if self.file.layout_options() & layoutargs.loga_layout_type:
+        if self.file.layout_options() == layoutargs.loga_layout_type:
             entry = self.grab_entry(state.key[:1], LayoutEntry)
             layout = self.file.get_layout(layoutargs)
             entry.populate(layout)
