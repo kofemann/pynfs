@@ -61,14 +61,19 @@ class DataServer(object):
             res = self.sess.compound(ops)
             if res.status == NFS4_OK or res.status in exceptions:
                 return res
-            elif res.status in retry_errors and maxretries > 0:
-                maxretries -= 1
-                time.sleep(delay)
+            elif res.status in retry_errors:
+                if maxretries > 0:
+                    maxretries -= 1
+                    time.sleep(delay)
+                else:
+                    log.error("Too many retries with DS %s" % self.server)
+                    raise Exception("Dataserver communication retry error")
             elif res.status in state_errors:
                 self.disconnect()
                 self.connect()
             else:
-                log.error("Communication error with DS %s" % self.server)
+                log.error("Unhandled status %s from DS %s" %
+                          (nfsstat4[res.status], self.server))
                 raise Exception("Dataserver communication error")
 
     def get_netaddr4(self):
