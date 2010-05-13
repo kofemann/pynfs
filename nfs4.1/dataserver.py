@@ -123,6 +123,8 @@ class DataServer(object):
         fh, stateid = self.filehandles[mds_fh]
         ops = [op.putfh(fh)] + [op.close(seqid, stateid)]
         res = self.execute(ops)
+        # ignoring return
+        del self.filehandles[mds_fh]
 
 class DSDevice(object):
     def __init__(self, mdsds):

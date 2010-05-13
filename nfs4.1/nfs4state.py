@@ -193,7 +193,7 @@ class DictTree(object):
                 break
             sub_d = d.get(k)
             if sub_d is None:
-                raise KeyError
+                raise KeyError("bad key %r" % (key,))
             branch.append((d, k))
             d = sub_d
         # Prune the branch
