@@ -29,7 +29,7 @@ class NFS4Client(rpc.Client, rpc.Server):
     def __init__(self, host='localhost', port=2049, ctrl_proc=16):
         rpc.Client.__init__(self, 100003, 4)
         self.prog = 0x40000000
-        self.versions = [4] # List of supported versions of prog
+        self.versions = [1] # List of supported versions of prog
 
         self.minorversion = 1
         self.minor_versions = [1]
