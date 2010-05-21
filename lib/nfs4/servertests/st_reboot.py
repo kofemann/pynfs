@@ -13,7 +13,7 @@ def _ask(t, env):
         print "Reboot tests are not part of the standard test suite."
         if not env.opts.verbose:
             print "Also, it is probably better to use the -v option"
-        print "Are your *sure* you want to run them?"
+        print "Are you *sure* you want to run them?"
         answer = sys.stdin.readline()
         c = answer.lower()[0]
         __asked = (c=='y')
@@ -29,11 +29,24 @@ def _getcount(t, env):
         return False
 
 def _waitForReboot(c):
-    print "Hit ENTER to continue after server is reset"
+    """Wait for server to reboot.
+
+    Returns an estimate of how long grace period will last.
+    """
     oldleasetime = c.getLeaseTime()
-    sys.stdin.readline()
+    if c.opts.rebootscript is None:
+        print "Hit ENTER to continue after server is reset"
+        sys.stdin.readline()
+        print "Continuing with test"
+    else:
+        # Invoke the reboot script, passing it rebootargs as an argument.
+        os.system(c.opts.rebootscript + ' ' + c.opts.rebootargs)
+
+        # Wait until the server is back up.
+        # c.null() blocks until it gets a response,
+        # which happens when the server comes back up.
+        c.null()
     newleasetime = c.getLeaseTime()
-    print "Continuing with test"
     return 5 + max(oldleasetime, newleasetime)
 
 #####################################################

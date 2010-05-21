@@ -121,7 +121,9 @@ def scan_options(p):
     .usefile   = (None)
     .usedir    = (None)
     .usespecial= (None)
-    
+
+    .rebootscript = (None)
+    .rebootargs = (None)
     """
     p.add_option("--showflags", action="store_true", default=False,
                  help="Print a list of all possible flags and exit")
@@ -217,6 +219,20 @@ def scan_options(p):
     g.add_option("--secure", action="store_true", default=False,
                  help="Try to use 'secure' port number <1024 for client [False]")
     p.add_option_group(g)
+
+    g = OptionGroup(p, "Server reboot script options",
+                    "When running reboot scripts, these options determine "
+                    "the scripts and arguments used to control how the "
+                    "server is restarted.")
+
+    g.add_option("--rebootscript", default=None, metavar="FILE",
+                 help="Use FILE as the script to reboot SERVER.")
+
+    g.add_option("--rebootargs", default=None, metavar="ARGS",
+                 help="Pass ARGS as a string to the reboot script.")
+
+    p.add_option_group(g)
+
     return p.parse_args()
 
 class Argtype(object):
