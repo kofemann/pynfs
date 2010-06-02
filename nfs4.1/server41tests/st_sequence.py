@@ -156,15 +156,17 @@ def testTooManyOps(t, env):
     CODE: SEQ7
     """
     c1 = env.c1.new_client(env.testname(t))
-    # Only allow 4 ops per request
+    # Create session asking for 4 ops max per request
     attrs = channel_attrs4(0, 8192, 8192, 8192, 4, 8, [])
     sess1 = c1.create_session(fore_attrs = attrs)
-    # Send a compound with 4 ops (counting sequence), should work
-    res = sess1.compound([op.putrootfh(), op.getfh(), op.getattr(0)])
+    # Send the max number of ops allowed by the server
+    lots_of_ops = [op.putrootfh(), op.getfh()]
+    lots_of_ops += [op.getattr(0) for num in xrange(sess1.fore_channel.maxoperations-3)]
+    res = sess1.compound(lots_of_ops)
     check(res)
-    # Send a compound with 5 ops (counting sequence), should fail
-    res = sess1.compound([op.putrootfh(), op.getfh(), op.getattr(0),
-                          op.getattr(0xf)])
+    # Add one more op to exceed the maximum
+    lots_of_ops += [op.getattr(0)]
+    res = sess1.compound(lots_of_ops)
     check(res, NFS4ERR_TOO_MANY_OPS)
 
 def testBadSlot(t, env):
