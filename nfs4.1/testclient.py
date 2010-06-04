@@ -36,20 +36,6 @@ import socket
 import rpc
 import cPickle as pickle
 
-def unixpath2comps(str, pathcomps=None):
-    if pathcomps is None or str[0] == '/':
-        pathcomps = []
-    else:
-        pathcomps = pathcomps[:]
-    for component in str.split('/'):
-        if (component == '') or (component == '.'):
-            pass
-        elif component == '..':
-            pathcomps = pathcomps[:-1]
-        else:
-            pathcomps.append(component)
-    return pathcomps
-
 def parse_useparams(str):
     return str.split(':')
 
@@ -250,7 +236,7 @@ def main():
         p.error("Need a server")
     url = args.pop(0)
     print "url", url
-    opt.path = unixpath2comps(url)
+    opt.path = nfs4lib.path_components(url)
     print "Set opt.path", opt.path
 
     # Check --use* options are valid
@@ -270,7 +256,7 @@ def main():
                 if path[-1] == '/' and attr != 'usedir':
                     p.error("Can't use dir for --%s" %attr)
                 try:
-                    path = unixpath2comps(path)
+                    path = nfs4lib.path_components(path)
                 except Exception, e:
                     p.error(e)
             setattr(opt, attr, [comp for comp in path if comp])

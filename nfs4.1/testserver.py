@@ -42,20 +42,6 @@ import cPickle as pickle
 
 VERSION="0.2" # How/when update this?
 
-def unixpath2comps(str, pathcomps=None):
-    if pathcomps is None or str[0] == '/':
-        pathcomps = []
-    else:
-        pathcomps = pathcomps[:]
-    for component in str.split('/'):
-        if (component == '') or (component == '.'):
-            pass
-        elif component == '..':
-            pathcomps = pathcomps[:-1]
-        else:
-            pathcomps.append(component)
-    return pathcomps
-
 def scan_options(p):
     """Parse command line options
 
@@ -279,7 +265,7 @@ def main():
                 if path[-1] == '/' and attr != 'usedir':
                     p.error("Can't use dir for --%s" %attr)
                 try:
-                    path = unixpath2comps(path)
+                    path = nfs4lib.path_components(path)
                 except Exception, e:
                     p.error(e)
             setattr(opt, attr, [comp for comp in path if comp])
