@@ -10,8 +10,6 @@ import hashlib
 import sys
 import nfs4_ops as op
 
-DS_PATH="pynfs_mds"
-
 log = logging.getLogger("Dataserver Manager")
 
 class DataServer(object):
@@ -21,7 +19,8 @@ class DataServer(object):
         self.server = server
         self.port = int(port)
         self.active = active
-        self.path = [DS_PATH]
+        self.path = path
+        self.path_fh = None
         self.filehandles = {}
         if active:
             self.up()
@@ -84,10 +83,22 @@ class DataServer(object):
         return [netaddr4(self.proto, uaddr)]
 
     def make_root(self, attrs={FATTR4_MODE:0777}):
+        existing_path = []
         kind = createtype4(NF4DIR)
-        cr_ops = nfs4lib.use_obj(self.path[:-1]) + \
-            [op.create(kind, self.path[-1], attrs)]
-        self.execute(cr_ops, exceptions=[NFS4ERR_EXIST])
+        for comp in self.path:
+            existing_path.append(comp)
+            res = self.execute(nfs4lib.use_obj(existing_path),
+                               exceptions=[NFS4ERR_NOENT])
+            if res.status == NFS4ERR_NOENT:
+                cr_ops = nfs4lib.use_obj(existing_path[:-1]) + \
+                    [op.create(kind, comp, attrs)]
+                self.execute(cr_ops)
+        res = self.execute(nfs4lib.use_obj(self.path) + [op.getfh()])
+        self.path_fh = res.resarray[-1].object
+        need = ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_EXTEND
+        res = self.execute(nfs4lib.use_obj(self.path_fh) + [op.access(need)])
+        if res.resarray[-1].access != need:
+            raise RuntimeError
         # XXX clean DS directory
 
     def fh_to_name(self, mds_fh):
@@ -105,7 +116,7 @@ class DataServer(object):
             open_op = op.open(seqid, access, deny,
                               open_owner4(self.sess.client.clientid, owner),
                               openflag, open_claim4(CLAIM_NULL, name))
-            res = self.execute(nfs4lib.use_obj(self.path) + [open_op, op.getfh()], exceptions=[NFS4ERR_EXIST])
+            res = self.execute(nfs4lib.use_obj(self.path_fh) + [open_op, op.getfh()], exceptions=[NFS4ERR_EXIST])
             if res.status == NFS4_OK:
                  ds_fh = res.resarray[-1].opgetfh.resok4.object
                  ds_openstateid = stateid4(0, res.resarray[-2].stateid.other)
@@ -154,8 +165,9 @@ class DSDevice(object):
                              (server, port, '/'.join(path)))
                     ds = DataServer(server, port, path, mdsds=self.mdsds)
                     self.list.append(ds)
-                except IOError:
-                    log.critical("cannot connect to dataserver(s)")
+                except:
+                    log.critical("cannot access %s:%i/%s" %
+                                 (server, port, '/'.join(path)))
                     sys.exit(1)
         self.active = 1
         self.address_body = self._get_address_body()
