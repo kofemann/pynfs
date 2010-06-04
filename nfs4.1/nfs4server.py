@@ -1291,12 +1291,12 @@ class NFS4Server(rpc.Server):
                 try:
                     # BUG - need to fix fs locking
                     data = env.cfh.read(arg.offset, arg.count, env.principal)
-                    eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
+                    eof = (arg.offset + len(data)) >= env.cfh.fattr4_size
                 finally:
                     state.mark_done_reading()
         else:
             data = env.cfh.read(arg.offset, arg.count, env.principal)
-            eof = (arg.offset + arg.count) >= env.cfh.fattr4_size
+            eof = (arg.offset + len(data)) >= env.cfh.fattr4_size
         res = READ4resok(eof, data)
         return encode_status(NFS4_OK, res)
 
