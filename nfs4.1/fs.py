@@ -373,7 +373,7 @@ class FSObject(object):
     def access4_modify(self, principal):
         """Returns True if principal can change existing object data."""
         # STUB
-        return not self.fs.read_only
+        return (not self.fs.read_only) or (principal.skip_checks)
 
     # STUB - don't differentiate between extend and modify
     access4_extend = access4_modify
@@ -500,7 +500,7 @@ class FSObject(object):
         log_o.log(5, "FSObject.create(%r, %r)" % (name, principal))
         if not self.access4_extend(principal):
             raise NFS4Error(NFS4ERR_ACCESS)
-        obj = self.fs.create(kind)
+        obj = self.fs.create(kind, force=principal.skip_checks)
         if FATTR4_OWNER not in attrs:
             # STUB - should also limit ability to arbitrarily set owner
             attrs[FATTR4_OWNER] = principal.name
@@ -604,13 +604,13 @@ class FileSystem(object):
         """Syncs object to disk, returns value from enum stable_how4"""
         raise NotImplementedError
 
-    def create(self, kind):
+    def create(self, kind, force=False):
         """Allocs disk space and returns a FSObject associated with it.
 
         Note does not link the FSObject into the FS tree.
         """
         log_fs.log(5, "FileSystem.create(kind=%r)" % kind)
-        if self.read_only:
+        if self.read_only and not force:
             raise NFS4Error(NFS4ERR_ROFS, tag="fs.create failed")
         # Huge STUB
         id = self.alloc_id()
@@ -638,6 +638,7 @@ class RootFS(FileSystem):
         self._nextid = 0
         FileSystem.__init__(self)
         self.fsid = (0,0)
+        self.read_only = True
 
     def alloc_id(self):
         self._nextid += 1
