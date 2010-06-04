@@ -1,4 +1,3 @@
-import csv
 import rpc
 import nfs4lib
 from nfs4_type import *
@@ -16,7 +15,7 @@ DS_PATH="pynfs_mds"
 log = logging.getLogger("Dataserver Manager")
 
 class DataServer(object):
-    def __init__(self, server, port=2049, proto="tcp", flavor=rpc.AUTH_SYS, active=True, mdsds=True):
+    def __init__(self, server, port, path, proto="tcp", flavor=rpc.AUTH_SYS, active=True, mdsds=True):
         self.mdsds = mdsds
         self.proto = proto
         self.server = server
@@ -137,31 +136,29 @@ class DSDevice(object):
 
     def load(self, filename):
         """ Read dataservers from configuration file:
-        where each line has format e.g. 127.0.0.1:port
+        where each line has format e.g. server[:[port][/path]]
         """
-        try:
-            dsReader = csv.reader(open(filename), delimiter='\n')
-            self.active = 1
-        except IOError:
-            log.error("Error reading file %s. \n --> pNFS-files export not activated" % filename)
-            return None
-        for conf in dsReader:
-            # format ip:port
-            try:
-                dsopts = conf[0].partition(":")
-                if not dsopts[2] or dsopts[2] == "":
-                    ds = DataServer(dsopts[0], mdsds=self.mdsds)
-                else:
-                    ds = DataServer(server=dsopts[0], port=dsopts[2], mdsds=self.mdsds)
-                    log.info("Adding dataserver ip:%s port:%s" % (ds.server, ds.port))
-                self.list.append(ds)
-            except IOError:
-                log.critical("cannot connect to dataserver(s)")
-                log.critical("check for blank lines in dataservers.conf")
-                log.critical("or check dataserver status")
-                sys.exit(1)
+        with open(filename) as fd:
+            for line in fd:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                print "Analyzing: %r" % line
+                server, port, path = nfs4lib.parse_nfs_url(line)
+                if server is None:
+                    log.critical("Could not parse line: %r" % line)
+                    sys.exit(1)
+                print server, port, path
+                try:
+                    log.info("Adding dataserver ip:%s port:%s path:%s" %
+                             (server, port, '/'.join(path)))
+                    ds = DataServer(server, port, path, mdsds=self.mdsds)
+                    self.list.append(ds)
+                except IOError:
+                    log.critical("cannot connect to dataserver(s)")
+                    sys.exit(1)
+        self.active = 1
         self.address_body = self._get_address_body()
-        return 0
 
     def _get_address_body(self):
         stripe_indices = []

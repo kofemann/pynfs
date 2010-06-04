@@ -35,6 +35,5 @@ def _create_simple_block_dev():
 
 def _load_dataservers(file, connect_to_ds=False):
     dss = DSDevice(connect_to_ds)
-    if dss.load(file) is None:
-        return None
+    dss.load(file)
     return dss;
