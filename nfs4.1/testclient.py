@@ -28,7 +28,7 @@ if sys.hexversion < 0x02050000:
     sys.exit(1)
 import os
 
-import re
+import nfs4lib
 import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
 import client41tests.environment as environment
@@ -36,22 +36,6 @@ import socket
 import rpc
 import cPickle as pickle
 
-def parse_url(url):
-    """Parse [nfs://]host:port/path"""
-    p = re.compile(r"""
-    (?:nfs://)?      # Ignore an optionally prepended 'nfs://'
-    (?P<host>[^:]+)  # set host=everything up to next :
-    :?
-    (?P<port>[^/]*)  # set port=everything up to next /
-    (?P<path>/.*$|$) # set path=everything else
-    """, re.VERBOSE)
-
-    m = p.match(url)
-    if m:
-        return m.group('host'), m.group('port'), m.group('path')
-    else:
-        return None, None, None
-        
 def unixpath2comps(str, pathcomps=None):
     if pathcomps is None or str[0] == '/':
         pathcomps = []
@@ -267,17 +251,6 @@ def main():
     url = args.pop(0)
     print "url", url
     opt.path = unixpath2comps(url)
-##     opt.server, opt.port, opt.path = parse_url(url)
-##     if not opt.server:
-##         opt.server = ""
-##     if not opt.port:
-##         opt.port = 2049
-##     else:
-##         opt.port = int(opt.port)
-##     if not opt.path:
-##         opt.path = []
-##     else:
-##         opt.path = unixpath2comps(opt.path)
     print "Set opt.path", opt.path
 
     # Check --use* options are valid

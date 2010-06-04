@@ -32,7 +32,7 @@ if sys.hexversion < 0x02050000:
     sys.exit(1)
 import os
 
-import re
+import nfs4lib
 import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
 import server41tests.environment as environment
@@ -42,24 +42,6 @@ import cPickle as pickle
 
 VERSION="0.2" # How/when update this?
 
-def parse_url(url):
-    """Parse [nfs://]host:port/path, format taken from rfc 2224"""
-    p = re.compile(r"""
-    (?:nfs://)?      # Ignore an optionally prepended 'nfs://'
-    (?P<host>[^:]+)  # set host=everything up to next :
-    (:
-    (?P<port>\d*)    # set port=following digits
-    (?P<path>/.*)    # set path=everything else, must start with /
-    )?
-    $
-    """, re.VERBOSE)
-
-    m = p.match(url)
-    if m:
-        return m.group('host'), m.group('port'), m.group('path')
-    else:
-        return None, None, None
-        
 def unixpath2comps(str, pathcomps=None):
     if pathcomps is None or str[0] == '/':
         pathcomps = []
@@ -275,12 +257,9 @@ def main():
     if not args:
         p.error("Need a server")
     url = args.pop(0)
-    opt.server, port, path = parse_url(url)
+    opt.server, opt.port, opt.path = nfs4lib.parse_nfs_url(url)
     if not opt.server:
         p.error("%s not a valid server name" % url)
-    opt.port = (2049 if not port else int(port))
-    opt.path = (unixpath2comps(path) if path else [])
-    # print "server=%r, port=%r, path=%r" % (opt.server, opt.port, opt.path)
 
     if not args:
         p.error("No tests given")

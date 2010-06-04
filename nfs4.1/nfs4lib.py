@@ -8,6 +8,7 @@ import collections
 import hmac
 import struct
 import random
+import re
 from locking import Lock
 try:
     from Crypto.Cipher import AES
@@ -447,6 +448,30 @@ def get_nfstime(t=None):
     sec = int(t)
     nsec = int((t - sec) * 1000000000)
     return nfs4_type.nfstime4(sec, nsec)
+
+def parse_nfs_url(url):
+    """Parse [nfs://]host:port/path, format taken from rfc 2224
+
+    Returns triple server, port, path.
+    """
+    p = re.compile(r"""
+    (?:nfs://)?      # Ignore an optionally prepended 'nfs://'
+    (?P<host>[^:]+)  # set host=everything up to next :
+    (:
+    (?P<port>\d*)    # set port=following digits
+    (?P<path>/.*)?   # set path=everything else, must start with /
+    )?
+    $
+    """, re.VERBOSE)
+
+    m = p.match(url)
+    if m:
+        server, port, path = m.group('host'), m.group('port'), m.group('path')
+        port = (2049 if not port else int(port))
+        path = (path_components(path) if path else [])
+        return server, port, path
+    else:
+        return None, None, None
 
 def path_components(path, use_dots=True):
     """Convert a string '/a/b/c' into an array ['a', 'b', 'c']"""
