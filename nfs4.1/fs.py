@@ -142,7 +142,7 @@ class FSObject(object):
             self.createverf = "" # XXX Not really needed
             self._last_sync = -1
             if 1: # NF4REG
-                self.file = StringIO()
+                self.file = self.init_file()
             if 1: # NF4DIR
                 # Can't store FSObj, since needs to be pickled
                 self.parent = getattr(parent, "id", None)
@@ -156,6 +156,10 @@ class FSObject(object):
         self.covered_by = None # If this is a mountpoint for fs, equals fs.root 
         # XXX Need to write to disk here?
         self._init_hook()
+
+    def init_file(self):
+        """Hook for subclasses that want to use their own file class"""
+        return StringIO()
 
     def _init_hook(self):
         pass
@@ -1342,7 +1346,7 @@ class FSLayoutFSObj(FSObject):
         """Needs to support striping
         """
         # STUB: make nflutil a control variable
-        nflutil = NFL4_UFLG_STRIPE_UNIT_SIZE_MASK & 0x4000
+        nflutil = self.stripe_size
         # STUB: Return the layout_content4 for pnfs-files
         # This works only with one device id
         id = self.fs.dsdevice.devid
@@ -1365,9 +1369,16 @@ class FSLayoutFSObj(FSObject):
         # STUB:
         new_sz = arg.loca_last_write_offset + 1
         if new_sz >= self.fattr4_size:
-            self.fattr4_size = new_sz
+            # Note cannot set fattr4_size here, as that will
+            # zero out everything.  Here, since we are using FileLayoutFile,
+            # we know that truncate will just set size without touching data
+            self.file.truncate(new_sz)
             return new_sz
         return None
+
+    def init_file(self):
+        self.stripe_size = NFL4_UFLG_STRIPE_UNIT_SIZE_MASK & 0x4000
+        return FileLayoutFile(self)
 
     def layout_open_hook(self):
         self.fs.dsdevice.open_ds_file(mds_fh=self.fh)
@@ -1419,6 +1430,139 @@ class FileLayoutFS(FileSystem):
     def get_devicelist(self, kind, verf):
         raise NotImplementedError
 
+class FileLayoutFile(object): # XXX This should inherit from fs_base.py
+    """Emulate the file object by passing data through MDS to DS"""
+    def __init__(self, obj):
+        self._size = 0
+        self._pos = 0
+        self._obj = obj
+
+    def seek(self, offset, whence=0):
+        # Find new pos
+        if whence == 0: # From file start
+            newpos = offset
+        elif whence == 1: # Relative to pos
+            newpos = self._pos + offset
+        elif whence == 2: # Relative to end
+            self._size = self._query_size()
+            newpos = self._size + offset
+        self._pos = newpos
+
+    def tell(self):
+        return self._pos
+
+    def read(self, count=None):
+        out = []
+        self._size = self._query_size()
+        bytes_to_read = max(0, self._size - self._pos)
+        # Note count < 0 is equiv to count == None
+        if count is not None and count >= 0:
+            bytes_to_read = min(bytes_to_read, count)
+        while bytes_to_read:
+            vol, v_pos, length = self._find_extent(self._pos)
+            limit = min(length, bytes_to_read)
+            vol.seek(v_pos)
+            segment = vol.read(limit)
+            bytes = len(segment)
+            if bytes == 0:
+                break
+            out.append(segment)
+            self._pos += len(segment)
+            bytes_to_read -= len(segment)
+        return ''.join(out)
+
+    def _query_size(self):
+        size = self._size
+        for ds in self._obj.fs.dsdevice.list:
+            vol = FilelayoutVolWrapper(self._obj, ds)
+            size = max(size, vol.get_size())
+        return size
+
+    def _create_hole(self, offset, length):
+        while length:
+            vol, v_pos, v_len = self._find_extent(offset)
+            vol.seek(v_pos)
+            v_len = min(v_len, length)
+            vol.write('\0' * v_len)
+            length -= v_len
+
+    def write(self, data):
+        self._size = self._query_size()
+        if data and self._pos > self._size:
+            self._create_hole(self._size, self._pos - self._size)
+        while data:
+            vol, v_pos, length = self._find_extent(self._pos)
+            vol.seek(v_pos)
+            segment = data[:length]
+            # Need to deal with short writes
+            vol.write(segment)
+            self._pos += len(segment)
+            data = data[length:]
+        self._size = max(self._size, self._pos)
+
+    def truncate(self, size=None):
+        if size is None:
+            size = self._pos
+        self._size = size
+        device = self._obj.fs.dsdevice
+        for vol in device.list:
+            FilelayoutVolWrapper(self._obj, vol).truncate(size)
+
+    def _find_extent(self, file_offset):
+        """Given file offset, return matching volume and vol_offset.
+
+        In addition, return length for which that mapping is valid.
+        """
+        device = self._obj.fs.dsdevice
+        stripe = self._obj.stripe_size
+        count = len(device.list)
+        v_pos = file_offset
+        index = (file_offset // stripe) % count
+        remaining = stripe - (file_offset % stripe)
+        vol = FilelayoutVolWrapper(self._obj, device.list[index])
+        return vol, v_pos, remaining
+
+import nfs4_ops as op
+
+class FilelayoutVolWrapper(object):
+    def __init__(self, obj, dataserver):
+        self._obj = obj
+        self._ds = dataserver
+        self._fh = dataserver.filehandles[obj.fh][0]
+        self._pos = 0
+
+    def read(self, count):
+        # STUB stateid0 is illegal to a ds
+        ops = [op.putfh(self._fh),
+               op.read(nfs4lib.state00, self._pos, count)]
+        # There are all sorts of error handling issues here
+        res = self._ds.execute(ops)
+        data = res.resarray[-1].data
+        self._pos += len(data)
+        return data
+
+    def seek(self, offset):
+        self._pos = offset
+
+    def write(self, data):
+        ops = [op.putfh(self._fh),
+               op.write(nfs4lib.state00, self._pos, FILE_SYNC4, data)]
+        # There are all sorts of error handling issues here
+        res = self._ds.execute(ops)
+        self._pos += len(data)
+        return
+
+    def truncate(self, size):
+        ops = [op.putfh(self._fh),
+               op.setattr(nfs4lib.state00, {FATTR4_SIZE: size})]
+        res = self._ds.execute(ops)
+        return
+
+    def get_size(self):
+        ops = [op.putfh(self._fh),
+               op.getattr(1L << FATTR4_SIZE)]
+        res = self._ds.execute(ops)
+        return res.resarray[-1].obj_attributes[FATTR4_SIZE]
 
 ################################################
 
