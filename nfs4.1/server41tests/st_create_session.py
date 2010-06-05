@@ -317,9 +317,9 @@ def testCallbackProgram(t, env):
     """
     cb_occurred = threading.Event()
     transient = 0x40000004
-    def mycheck(msg):
-        print "Got call using prog=0x%x" % msg.prog
-        cb_occurred.prog = msg.prog
+    def mycheck(prog):
+        print "Got call using prog=0x%x" % prog
+        cb_occurred.prog = prog
         cb_occurred.set()
     orig = env.c1._check_program
     try:
