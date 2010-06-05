@@ -1997,9 +1997,11 @@ class NFS4Server(rpc.Server):
         log_41.info("Sending CB_COMPOUND")
         log_41.info(repr(c4))
         p.pack_CB_COMPOUND4args(c4)
-        # Callback version is 4, see draft29 18.36.3:
-        # "The server MUST specify...an ONC RPC version number equal to 4"
-        return pipe.send_call(prog, 4, 1, p.get_buffer(), credinfo)
+        # Despite RFC5661 18.36.3:
+        # "The server MUST specify...an ONC RPC version number equal to 4",
+        # Per the May 17, 2010 discussion on the ietf list, errataID 2291
+        # indicates it should in fact be 1
+        return pipe.send_call(prog, 1, 1, p.get_buffer(), credinfo)
 
     def cb_compound(self, *args, **kwargs):
         xid = self.cb_compound_async(*args, **kwargs)
@@ -2027,9 +2029,11 @@ class NFS4Server(rpc.Server):
     def cb_null_async(self, prog, credinfo, pipe):
         log_41.info("*" * 20)
         log_41.info("Sending CB_NULL")
-        # Callback version is 4, see draft29 18.36.3:
-        # "The server MUST specify...an ONC RPC version number equal to 4"
-        return pipe.send_call(prog, 4, 0, "", credinfo)
+        # Despite RFC5661 18.36.3:
+        # "The server MUST specify...an ONC RPC version number equal to 4",
+        # Per the May 17, 2010 discussion on the ietf list, errataID 2291
+        # indicates it should in fact be 1
+        return pipe.send_call(prog, 1, 0, "", credinfo)
 
     def cb_null(self, prog, pipe, credinfo=None):
         """ Sends bc_null."""
