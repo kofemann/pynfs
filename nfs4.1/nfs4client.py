@@ -429,39 +429,46 @@ class SessionRecord(object):
         # STUB - do some checking
         protect.context.set_ssv(ssv)
         return res
-        
-    def compound_async(self, ops, *args, **kwargs):
+
+    def _prepare_compound(self, kwargs):
+        """Common prep for both async and sync compound call.
+
+        Returns seq_op to prepend, and manipulates the kwargs dict.
+        """
         if "credinfo" not in kwargs:
             kwargs["credinfo"] = self.cred
         seq_op = self.seq_op(kwargs.pop("slot", None),
                              kwargs.pop("seq_delta", 1),
                              kwargs.pop("cache_this", True))
-        return self.c.compound_async([seq_op] + ops, *args, **kwargs)
-        
-    def compound(self, ops, *args, **kwargs):
-        if "credinfo" not in kwargs:
-            kwargs["credinfo"] = self.cred
-        xid = self.compound_async(ops, *args, **kwargs)
-        pipe = kwargs.get("pipe", None)
-        res = self.listen(xid, pipe)
-        if SHOW_TRAFFIC:
-            print res
+        slot = self.fore_channel.slots[seq_op.sa_slotid]
+        return slot, seq_op
+ 
+    def compound_async(self, ops, **kwargs):
+        slot, seq_op = self._prepare_compound(kwargs)
+        slot.xid = self.c.compound_async([seq_op] + ops, **kwargs)
+        return slot
+
+    def listen(self, slot, pipe=None):
+        res = self.c.listen(slot.xid, pipe=pipe)
+        slot.xid = None
+        res = self.update_seq_state(res, slot)
         return res
 
-    def listen(self, xid, pipe=None):
-        res = self.c.listen(xid, pipe=pipe)
+    def compound(self, ops, **kwargs):
+        slot, seq_op = self._prepare_compound(kwargs)
+        res = self.c.compound([seq_op] + ops, **kwargs)
+        res = self.update_seq_state(res, slot)
+        return res
+
+    def update_seq_state(self, res, slot):
+        slot.inuse = False
         seq_res = res.resarray[0]
-        if seq_res.sr_status != NFS4_OK:
-            # BUG - need to fix this
-            # self.fore_channel.slots[seq_op.sa_slotid].inuse = False
-            pass
-        else:
+        if seq_res.sr_status == NFS4_OK:
             # STUB - do some checks
-            self.fore_channel.slots[seq_res.sr_slotid].inuse = False
             # XXX we may want an option to not remove SEQUENCE
             res.resarray = res.resarray[1:]
         return res
-        
+
 ##     def open(self, owner, name=None, type=OPEN4_NOCREATE,
 ##              mode=UNCHECKED4, attrs={FATTR4_MODE:0644}, verf=None,
 ##              access=OPEN4_SHARE_ACCESS_READ,

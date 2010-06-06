@@ -469,6 +469,7 @@ class Slot(object):
         self.seen = False # server has determined that client has seen reply
         self.lock = Lock("Slot")
         self.inuse = False # client has outstanding message
+        self.xid = None # rpc xid of outstanding message, only set on async calls
 
     def check_seqid(self, seqid):
         """Server replay checking"""

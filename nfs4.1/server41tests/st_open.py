@@ -154,7 +154,7 @@ def testReadDeleg(t, env):
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
     print "FRED - SEND OPEN"
-    xid = sess2.compound_async(env.home + [open_op])
+    slot = sess2.compound_async(env.home + [open_op])
     # Wait for recall, and return delegation
     print "FRED - wait for RECALL"
     recall.wait() # STUB - deal with timeout
@@ -167,7 +167,7 @@ def testReadDeleg(t, env):
     check(res)
     # Now get OPEN reply
     print "FRED - listen for OPEN reply"
-    res = sess2.listen(xid)
+    res = sess2.listen(slot)
     print "FRED - OPEN res"
     print res
     checklist(res, [NFS4_OK, NFS4ERR_DELAY])
