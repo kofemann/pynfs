@@ -499,9 +499,12 @@ class Slot(object):
         """Client seqid"""
         # locking not needed, since slot is handed out under channel lock
         new_seqid = int( (self.seqid + delta) & 0xffffffff )
-        if delta == 1:
-            self.seqid = new_seqid
         return new_seqid
+
+    def finish_call(self, seq_res):
+        if seq_res.sr_status == NFS4_OK:
+            self.seqid = seq_res.sr_sequenceid
+        self.inuse = False
 
     # STUB - for client, need to track slot usage
 

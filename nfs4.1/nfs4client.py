@@ -409,6 +409,8 @@ class SessionRecord(object):
         if slot is None:
             slot = self.fore_channel.choose_slot()
         else:
+            # XXX Does anyone use this? it will likely break things
+            raise RuntimeError
             slot = self.fore_channel.slots[slot]
         # STUB, need to properly set highest
         return op.sequence(self.sessionid, slot.get_seqid(seq_delta),
@@ -461,8 +463,8 @@ class SessionRecord(object):
         return res
 
     def update_seq_state(self, res, slot):
-        slot.inuse = False
         seq_res = res.resarray[0]
+        slot.finish_call(seq_res)
         if seq_res.sr_status == NFS4_OK:
             # STUB - do some checks
             # XXX we may want an option to not remove SEQUENCE
