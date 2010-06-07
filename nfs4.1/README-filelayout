@@ -1,0 +1,28 @@
+The server can act as either a file-layout MDS or DS.  It is quite useful
+for basic testing of the client, and is easy to modify for testing
+rarely used code-paths.
+
+Current striping options are limited...it uses a sparse packing, with a fixed
+stripe size (currently set at 16K) on the data servers specified in a
+config file.
+
+Note if the MDS is also a DS, there can be no other data servers.
+(Given how simple it is to run two instances of python, one for the DS
+and one for the MDS, this is not much of a restriction.)
+
+Here is how I run the server.  I have three instances of python running in
+three shells.  I have them all on the same machine, but it would work equally
+well on three different machines.
+
+MDS:
+./nfs4server.py -r --use_files --dataservers=<DSLIST>
+
+DS:
+./nfs4server.py -r --is_ds --exports=<DS_EXPORTS> --port=12345
+./nfs4server.py -r --is_ds --exports=<DS_EXPORTS> --port=12346
+
+For DS_EXPORTS you can copy sample_code/ds_exports.py into the nfs4.1 directory and use that. (Yes, having to copy it is annoying...that needs to be fixed.)
+
+DSLIST is a config file which defaults to "dataservers.conf"
+It contains a list of the dataservers in the form server[:[port][/path]].
+See for example sample_code/dataservers.conf.

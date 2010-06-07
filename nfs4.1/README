@@ -69,6 +69,7 @@ Server
 
   PNFS-files:
       Support for pnfs-files has been added (--use_files, --is_ds flags).
+      See README-filelayout
 
   Client-testing:
       More difficult, since control over what RPCs are sent is so indirect.
