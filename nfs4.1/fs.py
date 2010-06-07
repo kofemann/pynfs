@@ -54,8 +54,15 @@ class FSObject(object):
     def _getsize(self):
         # STUB
         if self.fattr4_type == NF4REG:
-            self.file.seek(0, 2) # Seek to eof
-            return self.file.tell()
+            if hasattr(self.file, "__len__"):
+                return len(self.file)
+            else:
+                # This really needs locking
+                orig = self.file.tell()
+                self.file.seek(0, 2)
+                eof = self.file.tell()
+                self.file.seek(orig)
+                return eof
         elif self.fattr4_type == NF4DIR:
             return len(self.entries)
         else:
@@ -1437,6 +1444,10 @@ class FileLayoutFile(object): # XXX This should inherit from fs_base.py
         self._pos = 0
         self._obj = obj
 
+    def __len__(self):
+        self._size = self._query_size()
+        return self._size
+
     def seek(self, offset, whence=0):
         # Find new pos
         if whence == 0: # From file start
@@ -1562,7 +1573,8 @@ class FilelayoutVolWrapper(object):
         ops = [op.putfh(self._fh),
                op.getattr(1L << FATTR4_SIZE)]
         res = self._ds.execute(ops)
-        return res.resarray[-1].obj_attributes[FATTR4_SIZE]
+        attrdict = res.resarray[-1].obj_attributes
+        return attrdict.get(FATTR4_SIZE, 0)
 
 ################################################
 
