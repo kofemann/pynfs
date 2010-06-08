@@ -460,20 +460,37 @@ class SessionRecord(object):
         res = self.c.listen(slot.xid, pipe=pipe)
         slot.xid = None
         res = self.update_seq_state(res, slot)
+        res = self.remove_seq_op(res)
         return res
 
     def compound(self, ops, **kwargs):
+        max_retries = 10
+        delay_time = 1
+        handle_state_errors = kwargs.pop("handle_state_errors", True)
+        saved_kwargs = kwargs
         slot, seq_op = self._prepare_compound(kwargs)
-        res = self.c.compound([seq_op] + ops, **kwargs)
-        res = self.update_seq_state(res, slot)
+        for item in xrange(max_retries):
+            res = self.c.compound([seq_op] + ops, **kwargs)
+            res = self.update_seq_state(res, slot)
+            if res.status != NFS4ERR_DELAY or not handle_state_errors:
+                break
+            if res.resarray[0].sr_status != NFS4ERR_DELAY:
+                # As per errata ID 2006 for RFC 5661 section 15.1.1.3
+                # don't update the slot and sequence ID if the sequence
+                # operation itself receives NFS4ERR_DELAY
+                slot, seq_op = self._prepare_compound(saved_kwargs)
+            time.sleep(delay_time)
+        res = self.remove_seq_op(res)
         return res
 
     def update_seq_state(self, res, slot):
         seq_res = res.resarray[0]
         slot.finish_call(seq_res)
-        if seq_res.sr_status == NFS4_OK:
+        return res
+
+    def remove_seq_op(self, res):
+        if res.resarray[0].sr_status == NFS4_OK:
             # STUB - do some checks
-            # XXX we may want an option to not remove SEQUENCE
             res.resarray = res.resarray[1:]
         return res
 
