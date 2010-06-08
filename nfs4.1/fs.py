@@ -26,6 +26,7 @@ class MetaData(object):
         self.refcnt = 0
         self.createverf = ""
         self.owner = ""
+        self.mode = 0777
         self.time_access = self.time_modify = self.time_create = nfs4lib.get_nfstime()
         if 1:
             self.parent = 0
@@ -83,6 +84,9 @@ class FSObject(object):
         else:
             raise NFS4Error(NFS4ERR_INVAL)
 
+    def _setmode(self, value):
+        self.meta.mode = value
+
     def _set_time_access(self, value):
         if value.set_it == SET_TO_CLIENT_TIME4:
             self.meta.time_access = value.time
@@ -120,6 +124,7 @@ class FSObject(object):
     fattr4_time_modify_set = property(lambda s: s.time_modify, _set_time_modify)
     fattr4_time_access = property(lambda s: s.time_access)
     fattr4_time_modify = property(lambda s: s.time_modify)
+    fattr4_mode = property(lambda s: s.mode, _setmode)
     isdir = property(lambda s: s.type == NF4DIR)
     isfile = property(lambda s: s.type == NF4REG)
     isempty = property(lambda s: s.entries == {})
