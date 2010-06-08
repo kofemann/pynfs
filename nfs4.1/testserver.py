@@ -42,6 +42,17 @@ import cPickle as pickle
 
 VERSION="0.2" # How/when update this?
 
+# Auth_sys defaults
+HOST = socket.gethostname()
+if not hasattr(os, "getuid"):
+    UID = 4321
+else:
+    UID = os.getuid()
+if not hasattr(os, "getgid"):
+    GID = 42
+else:
+    GID = os.getgid()
+
 def scan_options(p):
     """Parse command line options
 
@@ -55,6 +66,9 @@ def scan_options(p):
     .debug_fail = (False)
     
     .security = (sys)
+    .uid = (UID)
+    .gid = (GID)
+    .machinename = (HOST)
 
     .force   = (False)
     .rundeps = (False)
@@ -96,6 +110,12 @@ def scan_options(p):
                     "These options choose or affect the security flavor used.")
     g.add_option("--security", default='sys',
                  help="Choose security flavor such as krb5i [%default]")
+    g.add_option("--uid", default=UID, type='int',
+                 help="uid for auth_sys [%i]" % UID)
+    g.add_option("--gid", default=GID, type='int',
+                 help="gid for auth_sys [%i]" % GID)
+    g.add_option("--machinename", default=HOST, metavar="HOST",
+                 help="Machine name to use for auth_sys [%s]" % HOST)
     p.add_option_group(g)
 
     g = OptionGroup(p, "Test selection options",

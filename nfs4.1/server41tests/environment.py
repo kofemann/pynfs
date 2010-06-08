@@ -117,7 +117,7 @@ class Environment(testmod.Environment):
         if opts.flavor == rpc.AUTH_NONE:
             self.cred1 = s1.init_cred()
         elif opts.flavor == rpc.AUTH_SYS:
-            self.cred1 = s1.init_cred(uid=4321, gid=42, name="mystery")
+            self.cred1 = s1.init_cred(uid=opts.uid, gid=opts.gid, name=opts.machinename)
         elif opts.flavor == rpc.RPCSEC_GSS:
             call = self.c1.make_call_function(self.c1.c1, 0,
                                               self.c1.default_prog,
