@@ -654,7 +654,7 @@ class ConnectionHandler(object):
                 log_t.warn("PROG_UNAVAIL, do not support prog=%i" % msg.prog)
                 raise rpclib.RPCUnsuccessfulReply(PROG_UNAVAIL)
             low, hi = self._version_range(msg.prog)
-            if not (low <= msg.vers <= hi):
+            if not self._check_version(low, hi, msg.vers):
                 log_t.warn("PROG_MISMATCH, do not support vers=%i" % msg.vers)
                 raise rpclib.RPCUnsuccessfulReply(PROG_MISMATCH, (low, hi))
             method = self._find_method(msg)
@@ -868,6 +868,9 @@ class Server(ConnectionHandler):
 
     def _check_program(self, prog):
         return (self.prog == prog)
+
+    def _check_version(self, low, hi, vers):
+        return (low <= vers <= hi)
 
     def _version_range(self, prog):
         return (min(self.versions), max(self.versions))

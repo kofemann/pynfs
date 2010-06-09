@@ -336,21 +336,21 @@ def testCallbackProgram(t, env):
         env.c1._check_program = orig
 
 def testCallbackVersion(t, env):
-    """Check server sends callback program with version==4
-
-    This is mandated by draft25 18.36.3.
+    """Check server sends callback program with a version listed in nfs4client.py
 
     FLAGS: create_session all
     CODE: CSESS21
     """
     cb_occurred = threading.Event()
     transient = 0x40000000
-    orig = env.c1._check_program
-    def mycheck(msg):
-        print "Got call using version=%i" % msg.vers
-        cb_occurred.vers = msg.vers
+    def mycheck(low, hi, vers):
+        print "Got call using version=%i" % vers
+        cb_occurred.low = low
+        cb_occurred.hi = hi
+        cb_occurred.vers = vers
         cb_occurred.set()
-        orig(msg)
+        return (low <= vers <= hi)
+    orig = env.c1._check_version
     try:
         env.c1._check_version = mycheck
         c = env.c1.new_client(env.testname(t))
@@ -358,7 +358,8 @@ def testCallbackVersion(t, env):
         cb_occurred.wait(10)
         if not cb_occurred.isSet():
             fail("No CB_NULL sent")
-        if cb_occurred.vers != 4:
-            fail("Expected cb version 4, got %i" % cb_occurred.vers)
+        if not (cb_occurred.low <= cb_occurred.vers <= cb_occurred.hi):
+            fail("Expected cb version between %i and %i, got %i" %
+                 (cb_occurred.low, cb_occurred.hi, cb_occurred.vers))
     finally:
         env.c1._check_version = orig
