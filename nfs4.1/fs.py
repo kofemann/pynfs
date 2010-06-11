@@ -53,12 +53,15 @@ class FSObject(object):
         return struct.pack("!QQbQ", major, minor, 0, self.id)
 
     def _getsize(self):
+        with self.seek_lock:
+            return self._getsize_locked()
+
+    def _getsize_locked(self):
         # STUB
         if self.fattr4_type == NF4REG:
             if hasattr(self.file, "__len__"):
                 return len(self.file)
             else:
-                # This really needs locking
                 orig = self.file.tell()
                 self.file.seek(0, 2)
                 eof = self.file.tell()
@@ -70,16 +73,21 @@ class FSObject(object):
             return 0
 
     def _setsize(self, value):
+        with self.seek_lock:
+            return self._setsize_locked(value)
+
+    def _setsize_locked(self, value):
         # STUB - How should this behave on non REG files? especially a DIR?
+        size = self._getsize_locked()
         if self.fattr4_type == NF4REG:
-            if value == self.fattr4_size:
+            if value == size:
                 return
-            elif value < self.fattr4_size:
+            elif value < size:
                 self.file.truncate(value)
             else:
                 # Pad with zeroes
                 self.file.seek(0, 2)
-                self.file.write(chr(0) * (value-self.fattr4_size))
+                self.file.write(chr(0) * (value - size))
             self.change_data()
         else:
             raise NFS4Error(NFS4ERR_INVAL)
@@ -164,6 +172,7 @@ class FSObject(object):
         self.state = FileState(self)
         self._set_fattrs()
         self.lock = RWLock(name=str(id))
+        self.seek_lock = Lock("SeekLock")
         self.current_layout = None
         self.covered_by = None # If this is a mountpoint for fs, equals fs.root 
         # XXX Need to write to disk here?
@@ -251,18 +260,20 @@ class FSObject(object):
             raise NFS4Error(NFS4ERR_ACCESS)
         if len(data) == 0:
             return 0
-        self.file.seek(offset)
-        try:
-            self.file.write(data)
-        finally:
-            self.change_data()
+        with self.seek_lock:
+            self.file.seek(offset)
+            try:
+                self.file.write(data)
+            finally:
+                self.change_data()
         return len(data)
 
     def read(self, offset, count, principal): # NF4REG only
         if not self.access4_read(principal):
             raise NFS4Error(NFS4ERR_ACCESS)
-        self.file.seek(offset)
-        data = self.file.read(count)
+        with self.seek_lock:
+            self.file.seek(offset)
+            data = self.file.read(count)
         self.change_access()
         return data
 
