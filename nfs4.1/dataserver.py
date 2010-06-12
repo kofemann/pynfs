@@ -41,7 +41,10 @@ class DataServer(object):
         self.c1.set_cred(self.cred1)
         self.c1.null()
         c = self.c1.new_client("DS.init_%s" % self.server)
-        self.sess = c.create_session()
+        # This is a hack to ensure MDS/DS communication path is at least
+        # as wide as the client/MDS channel (at least for linux client)
+        fore_attrs = channel_attrs4(0, 16384, 16384, 2868, 8, 8, [])
+        self.sess = c.create_session(fore_attrs=fore_attrs)
         self.make_root()
 
     def disconnect(self):

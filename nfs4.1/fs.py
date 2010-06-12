@@ -1510,6 +1510,7 @@ class FileLayoutFile(object): # XXX This should inherit from fs_base.py
             vol, v_pos, v_len = self._find_extent(offset)
             vol.seek(v_pos)
             v_len = min(v_len, length)
+            v_len = min(v_len, 8192) # Don't overwhelm MDS/DS channel limits
             vol.write('\0' * v_len)
             length -= v_len
 
@@ -1519,6 +1520,7 @@ class FileLayoutFile(object): # XXX This should inherit from fs_base.py
             self._create_hole(self._size, self._pos - self._size)
         while data:
             vol, v_pos, length = self._find_extent(self._pos)
+            length = min(length, 8192) # Don't overwhelm MDS/DS channel limits
             vol.seek(v_pos)
             segment = data[:length]
             # Need to deal with short writes
