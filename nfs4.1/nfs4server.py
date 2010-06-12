@@ -763,6 +763,7 @@ class NFS4Server(rpc.Server):
     
     def op_compound(self, args, cred):
         env = CompoundState(args, cred)
+        env.is_ds = self.is_ds
         # Check for problems with the compound itself
         if args.minorversion not in self.minor_versions:
             env.results.set_empty_return(NFS4ERR_MINOR_VERS_MISMATCH)
@@ -1266,20 +1267,15 @@ class NFS4Server(rpc.Server):
         env.cfh.verify_file()
         if arg.offset + len(arg.data) > 0x3ffffffe: # STUB - arbitrary value
             return encode_status(NFS4ERR_INVAL)
-        # STUB if server is pNFS DS don't validate state
-        if not self.is_ds:
-            with find_state(env, arg.stateid) as state:
-                state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
-                state.mark_writing()
-                try:
-                    count = env.cfh.write(arg.data, arg.offset, env.principal)
-                    # BUG - need to fix fs locking
-                    how = env.cfh.sync(arg.stable)
-                finally:
-                    state.mark_done_writing()
-        else:
-            count = env.cfh.write(arg.data, arg.offset, env.principal)
-            how = env.cfh.sync(arg.stable)
+        with find_state(env, arg.stateid) as state:
+            state.has_permission(OPEN4_SHARE_ACCESS_WRITE)
+            state.mark_writing()
+            try:
+                count = env.cfh.write(arg.data, arg.offset, env.principal)
+                # BUG - need to fix fs locking
+                how = env.cfh.sync(arg.stable)
+            finally:
+                state.mark_done_writing()
         res = WRITE4resok(count, how, self.verifier)
         return encode_status(NFS4_OK, res)
 
@@ -1287,20 +1283,16 @@ class NFS4Server(rpc.Server):
         check_session(env)
         check_cfh(env)
         env.cfh.verify_file()
-        if not self.is_ds:
-            with find_state(env, arg.stateid, allow_bypass= \
-                                env.session.client.config.allow_stateid1) as state:
-                state.has_permission(OPEN4_SHARE_ACCESS_READ)
-                state.mark_reading()
-                try:
-                    # BUG - need to fix fs locking
-                    data = env.cfh.read(arg.offset, arg.count, env.principal)
-                    eof = (arg.offset + len(data)) >= env.cfh.fattr4_size
-                finally:
-                    state.mark_done_reading()
-        else:
-            data = env.cfh.read(arg.offset, arg.count, env.principal)
-            eof = (arg.offset + len(data)) >= env.cfh.fattr4_size
+        with find_state(env, arg.stateid, allow_bypass= \
+                            env.session.client.config.allow_stateid1) as state:
+            state.has_permission(OPEN4_SHARE_ACCESS_READ)
+            state.mark_reading()
+            try:
+                # BUG - need to fix fs locking
+                data = env.cfh.read(arg.offset, arg.count, env.principal)
+                eof = (arg.offset + len(data)) >= env.cfh.fattr4_size
+            finally:
+                state.mark_done_reading()
         res = READ4resok(eof, data)
         return encode_status(NFS4_OK, res)
 

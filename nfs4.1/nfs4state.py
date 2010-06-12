@@ -20,11 +20,19 @@ POSIXLOCK = False
 SHARE, BYTE, DELEG, LAYOUT, ANON = range(5) # State types
 NORMAL, CB_INIT, CB_SENT, CB_RECEIVED, INVALID = range(5) # delegation/layout states
 
+DS_MAGIC = "\xa5" # STUB part of HACK code to ignore DS stateid
+
 @contextmanager
 def find_state(env, stateid, allow_0=True, allow_bypass=False):
     """Find the matching StateTableEntry, and manage its lock."""
-    # First we convert special stateids, see draft22 8.2.3
     anon = False
+    if env.is_ds:
+        # STUB - have dataservers ignore stateid (but still do needed locking
+        stateid = stateid4(0, DS_MAGIC * 12)
+        state = env.cfh.state.types[ANON][(DS_MAGIC, )]
+        # Could meddle with state.other here if needed
+        anon = True
+    # First we convert special stateids, see draft22 8.2.3
     if stateid.other == "\0" * 12:
         if allow_0 and stateid.seqid == 0:
             state = env.cfh.state.anon0
@@ -332,6 +340,7 @@ class AnonState(FileStateTyped):
         FileStateTyped.__init__(self, *args, **kwargs)
         self._tree[(0 ,)] = AnonEntry("\x00" * 12, self, (0,))
         self._tree[(1 ,)] = AnonEntry("\xff" * 12, self, (1,))
+        self._tree[(DS_MAGIC, )] = DSEntry(DS_MAGIC * 12, self, (DS_MAGIC, ))
 
 class ShareState(FileStateTyped):
     """Holds share state for a single file"""
@@ -583,6 +592,14 @@ class StateTableEntry(object):
         del self._state._tree[self.key]
         del self.key[0].state[self.other]
 
+class DSEntry(StateTableEntry):
+    """Hack to ignore data server state"""
+    type = ANON
+    def has_permission(self, access):
+        pass
+
+    def close(self):
+        pass
 
 class AnonEntry(StateTableEntry):
     """Handle special anonymous stateids
