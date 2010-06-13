@@ -327,7 +327,11 @@ class Pipe(object):
         """
         if not self._write_buf:
             raise RuntimeError
-        count = self._s.send(self._write_buf)
+        try:
+            count = self._s.send(self._write_buf)
+        except socket.error, e:
+            log_p.error("flush_pipe got exception %s" % str(e))
+            return True # This is to stop retries
         self._write_buf = self._write_buf[count:]
         return (not self._write_buf)
 
