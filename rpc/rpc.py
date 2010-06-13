@@ -527,15 +527,19 @@ class ConnectionHandler(object):
     def _event_connect_incoming(self, fd, internal=False):
         """Someone else is trying to connect to us (we act like server)."""
         s = self.sockets[fd]
-        if internal:
-            # We are accepting from the same thread that tried to connect.
-            # In linux this works, but in Windows it raises EWOULDBLOCK
-            # if we don't do this
-            s.setblocking(1)
-            csock, caddr = s.accept()
-            s.setblocking(0)
-        else:
-            csock, caddr = s.accept()
+        try:
+            if internal:
+                # We are accepting from the same thread that tried to connect.
+                # In linux this works, but in Windows it raises EWOULDBLOCK
+                # if we don't do this
+                s.setblocking(1)
+                csock, caddr = s.accept()
+                s.setblocking(0)
+            else:
+                csock, caddr = s.accept()
+        except socket.error, e:
+            log_p.error("accept() got error %s" % str(e))
+            return
         csock.setblocking(0)
         fd = csock.fileno()
         pipe = self.sockets[fd] = RpcPipe(csock, self._alarm)
