@@ -1,9 +1,9 @@
 from nfs4.nfs4_const import *
-from environment import check
+from environment import check, checklist
 
 _text = "Random data to write"
 
-def _commit(t, c, offset=0, count=0):
+def _commit(t, c, offset=0, count=0, statlist=[NFS4_OK]):
     """COMMIT
 
     FLAGS: commit all
@@ -15,7 +15,7 @@ def _commit(t, c, offset=0, count=0):
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
     res = c.commit_file(fh, offset, count)
-    check(res, msg="COMMIT with offset=%x, count=%x" % (offset, count))
+    checklist(res, statlist, msg="COMMIT with offset=%x, count=%x" % (offset, count))
 
 def testCommitOffset0(t, env):
     """COMMIT
@@ -42,7 +42,7 @@ def testCommitOffsetMax1(t, env):
     DEPEND: MKFILE
     CODE: CMT1c
     """
-    _commit(t, env.c1, 0xffffffffffffffffL)
+    _commit(t, env.c1, 0xffffffffffffffffL, statlist=[NFS4_OK, NFS4ERR_INVAL])
 
 def testCommitOffsetMax2(t, env):
     """COMMIT
@@ -51,7 +51,7 @@ def testCommitOffsetMax2(t, env):
     DEPEND: MKFILE
     CODE: CMT1d
     """
-    _commit(t, env.c1, 0xfffffffffffffffeL)
+    _commit(t, env.c1, 0xfffffffffffffffeL, statlist=[NFS4_OK, NFS4ERR_INVAL])
 
 def testCommitCount1(t, env):
     """COMMIT
@@ -70,7 +70,6 @@ def testCommitCountMax(t, env):
     CODE: CMT1f
     """
     _commit(t, env.c1, 0, 0xffffffffL)
-
 
 def testLink(t, env):
     """COMMIT
