@@ -253,7 +253,7 @@ class Pipe(object):
         """Pull up to count bytes from pipe, converting into records."""
         # This is only called from main handler thread, so doesn't need locking
         data = self._s.recv(count)
-        if data is None:
+        if not data:
             # This indicates socket has closed
             return None
         out = []
