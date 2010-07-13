@@ -326,6 +326,8 @@ class ClientRecord(object):
     def create_session(self,
                        flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
                        fore_attrs=None, back_attrs=None, sec=None, prog=None):
+        max_retries = 10
+        delay_time = 1
         chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
         if fore_attrs is None:
             fore_attrs = chan_attrs
@@ -335,11 +337,15 @@ class ClientRecord(object):
             sec= [callback_sec_parms4(0)]
         if prog is None:
             prog = self.c.prog
-        res = self.c.compound([op.create_session(self.clientid, self.seqid,
+        for item in xrange(max_retries):
+            res = self.c.compound([op.create_session(self.clientid, self.seqid,
                                                  flags,
                                                  fore_attrs, back_attrs,
                                                  prog, sec)],
                               self.cred)
+            if res.status != NFS4ERR_DELAY:
+                break
+            time.sleep(delay_time)
         nfs4lib.check(res)
         return self._add_session(res.resarray[0])
 
