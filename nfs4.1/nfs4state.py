@@ -79,6 +79,7 @@ def find_state(env, stateid, allow_0=True, allow_bypass=False):
     else:
         # See draft22 12.5.3
         if stateid.seqid == 0:
+            state.lock.release()
             raise NFS4Error(NFS4ERR_BAD_STATEID, tag="layout stateid.seqid==0")
     try:
         yield state
