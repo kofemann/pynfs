@@ -254,6 +254,8 @@ class FileStateTyped(object):
 
     def grab_entry(self, key, klass):
         """Returns tree[key] if it exists, otherwise creates it."""
+        if key == (DS_MAGIC,):
+            return self.file.state.types[ANON][(DS_MAGIC, )]
         entry = self._tree.get(key)
         if entry is None:
             client = key[0]
@@ -600,6 +602,9 @@ class DSEntry(StateTableEntry):
         pass
 
     def close(self):
+        pass
+
+    def populate(self, layout):
         pass
 
 class AnonEntry(StateTableEntry):
