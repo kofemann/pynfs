@@ -1401,7 +1401,10 @@ class FSLayoutFSObj(FSObject):
 
     def init_file(self):
         self.stripe_size = NFL4_UFLG_STRIPE_UNIT_SIZE_MASK & 0x4000
-        return FileLayoutFile(self)
+        if self.fs.dsdevice.mdsds:
+            return StringIO()
+        else:
+            return FileLayoutFile(self)
 
     def layout_open_hook(self):
         self.fs.dsdevice.open_ds_file(mds_fh=self.fh)
