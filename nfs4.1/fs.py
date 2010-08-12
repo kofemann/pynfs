@@ -1390,7 +1390,9 @@ class FSLayoutFSObj(FSObject):
 
     def _commit_layout(self, arg):
         # STUB:
-        new_sz = arg.loca_last_write_offset + 1
+        if not arg.loca_last_write_offset.no_newoffset:
+            return None
+        new_sz = arg.loca_last_write_offset.no_offset + 1
         if new_sz >= self.fattr4_size:
             # Note cannot set fattr4_size here, as that will
             # zero out everything.  Here, since we are using FileLayoutFile,
