@@ -411,7 +411,7 @@ class SessionRecord(object):
         self.back_channel = RecvChannel(csr.csr_back_chan_attrs)
         # STUB - and other stuff
 
-    def seq_op(self, slot=None, seq_delta=1, cache_this=True):
+    def seq_op(self, slot=None, seq_delta=1, cache_this=False):
         if slot is None:
             slot = self.fore_channel.choose_slot()
         else:
@@ -447,7 +447,7 @@ class SessionRecord(object):
             kwargs["credinfo"] = self.cred
         seq_op = self.seq_op(kwargs.pop("slot", None),
                              kwargs.pop("seq_delta", 1),
-                             kwargs.pop("cache_this", True))
+                             kwargs.pop("cache_this", False))
         slot = self.fore_channel.slots[seq_op.sa_slotid]
         return slot, seq_op
  
