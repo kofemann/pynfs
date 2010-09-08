@@ -44,7 +44,7 @@ def _recall(c, op, cbid):
 
 def _cause_recall(t, env):
     c = env.c1
-    sleeptime = 5
+    sleeptime = 1
     while 1:
         # need lock around this to prevent _recall from
         # calling c.unpacker.reset while open is still unpacking
@@ -56,9 +56,6 @@ def _cause_recall(t, env):
         if res.status == NFS4_OK: break
         checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
-        sleeptime += 5
-        if sleeptime > 20:
-            sleeptime = 20
     return c.confirm('newowner', res)
 
 def _verify_cb_occurred(t, c, count):
