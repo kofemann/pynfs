@@ -396,9 +396,11 @@ def testChangeDeleg(t, env, funct=_recall):
     deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.code], funct, NFS4_OK)
     # Create new callback server
     new_server = CBServer(c)
+    new_server.set_cb_recall(c.cbid, funct, NFS4_OK);
     cb_thread = threading.Thread(target=new_server.run)
     cb_thread.setDaemon(1)
     cb_thread.start()
+    c.cb_server = new_server
     env.sleep(3)
     # Switch to using new server
     res = c.compound([_set_clientid(c, id, new_server)])
@@ -415,9 +417,6 @@ def testChangeDeleg(t, env, funct=_recall):
     count = new_server.opcounts[OP_CB_RECALL]
     fh2, stateid2 = _cause_recall(t, env)
     _verify_cb_occurred(t, c, count)
-    ops = c.use_obj(fh) + [c.delegreturn_op(deleg_info.read.stateid)]
-    res = c.compound(ops)
-    check(res)
 
 
    
