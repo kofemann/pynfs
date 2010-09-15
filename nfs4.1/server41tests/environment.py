@@ -471,7 +471,9 @@ def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
 def open_file(sess, owner, path=None,
               access=OPEN4_SHARE_ACCESS_READ,
               deny=OPEN4_SHARE_DENY_NONE,
+              claim_type=CLAIM_NULL,
               want_deleg=False,
+              deleg_type=None,
               # Setting the following should induce server errors
               seqid=0, clientid=0):
     # Set defaults
@@ -484,10 +486,17 @@ def open_file(sess, owner, path=None,
     if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
         access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     # Open the file
+    if claim_type==CLAIM_NULL:
+        fh_op = use_obj(dir)
+    elif claim_type==CLAIM_PREVIOUS:
+        fh_op = [op.putfh(path)]
+        name = None
+    if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
+        access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     open_op = op.open(seqid, access, deny, open_owner4(clientid, owner),
                       openflag4(OPEN4_NOCREATE),
-                      open_claim4(CLAIM_NULL, name))
-    return sess.compound(use_obj(dir) + [open_op, op.getfh()])
+                      open_claim4(claim_type, name, deleg_type))
+    return sess.compound(fh_op + [open_op, op.getfh()])
 
 def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
                    access=OPEN4_SHARE_ACCESS_BOTH,
