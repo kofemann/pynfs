@@ -39,8 +39,10 @@ def _waitForReboot(c):
         sys.stdin.readline()
         print "Continuing with test"
     else:
-        # Invoke the reboot script, passing it rebootargs as an argument.
-        os.system(c.opts.rebootscript + ' ' + c.opts.rebootargs)
+        args = c.opts.rebootscript
+        if c.opts.rebootargs:
+            c.opts.rebootscript += ' ' + c.opts.rebootargs
+        os.system(args)
 
         # Wait until the server is back up.
         # c.null() blocks until it gets a response,
