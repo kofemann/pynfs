@@ -191,7 +191,7 @@ def testReplayCache001(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.putrootfh()])
+    res1 = sess1.compound([op.putrootfh()], cache_this=True)
     check(res1)
     res2 = sess1.compound([op.putrootfh()], seq_delta=0)
     check(res2)
@@ -211,7 +211,7 @@ def testReplayCache002(t, env):
     check(res)
     ops = env.home + [op.savefh(),\
           op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
-    res1 = sess1.compound(ops)
+    res1 = sess1.compound(ops, cache_this=True)
     check(res1)
     res2 = sess1.compound(ops, seq_delta=0)
     check(res2)
@@ -227,7 +227,7 @@ def testReplayCache003(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.putrootfh(), op.lookup("")])
+    res1 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound([op.putrootfh(), op.lookup("")], seq_delta=0)
     check(res2, NFS4ERR_INVAL)
@@ -244,7 +244,7 @@ def testReplayCache004(t, env):
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
     ops = [op.putrootfh(), op.savefh(), op.rename("", "foo")]
-    res1 = sess1.compound(ops)
+    res1 = sess1.compound(ops, cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound(ops, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
@@ -260,7 +260,7 @@ def testReplayCache005(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.illegal()])
+    res1 = sess1.compound([op.illegal()], cache_this=True)
     check(res1, NFS4ERR_OP_ILLEGAL)
     res2 = sess1.compound([op.illegal()], seq_delta=0)
     check(res2, NFS4ERR_OP_ILLEGAL)
