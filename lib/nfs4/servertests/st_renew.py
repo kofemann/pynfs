@@ -32,9 +32,8 @@ def testExpired(t, env):
     c.init_connection()
     c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
                      deny=OPEN4_SHARE_DENY_BOTH)
-    sleeptime = c.getLeaseTime() * 3 / 2
+    sleeptime = c.getLeaseTime() * 2
     env.sleep(sleeptime)
-    # Force server to purge c1 state
     c2 = env.c2
     c2.init_connection()
     c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,

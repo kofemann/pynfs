@@ -107,7 +107,7 @@ def testTimedoutClose1(t, env):
     CODE: CLOSE8
     """
     c = env.c1
-    sleeptime = c.getLeaseTime() * 3 // 2
+    sleeptime = c.getLeaseTime() * 2
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
                                    attrs={FATTR4_MODE: 0666})
@@ -129,7 +129,7 @@ def testTimedoutClose2(t, env):
     CODE: CLOSE9
     """
     c = env.c1
-    sleeptime = c.getLeaseTime() * 3 // 2
+    sleeptime = c.getLeaseTime() * 2
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
                                    attrs={FATTR4_MODE: 0666})
