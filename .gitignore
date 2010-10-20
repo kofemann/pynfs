@@ -1,7 +1,12 @@
+#general garbage:
+*.orig
+.*
+!.gitignore
+
+# Generated files
 *.pyc
 *.pyo
 
-# Generated files
 *_const.py
 *_type.py
 *_pack.py
