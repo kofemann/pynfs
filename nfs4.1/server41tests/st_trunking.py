@@ -14,7 +14,7 @@ def create_session(c, clientid, sequenceid, cred=None, flags=0):
                                         123, [])], cred)
     return res
 
-def testTwoSessions(t, env)
+def testTwoSessions(t, env):
 	"""Create multiple sessions per client
 
 	FLAGS: trunking all
@@ -25,7 +25,7 @@ def testTwoSessions(t, env)
 	sess2 = c.create_session()
 
 
-def testUseTwoSessions(t, env)
+def testUseTwoSessions(t, env):
 	"""Use multiple sessions per client
 
 	FLAGS: trunking all
@@ -38,7 +38,7 @@ def testUseTwoSessions(t, env)
 	sess2 = c.create_session()
 	res = sess2.compound([])
 	check(res)
-	res = c.c.compound([op.destroy_session(sess.sessionid)]
+	res = c.c.compound([op.destroy_session(sess.sessionid)])
 	check(res)
 	res = sess2.compound([])
 	check(res)
