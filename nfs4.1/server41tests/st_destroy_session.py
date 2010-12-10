@@ -55,14 +55,11 @@ def testDestroy2(t, env):
     res = create_file(sess2, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    print res
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
-    print "OPEN fh =", repr(fh)
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
-    # c2 - OPEN - WRITE
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess3 = c2.create_session()
     claim = open_claim4(CLAIM_NULL, env.testname(t))
@@ -72,14 +69,9 @@ def testDestroy2(t, env):
                       owner, how, claim)
     c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
     c1.cb_post_hook(OP_CB_RECALL, post_hook)
-    print "FRED - SEND OPEN"
     slot = sess3.compound_async(env.home + [open_op])
     recall.happened = False
-    # Wait for recall, and return delegation
-    print "FRED - wait for RECALL"
     recall.wait(100) # STUB - deal with timeout
-    # Do something to get callback
-    # Check that callback is sent
     if not recall.happened:
         fail("Did not get callback")
 
