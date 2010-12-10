@@ -70,6 +70,8 @@ def testDestroy2(t, env):
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
+    c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    c1.cb_post_hook(OP_CB_RECALL, post_hook)
     print "FRED - SEND OPEN"
     slot = sess3.compound_async(env.home + [open_op])
     recall.happened = False
