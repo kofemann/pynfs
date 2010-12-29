@@ -363,3 +363,22 @@ def testCallbackVersion(t, env):
                  (cb_occurred.low, cb_occurred.hi, cb_occurred.vers))
     finally:
         env.c1._check_version = orig
+
+def testMaxreqs(t, env):
+    """A CREATE_SESSION with maxreqs too large should return
+       a modified value
+
+    FLAGS: create_session all
+    CODE: CSESS22
+    """
+    # Assuming this is too large for any server; increase if necessary:
+    # but too huge will eat many memory for replay_cache, be careful!
+    TOO_MANY_SLOTS = 500
+
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with fore_channel = TOO_MANY_SLOTS
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128, TOO_MANY_SLOTS, [])
+    sess1 = c.create_session(fore_attrs=chan_attrs)
+    if nfs4lib.test_equal(sess1.fore_channel.maxrequests,
+                          chan_attrs.ca_maxrequests, "count4"):
+        fail("Server allows surprisingly large fore_channel maxreqs")
