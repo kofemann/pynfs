@@ -269,8 +269,8 @@ class NFS4Client(rpc.Client, rpc.Server):
     def op_cb_recall(self, arg, env):
         log_cb.info("In CB_RECALL")
         self.prehook(arg, env)
-        res = self.posthook(arg, env, res=None)
-        return encode_status(NFS4_OK)
+        res = self.posthook(arg, env, res=NFS4_OK)
+        return encode_status(res)
 
     def new_client(self, name, verf=None, cred=None, protect=None, flags=0,
                    expect=NFS4_OK):

@@ -93,7 +93,9 @@ def testDestroy3(t, env):
         recall.stateid = arg.stateid # NOTE this must be done before set()
         recall.happened = True
         env.notify = recall.set # This is called after compound sent to queue
-    def post_hook(arg, env, res):
+    def bad_post_hook(arg, env, res):
+	return None;
+    def good_post_hook(arg, env, res):
         return res
     c = env.c1.new_client(env.testname(t))
     sess1 = c.create_session()
@@ -106,6 +108,7 @@ def testDestroy3(t, env):
     print "OPEN fh =", repr(fh)
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
+    recall.happened = False
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess2 = c2.create_session()
     claim = open_claim4(CLAIM_NULL, env.testname(t))
@@ -114,36 +117,19 @@ def testDestroy3(t, env):
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
     slot = sess2.compound_async(env.home + [open_op])
-    recall.happened = False
-    recall.wait(100) # STUB - deal with timeout
+    c.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    c.cb_post_hook(OP_CB_RECALL, bad_post_hook)
+    recall.wait(1) # STUB - deal with timeout
     if not recall.happened:
         fail("Did not get callback")
-    res = c.c.compound([op.destroy_session(sess1.sessionid)])
-    sess3 = c.create_session()
-    res = create_file(sess3, env.testname(t),
-                      access=OPEN4_SHARE_ACCESS_READ |
-                      OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    print res
-    check(res)
-    fh = res.resarray[-1].object
-    deleg = res.resarray[-2].delegation
-    print "OPEN fh =", repr(fh)
-    if deleg.delegation_type == OPEN_DELEGATE_NONE:
-        fail("Could not get delegation")
-    # c2 - OPEN - WRITE
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
-    sess2 = c2.create_session()
-    claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
-    how = openflag4(OPEN4_NOCREATE)
-    open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
-                      owner, how, claim)
-    slot = sess2.compound_async(env.home + [open_op])
     recall.happened = False
-    # Wait for recall, and return delegation
+    # since we did not reply to callback, robust server should retry when
+    # we give it a new backchannel to use:
+    res = c.c.compound([op.destroy_session(sess1.sessionid)])
+    c.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    c.cb_post_hook(OP_CB_RECALL, good_post_hook)
+    sess3 = c.create_session()
     recall.wait(100) # STUB - deal with timeout
-    # Do something to get callback
-    # Check that callback is sent
     if not recall.happened:
         fail("Did not get callback")
 
