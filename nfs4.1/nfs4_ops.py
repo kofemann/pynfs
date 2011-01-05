@@ -30,13 +30,18 @@ def _pull_argops(op_dict):
         d["funct_name"] = "%s" % enum_name.lower() # <name>
         class_name = "%s4args" % enum_name
         klass = getattr(_type, class_name, None)
+        print d["funct_name"], class_name, klass
         if klass is None:
             # This operation takes no arguments
             d["funct_args"] = d["create_args"] = d["set_args"] = ""
         else:
-            arg_list = ", ".join(inspect.getargspec(klass.__init__)[0][1:])
+            if type(klass) is dict:
+                arg_list = "enum_value"
+                d["create_args"] = "args = enum_value"
+            else:
+                arg_list = ", ".join(inspect.getargspec(klass.__init__)[0][1:])
+                d["create_args"] = "args = _type.%s(%s)" % (class_name, arg_list)
             d["funct_args"] = arg_list
-            d["create_args"] = "args = _type.%s(%s)" % (class_name, arg_list)
             if enum_name.startswith("CB_"):
                 d["set_args"] = "opcb%s=args" % enum_name.lower()[3:]
             else:
