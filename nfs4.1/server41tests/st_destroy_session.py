@@ -90,26 +90,22 @@ def testDestroy3(t, env):
     """
     recall = threading.Event()
     def pre_hook(arg, env):
-        print "FRED - called prehook"
         recall.stateid = arg.stateid # NOTE this must be done before set()
         recall.happened = True
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
-        print "FRED - called posthook"
         return res
     c = env.c1.new_client(env.testname(t))
     sess1 = c.create_session()
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    print res
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
     print "OPEN fh =", repr(fh)
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
-    # c2 - OPEN - WRITE
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess2 = c2.create_session()
     claim = open_claim4(CLAIM_NULL, env.testname(t))
@@ -117,14 +113,9 @@ def testDestroy3(t, env):
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
-    print "FRED - SEND OPEN"
     slot = sess2.compound_async(env.home + [open_op])
     recall.happened = False
-    # Wait for recall, and return delegation
-    print "FRED - wait for RECALL"
     recall.wait(100) # STUB - deal with timeout
-    # Do something to get callback
-    # Check that callback is sent
     if not recall.happened:
         fail("Did not get callback")
     res = c.c.compound([op.destroy_session(sess1.sessionid)])
@@ -147,11 +138,9 @@ def testDestroy3(t, env):
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
-    print "FRED - SEND OPEN"
     slot = sess2.compound_async(env.home + [open_op])
     recall.happened = False
     # Wait for recall, and return delegation
-    print "FRED - wait for RECALL"
     recall.wait(100) # STUB - deal with timeout
     # Do something to get callback
     # Check that callback is sent
