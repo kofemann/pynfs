@@ -1253,8 +1253,11 @@ class type_info(Info):
             # recursively search through casts.  Also, do we need
             # a const_output for the same case with enum?
             cast = name_dict.get(self.type, None)
-            if cast and cast.type in ["struct", "union"]:
-                return "%s = %s\n" % (self.id, self.type)
+            if cast:
+                if cast.type in ["struct", "union"]:
+                    return "%s = %s\n" % (self.id, self.type)
+                elif cast.type == "enum":
+                    return "%s = const.%s\n" % (self.id, self.type)
         
     def pack_output(self):
         if not self.array:
