@@ -411,3 +411,19 @@ def testCsr_sequence(t, env):
     sess1 = c.create_session(fore_attrs=chan_attrs)
     if not nfs4lib.test_equal(sess1.seqid, csa_sequence, "int"):
         fail("Server returns bad csr_sequence which not equal to csa_sequence")
+
+def testTooSmallMaxRS(t, env):
+    """If client selects a value for ca_maxresponsesize such that
+       a replier on a channel could never send a response,
+       server SHOULD return NFS4ERR_TOOSMALL
+
+    FLAGS: create_session all
+    CODE: CSESS25
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with too small ca_maxresponsesize
+    chan_attrs = channel_attrs4(0,8192,0,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res, NFS4ERR_TOOSMALL)
