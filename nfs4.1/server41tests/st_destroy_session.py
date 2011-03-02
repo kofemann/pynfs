@@ -149,3 +149,21 @@ def testDestoryNotFinalOps(t, env):
                         op.destroy_session(sess1.sessionid),
                         op.putrootfh()])
     check(res, NFS4ERR_NOT_ONLY_OP)
+
+def testDestoryNotSoleOps(t, env):
+    """ If the COMPOUND request does not start with SEQUENCE,
+        and DESTROY_SESSION is not the sole operation,
+        then server MUST return NFS4ERR_NOT_ONLY_OP. rfc5661 18.37.3
+
+    FLAGS: destroy_session
+    CODE: DSESS9005
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess1 = c.create_session()
+
+    sid = sess1.sessionid
+    res = c.c.compound([op.destroy_session(sess1.sessionid), op.putrootfh()])
+    check(res, NFS4ERR_NOT_ONLY_OP)
+
+    res = c.c.compound([op.putrootfh(), op.destroy_session(sess1.sessionid)])
+    check(res, NFS4ERR_NOT_ONLY_OP)
