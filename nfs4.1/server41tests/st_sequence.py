@@ -338,3 +338,28 @@ def testSessionidSequenceidSlotid(t, env):
 
     if not nfs4lib.test_equal(res.resarray[0].sr_slotid, 2, "int"):
         fail("server return bad slotid")
+
+def testBadSequenceidAtSlot(t, env):
+    """ If the difference between sa_sequenceid and the server's cached
+        sequence ID at the slot ID is two (2) or more, or if sa_sequenceid
+        is less than the cached sequence ID , server MUST return
+        NFS4ERR_SEQ_MISORDERED. rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ13
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    sess1 = c.create_session()
+
+    sid = sess1.sessionid
+    res = c.c.compound([op.sequence(sid, 1, 2, 3, True)])
+    check(res)
+
+    seqid = res.resarray[0].sr_sequenceid
+    # SEQUENCE with bad sr_sequenceid
+    res = c.c.compound([op.sequence(sid, seqid + 2, 2, 3, True)])
+    check(res, NFS4ERR_SEQ_MISORDERED)
+
+    res = c.c.compound([op.sequence(sid, nfs4lib.dec_u32(seqid), 2, 3, True)])
+    check(res, NFS4ERR_SEQ_MISORDERED)
