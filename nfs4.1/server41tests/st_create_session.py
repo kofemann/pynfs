@@ -382,3 +382,17 @@ def testMaxreqs(t, env):
     if nfs4lib.test_equal(sess1.fore_channel.maxrequests,
                           chan_attrs.ca_maxrequests, "count4"):
         fail("Server allows surprisingly large fore_channel maxreqs")
+
+def testNotOnlyOp(t, env):
+    """Check for NFS4ERR_NOT_ONLY_OP
+
+    FLAGS: create_session all
+    CODE: CSESS23
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with PUT_ROOTFH
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, []), op.putrootfh()], None)
+    check(res, NFS4ERR_NOT_ONLY_OP)
