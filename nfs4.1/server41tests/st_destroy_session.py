@@ -133,3 +133,19 @@ def testDestroy3(t, env):
     if not recall.happened:
         fail("Did not get callback")
 
+def testDestoryNotFinalOps(t, env):
+    """ If the COMPOUND request starts with SEQUENCE, DESTROY_SESSION
+        MUST be the final operation in the COMPOUND request.
+        rfc5661 18.37.3
+
+    FLAGS: destroy_session
+    CODE: DSESS9004
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess1 = c.create_session()
+
+    sid = sess1.sessionid
+    res = c.c.compound([op.sequence(sid, 1, 2, 3, False),
+                        op.destroy_session(sess1.sessionid),
+                        op.putrootfh()])
+    check(res, NFS4ERR_NOT_ONLY_OP)
