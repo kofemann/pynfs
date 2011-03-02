@@ -404,6 +404,7 @@ class SendChannel(object):
 class SessionRecord(object):
     def __init__(self, csr, client):
         self.sessionid = csr.csr_sessionid
+        self.seqid = csr.csr_sequence
         self.client = client
         self.c = client.c
         self.cred = client.cred

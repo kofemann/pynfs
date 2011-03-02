@@ -396,3 +396,18 @@ def testNotOnlyOp(t, env):
                                         chan_attrs, chan_attrs,
                                         123, []), op.putrootfh()], None)
     check(res, NFS4ERR_NOT_ONLY_OP)
+
+def testCsr_sequence(t, env):
+    """The corresponding result of csa_sequence is csr_sequence,
+       which MUST be equal to csa_sequence.
+
+    FLAGS: create_session all
+    CODE: CSESS24
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    csa_sequence = c.seqid
+    sess1 = c.create_session(fore_attrs=chan_attrs)
+    if not nfs4lib.test_equal(sess1.seqid, csa_sequence, "int"):
+        fail("Server returns bad csr_sequence which not equal to csa_sequence")
