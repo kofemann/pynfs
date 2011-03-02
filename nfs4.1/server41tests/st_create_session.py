@@ -1,6 +1,6 @@
 from nfs4_const import *
 import nfs4_ops as op
-from environment import check, fail
+from environment import check, fail, create_file, open_file
 from nfs4_type import *
 import random
 import nfs4lib
@@ -427,3 +427,31 @@ def testTooSmallMaxRS(t, env):
                                         chan_attrs, chan_attrs,
                                         123, [])], None)
     check(res, NFS4ERR_TOOSMALL)
+
+def testRepTooBig(t, env):
+    """If requester sends a request for which the size of the reply
+       would exceed ca_maxresponsesize, the replier will return
+       NFS4ERR_REP_TOO_BIG
+
+    FLAGS: create_session all
+    CODE: CSESS26
+    """
+    name = env.testname(t)
+    c1 = env.c1.new_client(name)
+    # create session with a small ca_maxresponsesize
+    chan_attrs = channel_attrs4(0,8192,50,8192,128,8,[])
+    sess1 = c1.create_session(fore_attrs=chan_attrs)
+    owner = "owner_%s" % name
+    path = sess1.c.homedir + [name]
+    res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_BOTH)
+    check(res)
+
+    # write some data to file
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, "write test data " * 10)])
+    check(res)
+
+    # read data rather than ca_maxresponsesize
+    res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 500)])
+    check(res, NFS4ERR_REP_TOO_BIG)
