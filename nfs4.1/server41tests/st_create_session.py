@@ -455,3 +455,24 @@ def testRepTooBig(t, env):
     # read data rather than ca_maxresponsesize
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 500)])
     check(res, NFS4ERR_REP_TOO_BIG)
+
+def testRepTooBigToCache(t, env):
+    """If requester sends a request for which the size of the reply
+       would exceed ca_maxresponsesize_cached, the replier will return
+       NFS4ERR_REP_TOO_BIG_TO_CACHE
+
+    FLAGS: create_session all
+    CODE: CSESS27
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with a small ca_maxresponsesize_cached
+    chan_attrs = channel_attrs4(0,8192,8192,10,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res)
+
+    # SEQUENCE with cache this
+    sid = res.resarray[0].csr_sessionid
+    res = c.c.compound([op.sequence(sid, 1, 0, 0, True)])
+    check(res, NFS4ERR_REP_TOO_BIG_TO_CACHE)
