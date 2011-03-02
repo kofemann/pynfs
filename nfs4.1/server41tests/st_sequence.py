@@ -314,3 +314,27 @@ def testOpNotInSession(t, env):
     # putrootfh with out session
     res = c.c.compound([op.putrootfh()])
     check(res, NFS4ERR_OP_NOT_IN_SESSION)
+
+def testSessionidSequenceidSlotid(t, env):
+    """ The sr_sessionid result MUST equal sa_sessionid.
+        The sr_slotid result MUST equal sa_slotid.
+        The sr_sequenceid result MUST equal sa_sequenceid.
+        rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ12
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess1 = c.create_session()
+
+    # SEQUENCE
+    sid = sess1.sessionid
+    res = c.c.compound([op.sequence(sid, 1, 2, 3, True)])
+    if not nfs4lib.test_equal(res.resarray[0].sr_sessionid, sid, "opaque"):
+        fail("server return bad sessionid")
+
+    if not nfs4lib.test_equal(res.resarray[0].sr_sequenceid, 1, "int"):
+        fail("server return bad sequenceid")
+
+    if not nfs4lib.test_equal(res.resarray[0].sr_slotid, 2, "int"):
+        fail("server return bad slotid")
