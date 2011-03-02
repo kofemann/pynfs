@@ -301,3 +301,16 @@ def testReplayCache007(t, env):
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
     check(res2, NFS4ERR_RETRY_UNCACHED_REP)
 
+def testOpNotInSession(t, env):
+    """Operations other than SEQUENCE, BIND_CONN_TO_SESSION, EXCHANGE_ID,
+       CREATE_SESSION, and DESTROY_SESSION, MUST NOT appear as the
+       first operation in a COMPOUND. rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ11
+    """
+    c = env.c1.new_client(env.testname(t))
+
+    # putrootfh with out session
+    res = c.c.compound([op.putrootfh()])
+    check(res, NFS4ERR_OP_NOT_IN_SESSION)
