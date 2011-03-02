@@ -458,13 +458,14 @@ def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     else:
         dir = path[:-1]
         name = path[-1]
-    if (mode==EXCLUSIVE4) and (verifier==None):
+    if ((mode==EXCLUSIVE4) or (mode==EXCLUSIVE4_1)) and (verifier==None):
         verifier = sess.c.verifier
     if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
         access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     # Create the file
     open_op = op.open(seqid, access, deny, open_owner4(clientid, owner),
-                      openflag4(OPEN4_CREATE, createhow4(mode, attrs, verifier)),
+                      openflag4(OPEN4_CREATE, createhow4(mode, attrs, verifier,
+                                               creatverfattr(verifier, attrs))),
                       open_claim4(CLAIM_NULL, name))
     return sess.compound(use_obj(dir) + [open_op, op.getfh()])
 
