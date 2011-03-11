@@ -252,6 +252,22 @@ def testCbSecParms(t, env):
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session(sec=sec)
 
+def testCbSecParmsDec(t, env):
+    """A decode problem was found at NFS server
+       (wrong index used in inner loop).
+       http://marc.info/?l=linux-kernel&m=129961996327640&w=2
+
+    FLAGS: create_session all
+    CODE: CSESS16a
+    """
+    sec = [callback_sec_parms4(AUTH_NONE),
+           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, "Handle from server", "Client handle")),
+           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, "Random machine name", 7, 11, [])),
+           ]
+
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session(sec=sec)
+
 def testRdmaArray0(t, env):
     """Test 0 length rdma arrays
 
