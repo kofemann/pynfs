@@ -1,0 +1,3 @@
+include *.c
+exclude *_wrap.c
+exclude gssapi.py

@@ -1,0 +1,12 @@
+*.pyc
+*.pyo
+
+# Generated files
+*_const.py
+*_type.py
+*_pack.py
+parser.out
+parsetab.py
+
+# setup.py files
+build/

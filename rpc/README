@@ -1,0 +1,7 @@
+GSS enabled RPC code.
+
+  Still some gss integration to do.
+      Initial config - how tell what sec flavors/principals to use/exclude
+      What header info needs to passed down to procedure, and in what form
+          (ie the API *will* change here)
+
