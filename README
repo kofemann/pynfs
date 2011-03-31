@@ -1,8 +1,4 @@
-For nfs4 testing, see the nfs4/README.
-For automatic code generation frmo an XDR file, see xdr/README.
-
-First, if you need gss (kerberos), cd to the gssapi directoy
-and run "python setup.py build_ext --inplace"
-
-To use, you will first need to run "python setup.py build" to generate
-python files from xdr.
+The 4.0 and 4.1 git trees have been merged, preparing for merging of
+the actual code bases.  As a first step, the original 4.0 code was
+just moved down into the nfs4.0 directory.  If yuo want to ignore the
+4.1 work, just cd down to nfs4.0 and work from there as before.
