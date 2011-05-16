@@ -122,8 +122,9 @@ def scan_options(p):
     .usedir    = (None)
     .usespecial= (None)
 
-    .rebootscript = (None)
-    .rebootargs = (None)
+    .serverhelper = (None)
+    .serverhelperarg = (None)
+
     """
     p.add_option("--showflags", action="store_true", default=False,
                  help="Print a list of all possible flags and exit")
@@ -225,11 +226,11 @@ def scan_options(p):
                     "the scripts and arguments used to control how the "
                     "server is restarted.")
 
-    g.add_option("--rebootscript", default=None, metavar="FILE",
-                 help="Use FILE as the script to reboot SERVER.")
+    g.add_option("--serverhelper", default=None, metavar="FILE",
+                 help="Use script to perform special actions on server")
 
-    g.add_option("--rebootargs", default=None, metavar="ARGS",
-                 help="Pass ARGS as a string to the reboot script.")
+    g.add_option("--serverhelperarg", default=None, metavar="ARG",
+                 help="Pass ARG as first argument to serverhelper");
 
     p.add_option_group(g)
 

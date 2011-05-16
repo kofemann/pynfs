@@ -1,30 +1,20 @@
 from nfs4.nfs4_const import *
 from environment import check, checklist
-import sys
 import os
 
 # NOTE - reboot tests are NOT part of the standard test suite
 
-def _waitForReboot(c):
+def _waitForReboot(c, env):
     """Wait for server to reboot.
 
     Returns an estimate of how long grace period will last.
     """
     oldleasetime = c.getLeaseTime()
-    if c.opts.rebootscript is None:
-        print "Hit ENTER to continue after server is reset"
-        sys.stdin.readline()
-        print "Continuing with test"
-    else:
-        args = c.opts.rebootscript
-        if c.opts.rebootargs:
-            c.opts.rebootscript += ' ' + c.opts.rebootargs
-        os.system(args)
-
-        # Wait until the server is back up.
-        # c.null() blocks until it gets a response,
-        # which happens when the server comes back up.
-        c.null()
+    env.serverhelper("reboot")
+    # Wait until the server is back up.
+    # c.null() blocks until it gets a response,
+    # which happens when the server comes back up.
+    c.null()
     newleasetime = c.getLeaseTime()
     return 5 + max(oldleasetime, newleasetime)
 
@@ -40,7 +30,7 @@ def testRebootValid(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                        deleg_type=OPEN_DELEGATE_NONE)
@@ -73,7 +63,7 @@ def testManyClaims(t, env):
         c.init_connection(id)
         fh, stateid = c.create_confirm(t.code, basedir + [id])
         fhdict[id] = fh
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try: 
         # Lots of reclaims
         badfh = fhdict[idlist[-1]]
@@ -101,7 +91,7 @@ def testRebootWait(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                        deleg_type=OPEN_DELEGATE_NONE)
@@ -123,7 +113,7 @@ def testRebootInvalid(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         c.init_connection()
         res = c.open_file(t.code, fh, access=OPEN4_SHARE_ACCESS_WRITE,
@@ -167,7 +157,7 @@ def testEdge1(t, env):
     res2 = c2.close_file(t.code, fh2, stateid2)
     check(res2, msg="Client 2 closing file")
     # Server reboots
-    sleeptime = _waitForReboot(c2)
+    sleeptime = _waitForReboot(c2, env)
     try:
         # Client 1: Reclaim lock (should not work, since #2 has interfered)
         res1 = c1.compound([c1.renew_op(c1.clientid)])
@@ -197,7 +187,7 @@ def testEdge2(t, env):
     res1 = c1.lock_file(t.code, fh1, stateid1)
     check(res1, msg="Client 1 locking file")
     # Server reboots
-    sleeptime = _waitForReboot(c1)
+    sleeptime = _waitForReboot(c1, env)
     # Let grace period expire
     env.sleep(sleeptime, "Waiting for grace period to end")
     # Client 2: come in and grab lock
@@ -214,7 +204,7 @@ def testEdge2(t, env):
     res2 = c2.close_file(t.code, fh2, stateid2)
     check(res2, msg="Client 2 closing file")
     # Server reboots
-    sleeptime = _waitForReboot(c2)
+    sleeptime = _waitForReboot(c2, env)
     try:
         # Client 1: Reclaim lock (should not work, since #2 has interfered)
         res1 = c1.compound([c1.renew_op(c1.clientid)])
@@ -251,7 +241,7 @@ def testRootSquash(t, env):
     print "Detected root squashing: root -> %s" % oldname
     
     # Wait for grace period to have *just* expired
-    _waitForReboot(c)
+    _waitForReboot(c, env)
     c.init_connection()
     while 1:
         res = c.create_file(t.code, c.homedir + [t.code, 'file'])
@@ -279,7 +269,7 @@ def testValidDeleg(t, env):
     c.init_connection(id, cb_ident=0)
     deleg_info, fh, stateid =_get_deleg(t, c, c.homedir + [t.code],
                                         None, NFS4_OK)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                           deleg_type=OPEN_DELEGATE_NONE)
@@ -306,13 +296,13 @@ def testRebootMultiple(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         c.init_connection()
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                        deleg_type=OPEN_DELEGATE_NONE)
         check(res, msg="Reclaim using newly created clientid")
-        sleeptime = _waitForReboot(c)
+        sleeptime = _waitForReboot(c, env)
         c.init_connection()
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                        deleg_type=OPEN_DELEGATE_NONE)
@@ -330,7 +320,7 @@ def testGraceSeqid(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    sleeptime = _waitForReboot(c)
+    sleeptime = _waitForReboot(c, env)
     try:
         c.init_connection()
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
