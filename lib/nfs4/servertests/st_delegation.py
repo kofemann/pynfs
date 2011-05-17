@@ -561,4 +561,21 @@ def testRemove(t, env):
             sleeptime = 20
     _verify_cb_occurred(t, c, count)
 
-    
+def _listToPath(components):
+    return '/'+reduce((lambda x,y:x+'/'+y), components)
+
+def testServerRemove(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure removing the file on the server
+    recalls it.  Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG16
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    env.serverhelper("unlink " + _listToPath(c.homedir + [t.code]));
+    _verify_cb_occurred(t, c, count)
