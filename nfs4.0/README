@@ -71,11 +71,20 @@ Problems:
 Get a warning message along the lines of:
 RuntimeWarning: Python C API version mismatch for module gssapi: This Python has API version 1012, module gssapi has version 1011.
 
-This imples the file lib/rpc/rpcsec/gssapi.so was compiled with header files
-from a different version of python than is curently being run.
+This implies the file lib/rpc/rpcsec/gssapi.so was compiled with header files
+from a different version of python than is currently being run.
 Delete gssapi.so and try `python2.3 setup.py build_ext --inplace' (or whatever
 version (>=2.3) that you use).
 
 If this gives an error similar to:
 error: invalid Python installation: unable to open /usr/lib/python2.3/config/Makefile (No such file or directory)
 and you installed from python-*.rpm, you need to also install python-devel-*.rpm.
+
+Building on OS X:
+
+"python setup.py build" can fail on OS X -- by default, setup.py tries 
+to build i386, x86_64 and PPC.  Modern macs don't support building PPC, so it
+may be necessary to run like:
+
+ARCHFLAGS="-arch i386 -arch x86_64" python setup.py build
+
