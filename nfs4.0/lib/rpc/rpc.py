@@ -503,10 +503,14 @@ class RPCServer(Server):
         self.rpcunpacker = rpc_pack.RPCUnpacker('')
         self.prog = prog
         self.vers = vers # FRED - this could be more general
-        self.security = {AUTH_NONE: SecAuthNone(),
-                         AUTH_SYS: SecAuthSys(),
-                         RPCSEC_GSS: SecAuthGss(),
-                         }
+        self.security = {}
+        for secname, sectype in {'none': AUTH_NONE,
+                                 'sys':  AUTH_SYS,
+                                 'gss':  RPCSEC_GSS,
+                                }.iteritems():
+            if supported.has_key(secname):
+                self.security[sectype] = supported[secname]
+
         self.readbufs = {}
         self.writebufs = {}
         self.packetbufs = {} # store packets read until have a whole record
