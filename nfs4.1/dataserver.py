@@ -13,15 +13,19 @@ import nfs4_ops as op
 log = logging.getLogger("Dataserver Manager")
 
 class DataServer(object):
-    def __init__(self, server, port, path, proto="tcp", flavor=rpc.AUTH_SYS, active=True, mdsds=True):
+    def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True):
         self.mdsds = mdsds
-        self.proto = proto
         self.server = server
         self.port = int(port)
         self.active = active
         self.path = path
         self.path_fh = None
         self.filehandles = {}
+
+        self.proto = "tcp"
+        if server.find(":") > -1:
+            self.proto = "tcp6"
+
         if active:
             self.up()
 

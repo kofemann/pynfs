@@ -455,18 +455,22 @@ def parse_nfs_url(url):
     Returns triple server, port, path.
     """
     p = re.compile(r"""
-    (?:nfs://)?      # Ignore an optionally prepended 'nfs://'
-    (?P<host>[^:]+)  # set host=everything up to next :
+    (?:nfs://)?               # Ignore an optionally prepended 'nfs://'
+    ((?P<host>[^:]+) |        # ipv4 addresses are everything up to port sep :
+     \[(?P<host6>.+)\])       # ipv6 addresses are in brackets
     (:
-    (?P<port>\d*)    # set port=following digits
-    (?P<path>/.*)?   # set path=everything else, must start with /
+    (?P<port>\d*)             # set port=following digits
+    (?P<path>/.*)?            # set path=everything else, must start with /
     )?
     $
     """, re.VERBOSE)
 
     m = p.match(url)
     if m:
-        server, port, path = m.group('host'), m.group('port'), m.group('path')
+        server = m.group('host')
+        if not server:
+            server = m.group('host6')
+        port, path = m.group('port'), m.group('path')
         port = (2049 if not port else int(port))
         path = (path_components(path) if path else [])
         return server, port, path

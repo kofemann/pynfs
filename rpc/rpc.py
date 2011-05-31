@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-import socket, select
+import socket, select, sys
 import struct
 import threading
 import logging
@@ -445,7 +445,7 @@ class ConnectionHandler(object):
         self.listeners = set()
 
         # Create internal server for alarm system to connect to
-        self.s = self.expose((LOOPBACK, 0), False)
+        self.s = self.expose((LOOPBACK, 0), socket.AF_INET, False)
         
         # Set up alarm system, which is how other threads inform the polling
         # thread that data is ready to be sent out
@@ -785,7 +785,10 @@ class ConnectionHandler(object):
         If secure==True, will bind local asocket to a port < 1024.
         """
         log_t.info("Called connect(%r)" % (address,))
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        af = socket.AF_INET
+        if address[0].find(':') != -1:
+            af = socket.AF_INET6
+        s = socket.socket(af, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if secure:
             self.bindsocket(s)
@@ -818,9 +821,9 @@ class ConnectionHandler(object):
                     raise
 
 
-    def expose(self, address, safe=True):
+    def expose(self, address, af, safe=True):
         """Start listening for incoming connections on the given address"""
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s = socket.socket(af, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(address)
         s.setblocking(0)
@@ -864,7 +867,12 @@ class Server(ConnectionHandler):
         self.prog = prog
         self.versions = versions # List of supported versions of prog
         self.default_cred = security.CredInfo()
-        self.expose((interface, port), False)
+        try:
+            # This listens on both AF_INET and AF_INET6
+            self.expose((interface, port), socket.AF_INET6, False)
+        except:
+            # ipv6 not supported, fall back to ipv4
+            self.expose((interface, port), socket.AF_INET, False)
 
     def _check_program(self, prog):
         return (self.prog == prog)
