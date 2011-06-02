@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-import socket, select, sys
+import socket, select
 import struct
 import threading
 import logging

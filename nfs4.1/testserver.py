@@ -243,9 +243,12 @@ def main():
     if not args:
         p.error("Need a server")
     url = args.pop(0)
-    opt.server, opt.port, opt.path = nfs4lib.parse_nfs_url(url)
-    if not opt.server:
+    server_list, opt.path = nfs4lib.parse_nfs_url(url)
+
+    if not server_list:
         p.error("%s not a valid server name" % url)
+
+    opt.server, opt.port = server_list[0]
 
     if not args:
         p.error("No tests given")

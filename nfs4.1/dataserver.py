@@ -13,7 +13,7 @@ import nfs4_ops as op
 log = logging.getLogger("Dataserver Manager")
 
 class DataServer(object):
-    def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True):
+    def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None):
         self.mdsds = mdsds
         self.server = server
         self.port = int(port)
@@ -25,6 +25,11 @@ class DataServer(object):
         self.proto = "tcp"
         if server.find(":") > -1:
             self.proto = "tcp6"
+
+        if multipath_servers:
+            self.multipath_servers = multipath_servers[:]
+        else:
+            self.multipath_servers = []
 
         if active:
             self.up()
@@ -83,11 +88,25 @@ class DataServer(object):
 
     def get_netaddr4(self):
         # STUB server multipathing not supported yet
-        hex_port = hex(self.port)[2:].zfill(4)
         uaddr = '.'.join([self.server,
                           str(self.port >> 8),
                           str(self.port & 0xff)])
-        return [netaddr4(self.proto, uaddr)]
+        return netaddr4(self.proto, uaddr)
+
+    def get_multipath_netaddr4s(self):
+        netaddr4s = []
+        for addr in self.multipath_servers:
+            server, port = addr
+            uaddr = '.'.join([server,
+                            str(port >> 8),
+                            str(port & 0xff)])
+            proto = "tcp"
+            if server.find(':') >= 0:
+                proto = "tcp6"
+
+            netaddr4s.append(netaddr4(proto, uaddr))
+        return netaddr4s
+
 
     def make_root(self, attrs={FATTR4_MODE:0777}):
         existing_path = []
@@ -162,15 +181,21 @@ class DSDevice(object):
                 if not line or line.startswith('#'):
                     continue
                 print "Analyzing: %r" % line
-                server, port, path = nfs4lib.parse_nfs_url(line)
-                if server is None:
+                try:
+                    server_list, path = nfs4lib.parse_nfs_url(line)
+                except:
                     log.critical("Could not parse line: %r" % line)
                     sys.exit(1)
+
+                # for now, just use the last path for local connections
+                server, port = server_list[-1]
+                server_list = server_list[:-1]
                 print server, port, path
                 try:
                     log.info("Adding dataserver ip:%s port:%s path:%s" %
                              (server, port, '/'.join(path)))
-                    ds = DataServer(server, port, path, mdsds=self.mdsds)
+                    ds = DataServer(server, port, path, mdsds=self.mdsds,
+                                    multipath_servers=server_list)
                     self.list.append(ds)
                 except:
                     log.critical("cannot access %s:%i/%s" %
@@ -185,7 +210,10 @@ class DSDevice(object):
         index = 0
         for d in self.list:
             if d.active:
-                netaddrs.append(d.get_netaddr4())
+                multipath = []
+                multipath.extend(d.get_multipath_netaddr4s())
+                multipath.append(d.get_netaddr4())
+                netaddrs.append(multipath)
                 stripe_indices.append(index)
                 index = index + 1
         addr = nfsv4_1_file_layout_ds_addr4(stripe_indices, netaddrs)

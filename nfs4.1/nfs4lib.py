@@ -451,31 +451,54 @@ def get_nfstime(t=None):
 
 def parse_nfs_url(url):
     """Parse [nfs://]host:port/path, format taken from rfc 2224
+       multipath addr:port pair are as such:
+
+      $ip1:$port1,$ip2:$port2..
 
     Returns triple server, port, path.
     """
     p = re.compile(r"""
     (?:nfs://)?               # Ignore an optionally prepended 'nfs://'
-    ((?P<host>[^:]+) |        # ipv4 addresses are everything up to port sep :
-     \[(?P<host6>.+)\])       # ipv6 addresses are in brackets
-    (:
-    (?P<port>\d*)             # set port=following digits
+    (?P<servers>[^/]+)
     (?P<path>/.*)?            # set path=everything else, must start with /
-    )?
     $
     """, re.VERBOSE)
 
     m = p.match(url)
     if m:
-        server = m.group('host')
-        if not server:
-            server = m.group('host6')
-        port, path = m.group('port'), m.group('path')
-        port = (2049 if not port else int(port))
+        servers = m.group('servers')
+        server_list = []
+
+        for server in servers.split(','):
+            server = server.strip()
+
+            idx = server.rfind(':')
+            bracket_idx = server.rfind(']')
+
+            # the first : is before ipv6 addr ] -> no port specified
+            if bracket_idx > idx:
+                idx = -1
+
+            if idx >= 0:
+                host = server[:idx]
+                port = server[idx+1:]
+            else:
+                host = server
+                port = None
+
+            # remove brackets around IPv6 addrs, if they exist
+            if host.startswith('[') and host.endswith(']'):
+                host = host[1:-1]
+
+            port = (2049 if not port else int(port))
+            server_list.append((host, port))
+
+        path = m.group('path')
         path = (path_components(path) if path else [])
-        return server, port, path
+
+        return tuple(server_list), path
     else:
-        return None, None, None
+        raise ValueError("Error parsing NFS URL: %s" % url)
 
 def path_components(path, use_dots=True):
     """Convert a string '/a/b/c' into an array ['a', 'b', 'c']"""
