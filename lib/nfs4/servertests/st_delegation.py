@@ -551,7 +551,7 @@ def testRemove(t, env):
     Respond properly and send DELEGRETURN.
 
     FLAGS: delegations
-    CODE: DELEG15
+    CODE: DELEG15a
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
@@ -559,6 +559,24 @@ def testRemove(t, env):
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
     _retry_conflicting_op(env, c, ops, "remove")
+    _verify_cb_occurred(t, c, count)
+
+def testLink(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure LINK recalls it.
+    Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG15b
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    ops = c.use_obj(c.homedir + [t.code]) + [c.savefh_op()];
+    ops += c.use_obj(c.homedir) + [c.link_op(t.code + '.link')];
+    _retry_conflicting_op(env, c, ops, "link")
     _verify_cb_occurred(t, c, count)
 
 def _listToPath(components):
