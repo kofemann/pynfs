@@ -533,7 +533,21 @@ def testClaimCur(t, env):
     ops = c.use_obj(path) + [c.delegreturn_op(deleg_info.read.stateid)]
     res = c.compound(ops)
     check(res)
-                            
+
+def _retry_conflicting_op(env, c, op, opname):
+    sleeptime = 5
+    while 1:
+        _lock.acquire()
+        res = c.compound(op)
+        _lock.release()
+        if res.status == NFS4_OK: break
+        checklist(res, [NFS4_OK, NFS4ERR_DELAY],
+                            "%s which causes recall" % opname)
+        env.sleep(sleeptime, 'Got NFS4ERR_DELAY on %s' % opname)
+        sleeptime += 5
+        if sleeptime > 20:
+            sleeptime = 20
+
 def testRemove(t, env):
     """DELEGATION test
 
@@ -547,18 +561,8 @@ def testRemove(t, env):
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    sleeptime = 5
-    while 1:
-        ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
-        _lock.acquire()
-        res = c.compound(ops)
-        _lock.release()
-        if res.status == NFS4_OK: break
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Remove which causes recall")
-        env.sleep(sleeptime, 'Got NFS4ERR_DELAY on remove')
-        sleeptime += 5
-        if sleeptime > 20:
-            sleeptime = 20
+    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    _retry_conflicting_op(env, c, ops, "remove")
     _verify_cb_occurred(t, c, count)
 
 def _listToPath(components):
