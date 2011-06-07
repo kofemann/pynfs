@@ -535,7 +535,6 @@ def testClaimCur(t, env):
     check(res)
 
 def _retry_conflicting_op(env, c, op, opname):
-    sleeptime = 5
     while 1:
         _lock.acquire()
         res = c.compound(op)
@@ -543,11 +542,8 @@ def _retry_conflicting_op(env, c, op, opname):
         if res.status == NFS4_OK: break
         checklist(res, [NFS4_OK, NFS4ERR_DELAY],
                             "%s which causes recall" % opname)
-        env.sleep(sleeptime, 'Got NFS4ERR_DELAY on %s' % opname)
-        sleeptime += 5
-        if sleeptime > 20:
-            sleeptime = 20
-
+        env.sleep(1, 'Got NFS4ERR_DELAY on %s' % opname)
+                            
 def testRemove(t, env):
     """DELEGATION test
 
