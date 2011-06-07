@@ -579,6 +579,24 @@ def testLink(t, env):
     _retry_conflicting_op(env, c, ops, "link")
     _verify_cb_occurred(t, c, count)
 
+def testRename(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure RENAME recalls it.
+    Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG15c
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    ops = c.use_obj(c.homedir) + [c.savefh_op()];
+    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')];
+    _retry_conflicting_op(env, c, ops, "rename")
+    _verify_cb_occurred(t, c, count)
+
 def _listToPath(components):
     return '/'+reduce((lambda x,y:x+'/'+y), components)
 
