@@ -509,7 +509,7 @@ class RPCServer(Server):
                                  'gss':  RPCSEC_GSS,
                                 }.iteritems():
             if supported.has_key(secname):
-                self.security[sectype] = supported[secname]
+                self.security[sectype] = supported[secname]()
 
         self.readbufs = {}
         self.writebufs = {}
