@@ -846,3 +846,20 @@ def xxtestLockowner2(t, env):
         self.ncl.lock_test(self.fh)
         self.ncl.lock_file(self.fh, self.stateid, error=[NFS4ERR_BAD_STATEID])
 
+def testOpenDowngradeLock(t, env):
+    """OPEN a file RW, then lock R, then downgrade to R, then unlock.
+
+    FLAGS: lock all
+    DEPEND: MKFILE
+    CODE: LOCK23
+    """
+    c = env.c1
+    c.init_connection()
+    fh, oldstateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+                                      deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+                                   deny=OPEN4_SHARE_DENY_NONE)
+    res = c.lock_file(t.code, fh, stateid);
+    res = c.downgrade_file(t.code, fh, res.lockid,
+                           access=OPEN4_SHARE_ACCESS_READ,
+                           deny=OPEN4_SHARE_DENY_NONE)
