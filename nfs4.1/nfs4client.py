@@ -457,9 +457,12 @@ class SessionRecord(object):
         return res
 
     def compound(self, ops, **kwargs):
-        slot, seq_op = self._prepare_compound(kwargs)
-        res = self.c.compound([seq_op] + ops, **kwargs)
-        res = self.update_seq_state(res, slot)
+        retry = True
+        while (retry):
+            slot, seq_op = self._prepare_compound(kwargs)
+            res = self.c.compound([seq_op] + ops, **kwargs)
+            res = self.update_seq_state(res, slot)
+            retry = (res.status == NFS4ERR_DELAY)
         return res
 
     def update_seq_state(self, res, slot):
