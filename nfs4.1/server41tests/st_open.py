@@ -124,11 +124,9 @@ def testReadDeleg(t, env):
     """
     recall = threading.Event()
     def pre_hook(arg, env):
-        print "FRED - called prehook"
         recall.stateid = arg.stateid # NOTE this must be done before set()
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
-        print "FRED - called posthook"
         return res
     # c1 - OPEN - READ
     c1 = env.c1.new_client("%s_1" % env.testname(t))
@@ -138,11 +136,9 @@ def testReadDeleg(t, env):
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    print res
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
-    print "OPEN fh =", repr(fh)
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
     # c2 - OPEN - WRITE
@@ -153,28 +149,18 @@ def testReadDeleg(t, env):
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
-    print "FRED - SEND OPEN"
     slot = sess2.compound_async(env.home + [open_op])
     # Wait for recall, and return delegation
-    print "FRED - wait for RECALL"
     recall.wait() # STUB - deal with timeout
     # Getting here means CB_RECALL reply is in the send queue.
     # Give it a moment to actually be sent
     env.sleep(1)
     res = sess1.compound([op.putfh(fh), op.delegreturn(recall.stateid)])
-    print "FRED RECALL res"
-    print
     check(res)
     # Now get OPEN reply
-    print "FRED - listen for OPEN reply"
     res = sess2.listen(slot)
-    print "FRED - OPEN res"
-    print res
     checklist(res, [NFS4_OK, NFS4ERR_DELAY])
-    print "FRED - done"
-    
-                         
-    
+
 def testReadWrite(t, env):
     """Do a simple READ and WRITE
 
