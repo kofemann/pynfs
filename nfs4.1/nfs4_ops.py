@@ -30,7 +30,6 @@ def _pull_argops(op_dict):
         d["funct_name"] = "%s" % enum_name.lower() # <name>
         class_name = "%s4args" % enum_name
         klass = getattr(_type, class_name, None)
-        print d["funct_name"], class_name, klass
         if klass is None:
             # This operation takes no arguments
             d["funct_args"] = d["create_args"] = d["set_args"] = ""
