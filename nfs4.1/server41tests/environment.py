@@ -117,7 +117,7 @@ class Environment(testmod.Environment):
         if opts.flavor == rpc.AUTH_NONE:
             self.cred1 = s1.init_cred()
         elif opts.flavor == rpc.AUTH_SYS:
-            self.cred1 = s1.init_cred(uid=4321, gid=42, name="mystery")
+            self.cred1 = s1.init_cred(uid=opts.uid, gid=opts.gid, name=opts.machinename)
         elif opts.flavor == rpc.RPCSEC_GSS:
             call = self.c1.make_call_function(self.c1.c1, 0,
                                               self.c1.default_prog,
@@ -458,20 +458,23 @@ def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     else:
         dir = path[:-1]
         name = path[-1]
-    if (mode==EXCLUSIVE4) and (verifier==None):
+    if ((mode==EXCLUSIVE4) or (mode==EXCLUSIVE4_1)) and (verifier==None):
         verifier = sess.c.verifier
     if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
         access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     # Create the file
     open_op = op.open(seqid, access, deny, open_owner4(clientid, owner),
-                      openflag4(OPEN4_CREATE, createhow4(mode, attrs, verifier)),
+                      openflag4(OPEN4_CREATE, createhow4(mode, attrs, verifier,
+                                               creatverfattr(verifier, attrs))),
                       open_claim4(CLAIM_NULL, name))
     return sess.compound(use_obj(dir) + [open_op, op.getfh()])
 
 def open_file(sess, owner, path=None,
               access=OPEN4_SHARE_ACCESS_READ,
               deny=OPEN4_SHARE_DENY_NONE,
+              claim_type=CLAIM_NULL,
               want_deleg=False,
+              deleg_type=None,
               # Setting the following should induce server errors
               seqid=0, clientid=0):
     # Set defaults
@@ -484,10 +487,17 @@ def open_file(sess, owner, path=None,
     if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
         access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     # Open the file
+    if claim_type==CLAIM_NULL:
+        fh_op = use_obj(dir)
+    elif claim_type==CLAIM_PREVIOUS:
+        fh_op = [op.putfh(path)]
+        name = None
+    if not want_deleg and access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK == 0:
+        access |= OPEN4_SHARE_ACCESS_WANT_NO_DELEG
     open_op = op.open(seqid, access, deny, open_owner4(clientid, owner),
                       openflag4(OPEN4_NOCREATE),
-                      open_claim4(CLAIM_NULL, name))
-    return sess.compound(use_obj(dir) + [open_op, op.getfh()])
+                      open_claim4(claim_type, name, deleg_type))
+    return sess.compound(fh_op + [open_op, op.getfh()])
 
 def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
                    access=OPEN4_SHARE_ACCESS_BOTH,

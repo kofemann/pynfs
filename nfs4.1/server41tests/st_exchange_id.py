@@ -1,9 +1,14 @@
 from nfs4_const import *
 import nfs4_ops as op
+import time
 from environment import check, fail
 from nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids
+
+def _getleasetime(sess):
+    res = sess.compound([op.putrootfh(), op.getattr(1 << FATTR4_LEASE_TIME)])
+    return res.resarray[-1].obj_attributes[FATTR4_LEASE_TIME]
 
 def testSupported(t, env):
     """Do a simple EXCHANGE_ID - no flags
@@ -436,3 +441,34 @@ def testNotOnlyOp(t, env):
     res = c.compound([op.exchange_id(owner, 0, protect, [c.impl_id]), op.putrootfh()])
     # per draft 21 18.35.3, server MUST return NFS4ERR_NOT_ONLY_OP
     check(res, NFS4ERR_NOT_ONLY_OP)
+
+def testLeasePeriod(t, env):
+    """Any unconfirmed record that is not confirmed within
+       a lease period SHOULD be removed.
+
+    FLAGS: exchange_id all
+    CODE: EID9
+    """
+    c1 = env.c1.new_client("%s_1" % env.testname(t))
+    c2 = env.c1.new_client("%s_2" % env.testname(t))
+
+    # Get server's lease time
+    c3 = env.c1.new_client("%s_3" % env.testname(t))
+    sess = c3.create_session()
+    lease = _getleasetime(sess)
+
+    # CREATE_SESSION
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    time.sleep(min(lease - 10, 1))
+    # Inside lease period, create_session will success.
+    res1 = c1.c.compound([op.create_session(c1.clientid, c1.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res1)
+
+    time.sleep(lease + 10)
+    # After lease period, create_session will get error NFS4ERR_STALE_CLIENTID
+    res2 = c2.c.compound([op.create_session(c2.clientid, c2.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res2, NFS4ERR_STALE_CLIENTID)

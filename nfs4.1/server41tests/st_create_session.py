@@ -1,6 +1,6 @@
 from nfs4_const import *
 import nfs4_ops as op
-from environment import check, fail
+from environment import check, fail, create_file, open_file
 from nfs4_type import *
 import random
 import nfs4lib
@@ -252,6 +252,22 @@ def testCbSecParms(t, env):
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session(sec=sec)
 
+def testCbSecParmsDec(t, env):
+    """A decode problem was found at NFS server
+       (wrong index used in inner loop).
+       http://marc.info/?l=linux-kernel&m=129961996327640&w=2
+
+    FLAGS: create_session all
+    CODE: CSESS16a
+    """
+    sec = [callback_sec_parms4(AUTH_NONE),
+           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, "Handle from server", "Client handle")),
+           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, "Random machine name", 7, 11, [])),
+           ]
+
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session(sec=sec)
+
 def testRdmaArray0(t, env):
     """Test 0 length rdma arrays
 
@@ -336,21 +352,21 @@ def testCallbackProgram(t, env):
         env.c1._check_program = orig
 
 def testCallbackVersion(t, env):
-    """Check server sends callback program with version==4
-
-    This is mandated by draft25 18.36.3.
+    """Check server sends callback program with a version listed in nfs4client.py
 
     FLAGS: create_session all
     CODE: CSESS21
     """
     cb_occurred = threading.Event()
     transient = 0x40000000
-    orig = env.c1._check_program
-    def mycheck(msg):
-        print "Got call using version=%i" % msg.vers
-        cb_occurred.vers = msg.vers
+    def mycheck(low, hi, vers):
+        print "Got call using version=%i" % vers
+        cb_occurred.low = low
+        cb_occurred.hi = hi
+        cb_occurred.vers = vers
         cb_occurred.set()
-        orig(msg)
+        return (low <= vers <= hi)
+    orig = env.c1._check_version
     try:
         env.c1._check_version = mycheck
         c = env.c1.new_client(env.testname(t))
@@ -358,7 +374,121 @@ def testCallbackVersion(t, env):
         cb_occurred.wait(10)
         if not cb_occurred.isSet():
             fail("No CB_NULL sent")
-        if cb_occurred.vers != 4:
-            fail("Expected cb version 4, got %i" % cb_occurred.vers)
+        if not (cb_occurred.low <= cb_occurred.vers <= cb_occurred.hi):
+            fail("Expected cb version between %i and %i, got %i" %
+                 (cb_occurred.low, cb_occurred.hi, cb_occurred.vers))
     finally:
         env.c1._check_version = orig
+
+def testMaxreqs(t, env):
+    """A CREATE_SESSION with maxreqs too large should return
+       a modified value
+
+    FLAGS: create_session all
+    CODE: CSESS22
+    """
+    # Assuming this is too large for any server; increase if necessary:
+    # but too huge will eat many memory for replay_cache, be careful!
+    TOO_MANY_SLOTS = 500
+
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with fore_channel = TOO_MANY_SLOTS
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128, TOO_MANY_SLOTS, [])
+    sess1 = c.create_session(fore_attrs=chan_attrs)
+    if nfs4lib.test_equal(sess1.fore_channel.maxrequests,
+                          chan_attrs.ca_maxrequests, "count4"):
+        fail("Server allows surprisingly large fore_channel maxreqs")
+
+def testNotOnlyOp(t, env):
+    """Check for NFS4ERR_NOT_ONLY_OP
+
+    FLAGS: create_session all
+    CODE: CSESS23
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with PUT_ROOTFH
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, []), op.putrootfh()], None)
+    check(res, NFS4ERR_NOT_ONLY_OP)
+
+def testCsr_sequence(t, env):
+    """The corresponding result of csa_sequence is csr_sequence,
+       which MUST be equal to csa_sequence.
+
+    FLAGS: create_session all
+    CODE: CSESS24
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    csa_sequence = c.seqid
+    sess1 = c.create_session(fore_attrs=chan_attrs)
+    if not nfs4lib.test_equal(sess1.seqid, csa_sequence, "int"):
+        fail("Server returns bad csr_sequence which not equal to csa_sequence")
+
+def testTooSmallMaxRS(t, env):
+    """If client selects a value for ca_maxresponsesize such that
+       a replier on a channel could never send a response,
+       server SHOULD return NFS4ERR_TOOSMALL
+
+    FLAGS: create_session all
+    CODE: CSESS25
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with too small ca_maxresponsesize
+    chan_attrs = channel_attrs4(0,8192,0,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res, NFS4ERR_TOOSMALL)
+
+def testRepTooBig(t, env):
+    """If requester sends a request for which the size of the reply
+       would exceed ca_maxresponsesize, the replier will return
+       NFS4ERR_REP_TOO_BIG
+
+    FLAGS: create_session all
+    CODE: CSESS26
+    """
+    name = env.testname(t)
+    c1 = env.c1.new_client(name)
+    # create session with a small ca_maxresponsesize
+    chan_attrs = channel_attrs4(0,8192,50,8192,128,8,[])
+    sess1 = c1.create_session(fore_attrs=chan_attrs)
+    owner = "owner_%s" % name
+    path = sess1.c.homedir + [name]
+    res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_BOTH)
+    check(res)
+
+    # write some data to file
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, "write test data " * 10)])
+    check(res)
+
+    # read data rather than ca_maxresponsesize
+    res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 500)])
+    check(res, NFS4ERR_REP_TOO_BIG)
+
+def testRepTooBigToCache(t, env):
+    """If requester sends a request for which the size of the reply
+       would exceed ca_maxresponsesize_cached, the replier will return
+       NFS4ERR_REP_TOO_BIG_TO_CACHE
+
+    FLAGS: create_session all
+    CODE: CSESS27
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with a small ca_maxresponsesize_cached
+    chan_attrs = channel_attrs4(0,8192,8192,10,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                        chan_attrs, chan_attrs,
+                                        123, [])], None)
+    check(res)
+
+    # SEQUENCE with cache this
+    sid = res.resarray[0].csr_sessionid
+    res = c.c.compound([op.sequence(sid, 1, 0, 0, True)])
+    check(res, NFS4ERR_REP_TOO_BIG_TO_CACHE)

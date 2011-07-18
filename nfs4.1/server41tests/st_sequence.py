@@ -191,7 +191,7 @@ def testReplayCache001(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.putrootfh()])
+    res1 = sess1.compound([op.putrootfh()], cache_this=True)
     check(res1)
     res2 = sess1.compound([op.putrootfh()], seq_delta=0)
     check(res2)
@@ -211,7 +211,7 @@ def testReplayCache002(t, env):
     check(res)
     ops = env.home + [op.savefh(),\
           op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
-    res1 = sess1.compound(ops)
+    res1 = sess1.compound(ops, cache_this=True)
     check(res1)
     res2 = sess1.compound(ops, seq_delta=0)
     check(res2)
@@ -227,7 +227,7 @@ def testReplayCache003(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.putrootfh(), op.lookup("")])
+    res1 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound([op.putrootfh(), op.lookup("")], seq_delta=0)
     check(res2, NFS4ERR_INVAL)
@@ -244,7 +244,7 @@ def testReplayCache004(t, env):
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
     ops = [op.putrootfh(), op.savefh(), op.rename("", "foo")]
-    res1 = sess1.compound(ops)
+    res1 = sess1.compound(ops, cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound(ops, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
@@ -260,7 +260,7 @@ def testReplayCache005(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.illegal()])
+    res1 = sess1.compound([op.illegal()], cache_this=True)
     check(res1, NFS4ERR_OP_ILLEGAL)
     res2 = sess1.compound([op.illegal()], seq_delta=0)
     check(res2, NFS4ERR_OP_ILLEGAL)
@@ -301,3 +301,94 @@ def testReplayCache007(t, env):
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
     check(res2, NFS4ERR_RETRY_UNCACHED_REP)
 
+def testOpNotInSession(t, env):
+    """Operations other than SEQUENCE, BIND_CONN_TO_SESSION, EXCHANGE_ID,
+       CREATE_SESSION, and DESTROY_SESSION, MUST NOT appear as the
+       first operation in a COMPOUND. rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ11
+    """
+    c = env.c1.new_client(env.testname(t))
+
+    # putrootfh with out session
+    res = c.c.compound([op.putrootfh()])
+    check(res, NFS4ERR_OP_NOT_IN_SESSION)
+
+def testSessionidSequenceidSlotid(t, env):
+    """ The sr_sessionid result MUST equal sa_sessionid.
+        The sr_slotid result MUST equal sa_slotid.
+        The sr_sequenceid result MUST equal sa_sequenceid.
+        rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ12
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess1 = c.create_session()
+
+    # SEQUENCE
+    sid = sess1.sessionid
+    res = c.c.compound([op.sequence(sid, 1, 2, 3, True)])
+    if not nfs4lib.test_equal(res.resarray[0].sr_sessionid, sid, "opaque"):
+        fail("server return bad sessionid")
+
+    if not nfs4lib.test_equal(res.resarray[0].sr_sequenceid, 1, "int"):
+        fail("server return bad sequenceid")
+
+    if not nfs4lib.test_equal(res.resarray[0].sr_slotid, 2, "int"):
+        fail("server return bad slotid")
+
+def testBadSequenceidAtSlot(t, env):
+    """ If the difference between sa_sequenceid and the server's cached
+        sequence ID at the slot ID is two (2) or more, or if sa_sequenceid
+        is less than the cached sequence ID , server MUST return
+        NFS4ERR_SEQ_MISORDERED. rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ13
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    sess1 = c.create_session()
+
+    sid = sess1.sessionid
+    res = c.c.compound([op.sequence(sid, 1, 2, 3, True)])
+    check(res)
+
+    seqid = res.resarray[0].sr_sequenceid
+    # SEQUENCE with bad sr_sequenceid
+    res = c.c.compound([op.sequence(sid, seqid + 2, 2, 3, True)])
+    check(res, NFS4ERR_SEQ_MISORDERED)
+
+    res = c.c.compound([op.sequence(sid, nfs4lib.dec_u32(seqid), 2, 3, True)])
+    check(res, NFS4ERR_SEQ_MISORDERED)
+
+def testReuseSlotID(t, env):
+    """ If client reuses a slot ID and sequence ID for a completely
+        different request, server MAY treat the request as if it is
+        a retry of what it has already executed. rfc5661 18.46.3
+
+    FLAGS: sequence all
+    CODE: SEQ14
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION
+    sess1 = c.create_session()
+
+    name = "%s_1" % env.testname(t)
+    res = create_file(sess1, name)
+    check(res)
+
+    sid = sess1.sessionid
+    seqid = nfs4lib.inc_u32(sess1.seqid)
+    dir = sess1.c.homedir
+
+    res = c.c.compound([op.sequence(sid, seqid, 0, 0, TRUE)] +
+                        nfs4lib.use_obj(dir) + [op.remove(name)])
+    check(res)
+
+    # Reuses slot ID and sequence ID for different request
+    res = c.c.compound([op.sequence(sid, seqid, 0, 0, TRUE)] +
+                        nfs4lib.use_obj(dir) + [op.rename(name, "test")])
+    check(res)

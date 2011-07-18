@@ -269,8 +269,8 @@ class NFS4Client(rpc.Client, rpc.Server):
     def op_cb_recall(self, arg, env):
         log_cb.info("In CB_RECALL")
         self.prehook(arg, env)
-        res = self.posthook(arg, env, res=None)
-        return encode_status(NFS4_OK)
+        res = self.posthook(arg, env, res=NFS4_OK)
+        return encode_status(res)
 
     def new_client(self, name, verf=None, cred=None, protect=None, flags=0,
                    expect=NFS4_OK):
@@ -326,6 +326,8 @@ class ClientRecord(object):
     def create_session(self,
                        flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
                        fore_attrs=None, back_attrs=None, sec=None, prog=None):
+        max_retries = 10
+        delay_time = 1
         chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
         if fore_attrs is None:
             fore_attrs = chan_attrs
@@ -335,11 +337,15 @@ class ClientRecord(object):
             sec= [callback_sec_parms4(0)]
         if prog is None:
             prog = self.c.prog
-        res = self.c.compound([op.create_session(self.clientid, self.seqid,
+        for item in xrange(max_retries):
+            res = self.c.compound([op.create_session(self.clientid, self.seqid,
                                                  flags,
                                                  fore_attrs, back_attrs,
                                                  prog, sec)],
                               self.cred)
+            if res.status != NFS4ERR_DELAY:
+                break
+            time.sleep(delay_time)
         nfs4lib.check(res)
         return self._add_session(res.resarray[0])
 
@@ -398,6 +404,7 @@ class SendChannel(object):
 class SessionRecord(object):
     def __init__(self, csr, client):
         self.sessionid = csr.csr_sessionid
+        self.seqid = csr.csr_sequence
         self.client = client
         self.c = client.c
         self.cred = client.cred
@@ -405,7 +412,7 @@ class SessionRecord(object):
         self.back_channel = RecvChannel(csr.csr_back_chan_attrs)
         # STUB - and other stuff
 
-    def seq_op(self, slot=None, seq_delta=1, cache_this=True):
+    def seq_op(self, slot=None, seq_delta=1, cache_this=False):
         if slot is None:
             slot = self.fore_channel.choose_slot()
         else:
@@ -441,7 +448,7 @@ class SessionRecord(object):
             kwargs["credinfo"] = self.cred
         seq_op = self.seq_op(kwargs.pop("slot", None),
                              kwargs.pop("seq_delta", 1),
-                             kwargs.pop("cache_this", True))
+                             kwargs.pop("cache_this", False))
         slot = self.fore_channel.slots[seq_op.sa_slotid]
         return slot, seq_op
  
@@ -454,20 +461,37 @@ class SessionRecord(object):
         res = self.c.listen(slot.xid, pipe=pipe)
         slot.xid = None
         res = self.update_seq_state(res, slot)
+        res = self.remove_seq_op(res)
         return res
 
     def compound(self, ops, **kwargs):
+        max_retries = 10
+        delay_time = 1
+        handle_state_errors = kwargs.pop("handle_state_errors", True)
+        saved_kwargs = kwargs
         slot, seq_op = self._prepare_compound(kwargs)
-        res = self.c.compound([seq_op] + ops, **kwargs)
-        res = self.update_seq_state(res, slot)
+        for item in xrange(max_retries):
+            res = self.c.compound([seq_op] + ops, **kwargs)
+            res = self.update_seq_state(res, slot)
+            if res.status != NFS4ERR_DELAY or not handle_state_errors:
+                break
+            if res.resarray[0].sr_status != NFS4ERR_DELAY:
+                # As per errata ID 2006 for RFC 5661 section 15.1.1.3
+                # don't update the slot and sequence ID if the sequence
+                # operation itself receives NFS4ERR_DELAY
+                slot, seq_op = self._prepare_compound(saved_kwargs)
+            time.sleep(delay_time)
+        res = self.remove_seq_op(res)
         return res
 
     def update_seq_state(self, res, slot):
         seq_res = res.resarray[0]
         slot.finish_call(seq_res)
-        if seq_res.sr_status == NFS4_OK:
+        return res
+
+    def remove_seq_op(self, res):
+        if res.resarray[0].sr_status == NFS4_OK:
             # STUB - do some checks
-            # XXX we may want an option to not remove SEQUENCE
             res.resarray = res.resarray[1:]
         return res
 

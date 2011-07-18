@@ -2,6 +2,7 @@ from st_create_session import create_session
 from nfs4_const import *
 from environment import check, checklist, fail, create_file, open_file
 from nfs4_type import open_owner4, openflag4, createhow4, open_claim4
+from nfs4_type import creatverfattr, fattr4
 import nfs4_ops as op
 import threading
 
@@ -187,3 +188,20 @@ def testReadWrite(t, env):
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 
+def testEXCLUSIVE4AtNameAttribute(t, env):
+    """If the file does exist,but the stored verifier does not match,
+       then an error of NFS4ERR_EXIST is returned from server.
+       rfc5661 18.16.3
+
+    FLAGS: open all
+    CODE: OPEN6
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+
+    res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1)
+    check(res)
+
+    res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1,
+                        verifier = "Justtest")
+    check(res, NFS4ERR_EXIST)
