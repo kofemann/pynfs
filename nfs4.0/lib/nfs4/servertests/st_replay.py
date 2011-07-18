@@ -147,7 +147,7 @@ def testUnlockWait(t, env):
     fh, stateid = c.create_confirm(t.code)
     res = c.lock_file(t.code, fh, stateid, 20, 100)
     check(res, msg="Locking file %s" % t.code)
-    sleeptime = c.getLeaseTime() * 3 // 2
+    sleeptime = c.getLeaseTime() * 2
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
     ops += [c.locku_op(READ_LT, 1, res.lockid, 0, 0xffffffffffffffff)]
@@ -177,7 +177,7 @@ def testCloseWait(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    sleeptime = c.getLeaseTime() * 3 // 2
+    sleeptime = c.getLeaseTime() * 2
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
     ops += [c.close_op(c.get_seqid(t.code), stateid)]

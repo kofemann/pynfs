@@ -15,6 +15,7 @@ from nfs4.nfs4_const import *
 from nfs4.nfs4_type import fsid4, nfsace4, fs_locations4, fs_location4, \
      specdata4, nfstime4, settime4, stateid4
 import rpc
+import sys
 import os
 
 class AttrInfo(object):
@@ -209,6 +210,21 @@ class Environment(testmod.Environment):
         print "Sleeping for %i seconds:" % sec, msg
         time.sleep(sec)
         print "Woke up"
+
+    def serverhelper(self, args):
+        """Perform a special operation on the server side (such as
+        rebooting the server)"""
+        if self.opts.serverhelper is None:
+            print "Manual operation required on server:"
+            print args + " and hit ENTER when done"
+            sys.stdin.readline()
+            print "Continuing with test"
+        else:
+            cmd = self.opts.serverhelper
+            if self.opts.serverhelperarg:
+                cmd += ' ' + self.opts.serverhelperarg
+            cmd += ' ' + args
+            os.system(cmd);
 
 #########################################
 debug_fail = False

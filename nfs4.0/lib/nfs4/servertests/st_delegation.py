@@ -44,7 +44,7 @@ def _recall(c, op, cbid):
 
 def _cause_recall(t, env):
     c = env.c1
-    sleeptime = 5
+    sleeptime = 1
     while 1:
         # need lock around this to prevent _recall from
         # calling c.unpacker.reset while open is still unpacking
@@ -56,9 +56,6 @@ def _cause_recall(t, env):
         if res.status == NFS4_OK: break
         checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
-        sleeptime += 5
-        if sleeptime > 20:
-            sleeptime = 20
     return c.confirm('newowner', res)
 
 def _verify_cb_occurred(t, c, count):
@@ -399,9 +396,11 @@ def testChangeDeleg(t, env, funct=_recall):
     deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.code], funct, NFS4_OK)
     # Create new callback server
     new_server = CBServer(c)
+    new_server.set_cb_recall(c.cbid, funct, NFS4_OK);
     cb_thread = threading.Thread(target=new_server.run)
     cb_thread.setDaemon(1)
     cb_thread.start()
+    c.cb_server = new_server
     env.sleep(3)
     # Switch to using new server
     res = c.compound([_set_clientid(c, id, new_server)])
@@ -418,9 +417,6 @@ def testChangeDeleg(t, env, funct=_recall):
     count = new_server.opcounts[OP_CB_RECALL]
     fh2, stateid2 = _cause_recall(t, env)
     _verify_cb_occurred(t, c, count)
-    ops = c.use_obj(fh) + [c.delegreturn_op(deleg_info.read.stateid)]
-    res = c.compound(ops)
-    check(res)
 
 
    
@@ -537,6 +533,16 @@ def testClaimCur(t, env):
     ops = c.use_obj(path) + [c.delegreturn_op(deleg_info.read.stateid)]
     res = c.compound(ops)
     check(res)
+
+def _retry_conflicting_op(env, c, op, opname):
+    while 1:
+        _lock.acquire()
+        res = c.compound(op)
+        _lock.release()
+        if res.status == NFS4_OK: break
+        checklist(res, [NFS4_OK, NFS4ERR_DELAY],
+                            "%s which causes recall" % opname)
+        env.sleep(1, 'Got NFS4ERR_DELAY on %s' % opname)
                             
 def testRemove(t, env):
     """DELEGATION test
@@ -545,24 +551,86 @@ def testRemove(t, env):
     Respond properly and send DELEGRETURN.
 
     FLAGS: delegations
-    CODE: DELEG15
+    CODE: DELEG15a
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    sleeptime = 5
-    while 1:
-        ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
-        _lock.acquire()
-        res = c.compound(ops)
-        _lock.release()
-        if res.status == NFS4_OK: break
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Remove which causes recall")
-        env.sleep(sleeptime, 'Got NFS4ERR_DELAY on remove')
-        sleeptime += 5
-        if sleeptime > 20:
-            sleeptime = 20
+    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    _retry_conflicting_op(env, c, ops, "remove")
     _verify_cb_occurred(t, c, count)
 
-    
+def testLink(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure LINK recalls it.
+    Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG15b
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    ops = c.use_obj(c.homedir + [t.code]) + [c.savefh_op()];
+    ops += c.use_obj(c.homedir) + [c.link_op(t.code + '.link')];
+    _retry_conflicting_op(env, c, ops, "link")
+    _verify_cb_occurred(t, c, count)
+
+def testRename(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure RENAME recalls it.
+    Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG15c
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    ops = c.use_obj(c.homedir) + [c.savefh_op()];
+    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')];
+    _retry_conflicting_op(env, c, ops, "rename")
+    _verify_cb_occurred(t, c, count)
+
+def testRenameOver(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure RENAME of other file over it recalls it.
+    Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG15d
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    res = c.create_file(t.code, c.homedir + [t.code])
+    _get_deleg(t, c, c.homedir + [t.code + '.rename'], _recall, NFS4_OK)
+    ops = c.use_obj(c.homedir) + [c.savefh_op()];
+    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')];
+    _retry_conflicting_op(env, c, ops, "rename")
+    _verify_cb_occurred(t, c, count)
+
+def _listToPath(components):
+    return '/'+reduce((lambda x,y:x+'/'+y), components)
+
+def testServerRemove(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure removing the file on the server
+    recalls it.  Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG16
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    env.serverhelper("unlink " + _listToPath(c.homedir + [t.code]));
+    _verify_cb_occurred(t, c, count)
