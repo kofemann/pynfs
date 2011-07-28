@@ -110,6 +110,7 @@ def xtestOpenClientid(t, env):
         # If by coincidence clientid==0, make a new client
         c1 = env.c1.new_client("%s_2" % name)
     sess1 = c1.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
     res = create_file(sess1, env.testname(t), clientid=c1.clientid)
     check(res, NFS4ERR_INVAL, msg="Using non-zero clientid in open_owner")
 
@@ -130,6 +131,7 @@ def testReadDeleg(t, env):
     c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
     c1.cb_post_hook(OP_CB_RECALL, post_hook)
     sess1 = c1.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)

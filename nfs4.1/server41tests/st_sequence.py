@@ -373,6 +373,7 @@ def testReuseSlotID(t, env):
     c = env.c1.new_client(env.testname(t))
     sess1 = c.create_session()
     sess1 = env.c1.new_client_session(env.testname(t))
+    sess1.compound([op.reclaim_complete(FALSE)])
 
     name = "%s_1" % env.testname(t)
     res = create_file(sess1, name)
