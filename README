@@ -1,4 +1,13 @@
-The 4.0 and 4.1 git trees have been merged, preparing for merging of
-the actual code bases.  As a first step, the original 4.0 code was
-just moved down into the nfs4.0 directory.  If yuo want to ignore the
-4.1 work, just cd down to nfs4.0 and work from there as before.
+This tree includes support for both 4.0 and 4.1 pynfs testing.  It is
+the merge of what were originally two independent projects--initially
+the 4.0 pynfs code was all moved into the nfs4.0 directory, but as time
+passes we expect to merge the two code bases.
+
+You can prepare both for use with a single
+	./setup.py build_ext --inplace
+which will create auto-generated files and compile any shared libraries
+in place.
+
+For more details about 4.0 and 4.1 testing, see nfs4.0/README and
+nfs4.1/README, respectively.  For information about automatic code
+generation from an XDR file, see xdr/README.
