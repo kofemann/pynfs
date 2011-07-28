@@ -18,8 +18,7 @@ def testSupported(t, env):
     FLAGS: open all
     CODE: OPEN1
     """
-    c1 = env.c1.new_client(env.testname(t))
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client_session(env.testname(t))
     res = create_file(sess1, env.testname(t))
     check(res)
     # See 8.1.3.1 of draft-10:
@@ -38,8 +37,7 @@ def testServerStateSeqid(t, env):
     CODE: OPEN2
     """
     name = env.testname(t)
-    c1 = env.c1.new_client(name)
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client_session(name)
     owner = "owner_%s" % name
     path = sess1.c.homedir + [name]
     res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
@@ -60,8 +58,7 @@ def xtestClientStateSeqid(t, env):
     CODE: OPEN3
     """
     name = env.testname(t)
-    c1 = env.c1.new_client(name)
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client_session(name)
     owner = "owner_%s" % name
     path = sess1.c.homedir + [name]
     res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
@@ -86,8 +83,7 @@ def xtestOpenSeqid(t, env):
     CODE: OPEN4
     """
     name = env.testname(t)
-    c1 = env.c1.new_client(name)
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client_session(name)
     owner = "owner_%s" % name
     path = sess1.c.homedir + [name]
     res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
@@ -143,8 +139,7 @@ def testReadDeleg(t, env):
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
     # c2 - OPEN - WRITE
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
-    sess2 = c2.create_session()
+    sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
@@ -168,8 +163,7 @@ def testReadWrite(t, env):
     FLAGS: open all
     CODE: OPEN30
     """
-    c1 = env.c1.new_client(env.testname(t))
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client_session(env.testname(t))
     owner = open_owner4(0, "My Open Owner")
     res = create_file(sess1, env.testname(t))
     check(res)
@@ -196,8 +190,7 @@ def testEXCLUSIVE4AtNameAttribute(t, env):
     FLAGS: open all
     CODE: OPEN6
     """
-    c1 = env.c1.new_client(env.testname(t))
-    sess1 = c1.create_session()
+    sess1 = env.c1.new_client(env.testname(t))
 
     res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1)
     check(res)

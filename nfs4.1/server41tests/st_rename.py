@@ -10,8 +10,7 @@ def testValidDir(t, env):
     CODE: RNM1d
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1', ['foo']], ['dir2']])
     res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
@@ -25,8 +24,7 @@ def testValidFile(t, env):
     CODE: RNM1r
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1', 'foo'], ['dir2']])
     res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
@@ -40,8 +38,7 @@ def testValidLink(t, env):
     CODE: RNM1a
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2']])
     res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4LNK, linkdata=env.linkdata))
@@ -57,8 +54,7 @@ def testValidBlock(t, env):
     CODE: RNM1b
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2']])
     res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4BLK, devdata=specdata4(1, 2)))
@@ -74,8 +70,7 @@ def testValidChar(t, env):
     CODE: RNM1c
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2']])
     res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4BLK, devdata=specdata4(1, 2)))
@@ -91,8 +86,7 @@ def testValidFifo(t, env):
     CODE: RNM1f
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2']])
     res = create_obj(sess, basedir + ['dir1', 'foo'], NF4FIFO)
@@ -108,8 +102,7 @@ def testValidSocket(t, env):
     CODE: RNM1s
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2']])
     res = create_obj(sess, basedir + ['dir1', 'foo'], NF4SOCK)
@@ -125,8 +118,7 @@ def testSfhFile(t, env):
     CODE: RNM2r
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.usefile + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -137,8 +129,7 @@ def testSfhLink(t, env):
     CODE: RNM2a
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.uselink + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -149,8 +140,7 @@ def testSfhBlock(t, env):
     CODE: RNM2b
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.useblock + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -161,8 +151,7 @@ def testSfhChar(t, env):
     CODE: RNM2c
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.usechar + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -173,8 +162,7 @@ def testSfhFifo(t, env):
     CODE: RNM2f
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.usefifo + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -185,8 +173,7 @@ def testSfhSocket(t, env):
     CODE: RNM2s
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.usesocket + [name], env.c1.homedir + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
 
@@ -197,8 +184,7 @@ def testCfhFile(t, env):
     CODE: RNM3r
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usefile + [name])
@@ -211,8 +197,7 @@ def testCfhLink(t, env):
     CODE: RNM3a
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.uselink + [name])
@@ -225,8 +210,7 @@ def testCfhBlock(t, env):
     CODE: RNM3b
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.useblock + [name])
@@ -239,8 +223,7 @@ def testCfhChar(t, env):
     CODE: RNM3c
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usechar + [name])
@@ -253,8 +236,7 @@ def testCfhFifo(t, env):
     CODE: RNM3f
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usefifo + [name])
@@ -267,8 +249,7 @@ def testCfhSocket(t, env):
     CODE: RNM3s
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     res = create_obj(sess, [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usesocket + [name])
@@ -281,8 +262,7 @@ def testNoSfh(t, env):
     CODE: RNM4
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     ops = env.home + [op.rename(name, name)]
     res = sess.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "RENAME with no <sfh>")
@@ -296,8 +276,7 @@ def testNonExistent(t, env):
     CODE: RNM5
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
@@ -311,8 +290,7 @@ def testZeroLengthOldname(t, env):
     CODE: RNM6
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
@@ -326,8 +304,7 @@ def testZeroLengthNewname(t, env):
     CODE: RNM7
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
@@ -341,8 +318,7 @@ def testBadutf8Oldname(t, env):
     CODE: RNM8
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
@@ -358,8 +334,7 @@ def testBadutf8Newname(t, env):
     CODE: RNM9
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, [name]])
     for bad_utf8 in get_invalid_utf8strings():
@@ -374,8 +349,7 @@ def testDotsOldname(t, env):
     CODE: RNM10
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, [name]])
     res = rename_obj(sess, basedir + ['.'], basedir + [name])
@@ -392,8 +366,7 @@ def testDotsNewname(t, env):
     CODE: RNM11
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, [name]])
     res = rename_obj(sess, basedir + [name], basedir + ['.'])
@@ -410,8 +383,7 @@ def testDirToObj(t, env):
     CODE: RNM12
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir'], 'file'])
     res = rename_obj(sess, basedir + ['dir'], basedir + ['file'])
@@ -424,8 +396,7 @@ def testDirToDir(t, env):
     CODE: RNM13
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1', ['foo']], ['dir2']])
     res = rename_obj(sess, basedir + ['dir1'], basedir + ['dir2'])
@@ -438,8 +409,7 @@ def testFileToDir(t, env):
     CODE: RNM14
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir'], 'file'])
     res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
@@ -452,8 +422,7 @@ def testFileToFile(t, env):
     CODE: RNM15
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, 'file1', 'file2'])
     res = rename_obj(sess, basedir + ['file1'], basedir + ['file2'])
@@ -466,8 +435,7 @@ def testDirToFullDir(t, env):
     CODE: RNM16
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2', ['foo']]])
     res = rename_obj(sess, basedir + ['dir1'], basedir + ['dir2'])
@@ -480,8 +448,7 @@ def testFileToFullDir(t, env):
     CODE: RNM17
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, 'file', ['dir', ['foo']]])
     res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
@@ -494,8 +461,7 @@ def testSelfRenameDir(t, env):
     CODE: RNM18
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     maketree(sess, [name])
     basedir = env.c1.homedir + [name]
     res = rename_obj(sess, basedir, basedir)
@@ -513,8 +479,7 @@ def testSelfRenameFile(t, env):
     CODE: RNM19
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     fh, stateid = create_confirm(sess, name)
     basedir = env.c1.homedir + [name]
     res = rename_obj(sess, basedir, basedir)
@@ -532,8 +497,7 @@ def testLinkRename(t, env):
     CODE: RNM20
     """
     name = env.testname(t)
-    c = env.c1.new_client(name)
-    sess = c.create_session()
+    sess = env.c1.new_client_session(name)
     maketree(sess, [name, 'file'])
     basedir = env.c1.homedir + [name]
     res = link(sess, basedir + ['file'], basedir + ['link'])

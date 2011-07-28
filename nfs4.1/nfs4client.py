@@ -289,6 +289,11 @@ class NFS4Client(rpc.Client, rpc.Server):
         else:
             return None
 
+    def new_client_session(self, name, flags=0):
+        c = self.new_client(name, flags=flags)
+        s = c.create_session()
+        return s
+
 class ClientStateProtection(object):
     def __init__(self, p_res, p_arg):
         self.type = p_res.spr_how

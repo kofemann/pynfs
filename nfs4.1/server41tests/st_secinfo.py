@@ -12,8 +12,7 @@ def testSupported(t, env):
     CODE: SEC1
     """
     name = env.testname(t)
-    c = env.c1.new_client(env.testname(t))
-    sess = c.create_session()
+    sess = env.c1.new_client_session(env.testname(t))
 
     # Create a tmpfile for testing
     owner = "owner_%s" % name
@@ -38,8 +37,7 @@ def testSupported2(t, env):
     CODE: SEC2
     """
     name = env.testname(t)
-    c = env.c1.new_client(env.testname(t))
-    sess = c.create_session()
+    sess = env.c1.new_client_session(env.testname(t))
 
     # Create a tmpfile for testing
     owner = "owner_%s" % name

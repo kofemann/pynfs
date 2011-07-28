@@ -143,8 +143,7 @@ class Environment(testmod.Environment):
         """Run once before any test is run"""
         if self.opts.noinit:
             return
-        c = self.c1.new_client("Environment.init_%i" % self.timestamp)
-        sess = c.create_session()
+        sess = self.c1.new_client_session("Environment.init_%i" % self.timestamp)
         if self.opts.maketree:
             self._maketree(sess)
         # Make sure opts.home exists
