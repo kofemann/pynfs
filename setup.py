@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from distutils.core import setup
 
 import sys
@@ -5,13 +7,13 @@ import os
 from os.path import join
 
 DESCRIPTION = """
-newpynfs 4.1
+pynfs
 ============
 
 Add stuff here.
 """
 
-DIRS = ["ply", "xdr", "gssapi", "rpc", "nfs4.1"] # Order is important
+DIRS = ["ply", "xdr", "gssapi", "rpc", "nfs4.1", "nfs4.0"] # Order is important
 
 def setup(*args, **kwargs):
     print "This just runs the setup.py file in each of the following dirs:"
