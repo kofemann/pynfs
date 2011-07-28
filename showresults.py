@@ -13,8 +13,8 @@
 if  __name__ == "__main__":
     import os.path
     import sys
-    if os.path.isfile(os.path.join(sys.path[0], 'lib', 'testmod.py')):
-        sys.path.insert(1, os.path.join(sys.path[0], 'lib'))
+    if os.path.isfile(os.path.join(sys.path[0], 'nfs4.1', 'testmod.py')):
+        sys.path.insert(1, os.path.join(sys.path[0], 'nfs4.1'))
 
 #import cPickle as pickle
 import pickle
