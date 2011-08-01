@@ -545,12 +545,19 @@ def maketree(sess, tree, root=None, owner=None):
         else:
             create_confirm(sess, owner, root + [obj])
 
+def lookup_obj(sess, path):
+    compound = [op.putrootfh()]
+    compound += [op.lookup(comp) for comp in path]
+    compound += [op.getfh()]
+    res = sess.compound(compound)
+    check(res)
+    return res.resarray[-1].object
+
 def rename_obj(sess, oldpath, newpath):
-    # Set (sfh) to olddir
-    ops = use_obj(oldpath[:-1]) + [op.savefh()]
-    # Set (cfh) to newdir
-    ops += use_obj(newpath[:-1])
-    # Call rename
+    olddir = lookup_obj(sess, oldpath[:-1])
+    newdir = lookup_obj(sess, newpath[:-1])
+    ops =  [op.putfh(olddir), op.savefh()]
+    ops += [op.putfh(newdir)]
     ops += [op.rename(oldpath[-1], newpath[-1])]
     return sess.compound(ops)
 
