@@ -6,8 +6,8 @@
 #                    Information Technology Integration
 #
 
-from nfs4.nfs4_const import nfs_opnum4
-import nfs4.nfs4_type as nfs4_type
+from nfs4_const import nfs_opnum4
+import nfs4_type as nfs4_type
 import time
 
 header = """\

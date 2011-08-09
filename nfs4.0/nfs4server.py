@@ -25,15 +25,15 @@ if  __name__ == "__main__":
     if os.path.isfile(os.path.join(sys.path[0], 'lib', 'testmod.py')):
         sys.path.insert(1, os.path.join(sys.path[0], 'lib'))
 
-from nfs4.nfs4_const import *
-from nfs4.nfs4_type import *
-import nfs4.nfs4_pack as nfs4_pack
+from nfs4_const import *
+from nfs4_type import *
+import nfs4_pack
 import rpc.rpc as rpc
-import nfs4.nfs4lib as nfs4lib
+import nfs4lib
 import time, StringIO, random, traceback, codecs
 import StringIO
-import nfs4.nfs4state as nfs4state
-from nfs4.nfs4state import NFS4Error, printverf
+import nfs4state
+from nfs4state import NFS4Error, printverf
 from xdrlib import Error as XDRError
 
 unacceptable_names = [ "", ".", ".." ]

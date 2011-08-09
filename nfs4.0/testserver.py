@@ -38,7 +38,7 @@ if  __name__ == "__main__":
 import re
 import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
-import nfs4.servertests.environment as environment
+import servertests.environment as environment
 import socket
 import rpc
 import cPickle as pickle
@@ -260,7 +260,7 @@ def run_filter(test, options):
 
 def printflags(list):
     """Print all legal flag names, which are given in list"""
-    from nfs4.nfs4_const import nfs_opnum4
+    from nfs4_const import nfs_opnum4
     command_names = [s.lower()[3:].replace('_', '') \
                      for s in nfs_opnum4.values()]
     list.sort()
@@ -285,7 +285,7 @@ def main():
     opt, args = scan_options(p)
 
     # Create test database
-    tests, fdict, cdict = testmod.createtests('nfs4.servertests')
+    tests, fdict, cdict = testmod.createtests('servertests')
 
     # Deal with any informational options
     if opt.showflags:

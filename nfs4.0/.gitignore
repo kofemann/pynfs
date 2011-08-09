@@ -4,7 +4,7 @@
 /out_last
 
 # Generated files
-/lib/nfs4/nfs4_ops.py
+/nfs4_ops.py
 *_const.py
 *_type.py
 *_pack.py

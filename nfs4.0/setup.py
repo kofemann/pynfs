@@ -41,8 +41,7 @@ def use_xdr(dir, xdrfile):
 
 def generate_files():
     home = os.getcwd()
-    dir = os.path.join(topdir, 'lib', 'nfs4')
-    use_xdr(dir, 'nfs4.x')
+    use_xdr(topdir, 'nfs4.x')
     import ops_gen # this must be delayed until nfs4.x is parsed
     sources = [ os.path.join(topdir, 'lib', 'ops_gen.py'),
                 'nfs4_const.py', 'nfs4_type.py' ]
@@ -94,7 +93,7 @@ setup(name = "newpynfs",
 
       ext_modules = [gssapi],
       package_dir = {'': 'lib'},
-      packages = ['nfs4', 'nfs4.servertests', 'ply', 'rpc', 'rpc.rpcsec'],
+      packages = ['servertests', 'ply', 'rpc', 'rpc.rpcsec'],
       py_modules = ['testmod', 'rpcgen'],
       scripts = ['testserver.py', 'showresults.py']
       )

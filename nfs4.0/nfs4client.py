@@ -27,10 +27,10 @@ except ImportError:
 #    import rlcompleter
 #    readline.parse_and_bind("tab: complete")
 #import cmd
-import nfs4.nfs4lib as nfs4lib
-import nfs4.nfs4_type as nfs4_type
-import nfs4.nfs4_const as nfs4_const
-import nfs4.nfs4_pack as nfs4_pack
+import nfs4lib
+import nfs4_type
+import nfs4_const
+import nfs4_pack
 import code
 import traceback
 
