@@ -3,7 +3,8 @@ the merge of what were originally two independent projects--initially
 the 4.0 pynfs code was all moved into the nfs4.0 directory, but as time
 passes we expect to merge the two code bases.
 
-You can prepare both for use with a single
+You can prepare both for use with
+	./setup.py build
 	./setup.py build_ext --inplace
 which will create auto-generated files and compile any shared libraries
 in place.
