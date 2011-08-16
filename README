@@ -12,3 +12,9 @@ in place.
 For more details about 4.0 and 4.1 testing, see nfs4.0/README and
 nfs4.1/README, respectively.  For information about automatic code
 generation from an XDR file, see xdr/README.
+
+Note that test results should *not* be considered authoritative
+statements about the protocol--if you find that a server fails a test,
+you should consult the rfc's and think carefully before assuming that
+the server is at fault.  (However, we do appreciate patches if you find
+a test that requires incorrect behavior.)
