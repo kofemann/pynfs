@@ -48,7 +48,7 @@ def testLink(t, env):
     c = env.c1
     c.init_connection()
     res = c.lock_test(env.opts.uselink)
-    check(res, NFS4ERR_INVAL, "LOCKT on non-file object")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "LOCKT on non-file object")
    
 def testBlock(t, env):
     """LOCKT on non-file objects)

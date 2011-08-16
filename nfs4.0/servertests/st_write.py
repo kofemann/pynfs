@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, compareTimes, makeBadID, makeStaleId
+from environment import check, checklist, compareTimes, makeBadID, makeStaleId
 
 _text = 'write data' # len=10
 
@@ -173,7 +173,7 @@ def testLink(t, env):
     res = c.create_obj(path, NF4LNK)
     check(res)
     res = c.write_file(path, _text)
-    check(res, NFS4ERR_INVAL, "WRITE to a symlink")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "WRITE to a symlink")
 
 def testBlock(t, env):
     """WRITE to a non-file should return NFS4ERR_INVAL

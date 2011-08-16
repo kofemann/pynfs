@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, get_invalid_utf8strings
+from environment import check, checklist, get_invalid_utf8strings
 
 def testValidDir(t, env):
     """RENAME : normal operation
@@ -130,7 +130,7 @@ def testSfhLink(t, env):
     """
     c = env.c1
     res = c.rename_obj(env.opts.uselink + [t.code], c.homedir + [t.code])
-    check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "RENAME with non-dir <sfh>")
 
 def testSfhBlock(t, env):
     """RENAME with non-dir (sfh) should return NFS4ERR_NOTDIR
@@ -200,7 +200,7 @@ def testCfhLink(t, env):
     res = c.create_obj(t.code)
     check(res)
     res = c.rename_obj(c.homedir + [t.code], env.opts.uselink + [t.code])
-    check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "RENAME with non-dir <cfh>")
 
 def testCfhBlock(t, env):
     """RENAME with non-dir (cfh) should return NFS4ERR_NOTDIR

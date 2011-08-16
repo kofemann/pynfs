@@ -89,7 +89,9 @@ def testDirOffLink(t, env):
     DEPEND: LOOKLINK
     CODE: CR2
     """
-    _test_notdir(t, env, env.opts.uselink)
+    c = env.c1
+    res = c.create_obj(env.opts.uselink + [t.code])
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK])
      
 def testDirOffBlock(t, env):
     """CREATE dir off a block device

@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, makeBadID, makeStaleId
+from environment import check, checklist, makeBadID, makeStaleId
 
 def _compare(t, res, expect, eof=True):
     def shorten(str):
@@ -122,7 +122,7 @@ def testLink(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.uselink)
-    check(res, NFS4ERR_INVAL, "Read of a non-file object")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "Read of a non-file object")
 
 def testBlock(t, env):
     """READ with non-file objects

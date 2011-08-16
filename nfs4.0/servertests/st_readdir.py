@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4lib import get_attr_name
-from environment import check
+from environment import check, checklist
 
 def _compare(t, entries, expect, attrlist=[]):
     names = [e.name for e in entries]
@@ -103,7 +103,11 @@ def testFhLink(t, env):
     DEPEND: LOOKLINK
     CODE: RDDR5a
     """
-    _try_notdir(env.c1, env.opts.uselink)
+    c = env.c1
+    ops = c.use_obj(env.opts.uselink)
+    ops += [c.readdir()]
+    res = c.compound(ops)
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "READDIR with non-dir <cfh>")
 
 def testFhBlock(t, env):
     """READDIR with non-dir (cfh) should give NFS4ERR_NOTDIR

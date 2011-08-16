@@ -80,7 +80,7 @@ def testLink(t, env):
     """
     c = env.c1
     res = c.commit_file(env.opts.uselink)
-    check(res, NFS4ERR_INVAL, "COMMIT with non-file object")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "COMMIT with non-file object")
 
 def testBlock(t, env):
     """COMMIT
