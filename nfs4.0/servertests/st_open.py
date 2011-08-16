@@ -156,7 +156,7 @@ def testBlock(t, env):
     c = env.c1
     c.init_connection()
     res = c.open_file(t.code, env.opts.useblock)
-    check(res, NFS4ERR_INVAL, "Trying to OPEN block device")
+    check(res, NFS4ERR_SYMLINK, "Trying to OPEN block device")
 
 def testChar(t, env):
     """OPEN with a character device should return NFS4ERR_INVAL
@@ -168,7 +168,7 @@ def testChar(t, env):
     c = env.c1
     c.init_connection()
     res = c.open_file(t.code, env.opts.usechar)
-    check(res, NFS4ERR_INVAL, "Trying to OPEN character device")
+    check(res, NFS4ERR_SYMLINK, "Trying to OPEN character device")
 
 def testSocket(t, env):
     """OPEN with a socket should return NFS4ERR_INVAL
@@ -180,7 +180,7 @@ def testSocket(t, env):
     c = env.c1
     c.init_connection()
     res = c.open_file(t.code, env.opts.usesocket)
-    check(res, NFS4ERR_INVAL, "Trying to OPEN socket")
+    check(res, NFS4ERR_SYMLINK, "Trying to OPEN socket")
 
 def testFifo(t, env):
     """OPEN with a fifo should return NFS4ERR_INVAL
@@ -192,7 +192,7 @@ def testFifo(t, env):
     c = env.c1
     c.init_connection()
     res = c.open_file(t.code, env.opts.usefifo)
-    check(res, NFS4ERR_INVAL, "Trying to OPEN fifo")
+    check(res, NFS4ERR_SYMLINK, "Trying to OPEN fifo")
 
 def testNoFh(t, env):
     """OPEN should fail with NFS4ERR_NOFILEHANDLE if no (cfh)
