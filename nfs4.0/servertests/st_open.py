@@ -587,6 +587,7 @@ def testUpgrades(t, env):
                                      deny=OPEN4_SHARE_DENY_NONE)
     res = c.open_file('owner1', file, access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_NONE)
+    check(res)
     fh = res.resarray[-1].switch.switch.object
     stateid = res.resarray[-2].switch.switch.stateid
     c.close_file(t.code, fh, stateid)
