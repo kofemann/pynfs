@@ -361,33 +361,3 @@ def testBadSequenceidAtSlot(t, env):
 
     res = c.c.compound([op.sequence(sid, nfs4lib.dec_u32(seqid), 2, 3, True)])
     check(res, NFS4ERR_SEQ_MISORDERED)
-
-def testReuseSlotID(t, env):
-    """ If client reuses a slot ID and sequence ID for a completely
-        different request, server MAY treat the request as if it is
-        a retry of what it has already executed. rfc5661 18.46.3
-
-    FLAGS: sequence all
-    CODE: SEQ14
-    """
-    c = env.c1.new_client(env.testname(t))
-    sess1 = c.create_session()
-    sess1 = env.c1.new_client_session(env.testname(t))
-    sess1.compound([op.reclaim_complete(FALSE)])
-
-    name = "%s_1" % env.testname(t)
-    res = create_file(sess1, name)
-    check(res)
-
-    sid = sess1.sessionid
-    seqid = nfs4lib.inc_u32(sess1.seqid)
-    dir = sess1.c.homedir
-
-    res = c.c.compound([op.sequence(sid, seqid, 0, 0, TRUE)] +
-                        nfs4lib.use_obj(dir) + [op.remove(name)])
-    check(res)
-
-    # Reuses slot ID and sequence ID for different request
-    res = c.c.compound([op.sequence(sid, seqid, 0, 0, TRUE)] +
-                        nfs4lib.use_obj(dir) + [op.rename(name, "test")])
-    check(res)
