@@ -288,7 +288,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
         for i in range(4):
             res = c.open_file('newowner', c.homedir + [t.code],
                               access=OPEN4_SHARE_ACCESS_WRITE)
-            env.sleep(lease // 2 + 5, "Waiting to send RENEW")
+            env.sleep(lease / 2, "Waiting to send RENEW")
             res = c.compound([c.renew_op(c.clientid)])
             checklist(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN], "RENEW")
             if res.status != NFS4_OK:
