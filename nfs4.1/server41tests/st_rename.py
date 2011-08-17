@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
+from environment import check, checklist, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
 import nfs4_ops as op
 from nfs4_type import *
 
@@ -131,7 +131,7 @@ def testSfhLink(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     res = rename_obj(sess, env.opts.uselink + [name], env.c1.homedir + [name])
-    check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <sfh>")
+    checklist(res, [NFS4ERR_SYMLINK, NFS4ERR_NOTDIR], "RENAME with non-dir <sfh>")
 
 def testSfhBlock(t, env):
     """RENAME with non-dir (sfh) should return NFS4ERR_NOTDIR
