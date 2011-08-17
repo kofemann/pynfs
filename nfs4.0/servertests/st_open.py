@@ -581,16 +581,17 @@ def testUpgrades(t, env):
     c = env.c1
     c.init_connection()
     file = c.homedir + [t.code]
-    c.create_confirm('owner1', file, access=OPEN4_SHARE_ACCESS_READ,
+    owner = t.code
+    c.create_confirm(owner, file, access=OPEN4_SHARE_ACCESS_READ,
                                      deny=OPEN4_SHARE_DENY_NONE)
-    c.open_file('owner1', file, access=OPEN4_SHARE_ACCESS_WRITE,
+    c.open_file(owner, file, access=OPEN4_SHARE_ACCESS_WRITE,
                                      deny=OPEN4_SHARE_DENY_NONE)
-    res = c.open_file('owner1', file, access=OPEN4_SHARE_ACCESS_BOTH,
+    res = c.open_file(owner, file, access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_NONE)
     check(res)
     fh = res.resarray[-1].switch.switch.object
     stateid = res.resarray[-2].switch.switch.stateid
-    c.close_file(t.code, fh, stateid)
+    c.close_file(owner, fh, stateid)
 
 
 #FRED - dot test
