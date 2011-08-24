@@ -63,3 +63,21 @@ def testOpenBeforeRECC(t, env):
 
     res = create_file(sess, fname, path, access=OPEN4_SHARE_ACCESS_BOTH)
     check(res, NFS4ERR_GRACE)
+
+def testDoubleRECC(t, env):
+    """If RECLAIM_COMPLETE is done a second time, error
+       NFS4ERR_COMPLETE_ALREADY will be returned. rfc5661 18.51.4
+
+    FLAGS: reclaim_complete all
+    CODE: RECC4
+    """
+    name = env.testname(t)
+    c = env.c1.new_client(name)
+    sess = c.create_session()
+
+    res = sess.compound([op.reclaim_complete(FALSE)])
+    check(res)
+
+    # RECLAIM_COMPLETE again
+    res = sess.compound([op.reclaim_complete(FALSE)])
+    check(res, NFS4ERR_COMPLETE_ALREADY)
