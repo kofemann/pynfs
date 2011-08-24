@@ -1,6 +1,6 @@
 from st_create_session import create_session
 from nfs4_const import *
-from environment import check, fail
+from environment import check, fail, open_file, create_confirm
 import nfs4_ops as op
 import nfs4lib
 
@@ -18,3 +18,30 @@ def testSupported(t, env):
 
     res = sess.compound([op.reclaim_complete(FALSE)])
     check(res)
+
+def testReclaimAfterRECC(t, env):
+    """If client does subsequent reclaims of locking state after
+       RECLAIM_COMPLETE is done, server will return NFS4ERR_NO_GRACE.
+       rfc5661 18.51.3
+
+    FLAGS: reclaim_complete all
+    CODE: RECC2
+    """
+    name = env.testname(t)
+    c = env.c1.new_client(name)
+    sess = c.create_session()
+
+    res = sess.compound([op.reclaim_complete(FALSE)])
+    check(res)
+
+    owner = "owner_%s" % name
+    path = sess.c.homedir + [name]
+    fh, stateid = create_confirm(sess, owner)
+
+    # Try to reclaims a file which is noexist after RECLAIM_COMPLETE
+    res = open_file(sess, owner, path=fh, claim_type=CLAIM_PREVIOUS,
+                    access=OPEN4_SHARE_ACCESS_BOTH,
+                    deny=OPEN4_SHARE_DENY_NONE,
+                    deleg_type=OPEN_DELEGATE_NONE)
+
+    check(res, NFS4ERR_NO_GRACE, warnlist = [NFS4ERR_EXIST | NFS4ERR_RECLAIM_BAD])
