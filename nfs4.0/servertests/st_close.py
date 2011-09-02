@@ -142,3 +142,36 @@ def testTimedoutClose2(t, env):
     c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
     res = c.close_file(t.code, fh, stateid)
     check(res, NFS4ERR_EXPIRED, "CLOSE after lease timeout with lock held")
+
+def testReplaySeqid(t, env):
+    """replayed CLOSE should succeed
+
+    FLAGS: close seqid all
+    DEPEND: MKFILE
+    CODE: CLOSE10
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    seqid = c.get_seqid(t.code)
+    res = c.close_file(t.code, fh, stateid)
+    check(res)
+    res = c.close_file(t.code, fh, stateid, seqid=seqid)
+    check(res)
+
+def testNextSeqid(t, env):
+    """replayed CLOSE with next seqid should fail
+
+    FLAGS: close seqid all
+    DEPEND: MKFILE
+    CODE: CLOSE11
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    seqid = c.get_seqid(t.code)
+    res = c.close_file(t.code, fh, stateid)
+    check(res)
+    res = c.close_file(t.code, fh, stateid, seqid=seqid+1)
+    # should probably fail somehow, but in any case I'm happy
+    # with anything that's not a server crash.
