@@ -614,3 +614,19 @@ def testReplay(t, env):
     check(res, msg="replayed open should succeed again")
     res = c.open_file(owner, file, deny=OPEN4_SHARE_DENY_BOTH)
     check(res, NFS4ERR_SHARE_DENIED, msg="non-replayed open should fail")
+
+def testBadSeqid(t, env):
+    """OPEN with a bad seqid
+
+    FLAGS: open seqid all
+    DEPEND: MKFILE
+    CODE: OPEN31
+    """
+    c = env.c1
+    c.init_connection()
+    file = c.homedir + [t.code]
+    owner = t.code
+    fh, stateid = c.create_confirm(owner, file, deny=OPEN4_SHARE_DENY_NONE)
+    c.seqid[owner] += 1
+    res = c.open_file(owner, file, deny=OPEN4_SHARE_DENY_BOTH)
+    check(res, NFS4ERR_BAD_SEQID)
