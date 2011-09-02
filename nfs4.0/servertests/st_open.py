@@ -593,5 +593,24 @@ def testUpgrades(t, env):
     stateid = res.resarray[-2].switch.switch.stateid
     c.close_file(owner, fh, stateid)
 
+def testReplay(t, env):
+    """Send the same OPEN twice
 
-#FRED - dot test
+    FLAGS: open seqid all
+    DEPEND: MKFILE
+    CODE: OPEN30
+    """
+    c = env.c1
+    c.init_connection()
+    file = c.homedir + [t.code]
+    owner = t.code
+    fh, stateid = c.create_confirm(owner, file, deny=OPEN4_SHARE_DENY_NONE)
+    res = c.close_file(owner, fh, stateid)
+    seqid = c.get_seqid(owner)
+    res = c.open_file(owner, file, deny=OPEN4_SHARE_DENY_BOTH)
+    check(res)
+    c.seqid[owner] -= 1
+    res = c.open_file(owner, file, deny=OPEN4_SHARE_DENY_BOTH)
+    check(res, msg="replayed open should succeed again")
+    res = c.open_file(owner, file, deny=OPEN4_SHARE_DENY_BOTH)
+    check(res, NFS4ERR_SHARE_DENIED, msg="non-replayed open should fail")
