@@ -175,3 +175,26 @@ def testNextSeqid(t, env):
     res = c.close_file(t.code, fh, stateid, seqid=seqid+1)
     # should probably fail somehow, but in any case I'm happy
     # with anything that's not a server crash.
+
+def testReplaySeqid(t, env):
+    """replayed CLOSE should succeed
+
+    The Linux server was only handling replays of the last close for a
+    given open owner; check for that bug.
+
+    FLAGS: close seqid all
+    DEPEND: MKFILE
+    CODE: CLOSE12
+    """
+    c = env.c1
+    c.init_connection()
+    path2 = c.homedir + [t.code + '-2']
+    fh, stateid = c.create_confirm(t.code)
+    fh2, stateid2 = c.create_confirm(t.code, path=path2);
+    seqid = c.get_seqid(t.code)
+    res = c.close_file(t.code, fh, stateid)
+    check(res)
+    res = c.close_file(t.code, fh, stateid, seqid=seqid)
+    check(res)
+    res = c.close_file(t.code, fh2, stateid2)
+
