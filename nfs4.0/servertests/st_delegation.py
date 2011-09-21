@@ -593,7 +593,7 @@ def testRename(t, env):
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [c.savefh_op()];
-    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')];
+    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 
@@ -612,7 +612,7 @@ def testRenameOver(t, env):
     res = c.create_file(t.code, c.homedir + [t.code])
     _get_deleg(t, c, c.homedir + [t.code + '.rename'], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [c.savefh_op()];
-    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')];
+    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 
@@ -632,5 +632,5 @@ def testServerRemove(t, env):
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    env.serverhelper("unlink " + _listToPath(c.homedir + [t.code]));
+    env.serverhelper("unlink " + _listToPath(c.homedir + [t.code]))
     _verify_cb_occurred(t, c, count)
