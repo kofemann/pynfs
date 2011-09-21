@@ -22,4 +22,10 @@ unlink )
 rename )
 	ssh $server "mv $1 $2"
 	;;
+link )
+	ssh $server "ln $1 $2"
+	;;
+chmod )
+	ssh $server "chmod $1 $2"
+	;;
 esac
