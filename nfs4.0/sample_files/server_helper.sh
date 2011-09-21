@@ -17,6 +17,9 @@ reboot )
 	virsh start $server
 	;;
 unlink )
-	path=$1
 	ssh $server "rm $1"
+	;;
+rename )
+	ssh $server "mv $1 $2"
+	;;
 esac

@@ -634,3 +634,39 @@ def testServerRemove(t, env):
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
     env.serverhelper("unlink " + _listToPath(c.homedir + [t.code]))
     _verify_cb_occurred(t, c, count)
+
+def testServerRenameSource(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure renaming the file on the server
+    recalls it.  Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG17
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    env.serverhelper("rename " + _listToPath(c.homedir + [t.code]) + " "
+                               + _listToPath(c.homedir + [t.code + "-2"]))
+    _verify_cb_occurred(t, c, count)
+
+
+def testServerRenameTarget(t, env):
+    """DELEGATION test
+
+    Get read delegation, then ensure renaming over the file on the server
+    recalls it.  Respond properly and send DELEGRETURN.
+
+    FLAGS: delegations
+    CODE: DELEG18
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    c.create_confirm(t.code, path=c.homedir + [t.code + '-2'])
+    _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
+    env.serverhelper("rename " + _listToPath(c.homedir + [t.code + "-2"]) + " "
+                               + _listToPath(c.homedir + [t.code]))
+    _verify_cb_occurred(t, c, count)
