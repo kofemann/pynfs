@@ -201,4 +201,41 @@ def testSocket(t, env):
     res = c.downgrade_file(t.code, env.opts.usesocket, stateid)
     check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
           [NFS4ERR_BAD_STATEID])
-    
+
+class open_sequence:
+    def __init__(self, client, owner):
+	self.client = client
+        self.owner = owner
+    def open(self, access):
+	self.fh, self.stateid = self.client.create_confirm(self.owner,
+						access=access,
+						deny=OPEN4_SHARE_DENY_NONE,
+						mode=UNCHECKED4)
+    def downgrade(self, access):
+	res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
+					access=access,
+					deny=OPEN4_SHARE_DENY_NONE)
+	self.stateid = res.stateid
+    def close(self):
+	self.client.close_file(self.owner, self.fh, self.stateid)
+	
+
+def testOpenDowngradeSequence(t, env):
+    """test complex upgrade/downgrade sequence
+
+    FLAGS: opendowngrade all
+    DEPEND: MKFILE
+    CODE:OPDG10
+    """
+    c = env.c1
+    c.init_connection()
+    os = open_sequence(c, t.code)
+    os.open(     OPEN4_SHARE_ACCESS_READ)
+    os.open(     OPEN4_SHARE_ACCESS_WRITE)
+    os.downgrade(OPEN4_SHARE_ACCESS_READ)
+    os.open(     OPEN4_SHARE_ACCESS_WRITE)
+    os.downgrade(OPEN4_SHARE_ACCESS_READ)
+    os.open(     OPEN4_SHARE_ACCESS_WRITE)
+    os.downgrade(OPEN4_SHARE_ACCESS_WRITE)
+    os.open(     OPEN4_SHARE_ACCESS_READ)
+    os.close()
