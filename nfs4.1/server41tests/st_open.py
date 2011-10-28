@@ -192,7 +192,7 @@ def testEXCLUSIVE4AtNameAttribute(t, env):
     FLAGS: open all
     CODE: OPEN6
     """
-    sess1 = env.c1.new_client(env.testname(t))
+    sess1 = env.c1.new_client_session(env.testname(t))
 
     res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1)
     check(res)
