@@ -455,8 +455,10 @@ def testRepTooBig(t, env):
     name = env.testname(t)
     c1 = env.c1.new_client(name)
     # create session with a small ca_maxresponsesize
-    chan_attrs = channel_attrs4(0,8192,50,8192,128,8,[])
+    chan_attrs = channel_attrs4(0,8192,500,8192,128,8,[])
     sess1 = c1.create_session(fore_attrs=chan_attrs)
+    sess1.compound([op.reclaim_complete(FALSE)])
+
     owner = "owner_%s" % name
     path = sess1.c.homedir + [name]
     res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_BOTH)
