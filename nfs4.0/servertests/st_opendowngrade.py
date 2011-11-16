@@ -218,6 +218,7 @@ class open_sequence:
 	self.stateid = res.stateid
     def close(self):
 	self.client.close_file(self.owner, self.fh, self.stateid)
+	
 
 def testOpenDowngradeSequence(t, env):
     """test complex upgrade/downgrade sequence
@@ -238,56 +239,3 @@ def testOpenDowngradeSequence(t, env):
     os.downgrade(OPEN4_SHARE_ACCESS_WRITE)
     os.open(     OPEN4_SHARE_ACCESS_READ)
     os.close()
-
-def list_os(state, depth):
-    if depth == 0:
-        return (("c",),)
-    # try each possible open:
-    s = ()
-    for i in [0, 1, 2]:
-        if state[i] == 0:
-            s += tuple(map(lambda x: ("o%s"%(["r", "w", "b"][i]),) + x,
-                    list_os(state[0:i] + (1,) + state[i:3], depth-1)))
-    if sum(state) <= 1:
-        # no downgrades are possible:
-        return s
-    if state[0] == 1:
-        # read downgrade:
-        s += tuple(map(lambda x: ("dr",) + x,
-                    list_os((1, 0, 0), depth - 1)))
-    if state[1] == 1:
-        # write downgrade:
-        s += tuple(map(lambda x: ("dw",) + x,
-                    list_os((0, 1, 0), depth - 1)))
-    return s
-
-def list_open_sequences(depth):
-    return list_os((0,0,0), depth)
-
-def testOpenDowngradeSequences(t, env):
-    """test complex upgrade/downgrade sequences
-
-    FLAGS: opendowngrade all
-    DEPEND: MKFILE
-    CODE:OPDG11
-    """
-
-    c = env.c1
-    c.init_connection()
-    os = open_sequence(c, t.code)
-    sequences = list_open_sequences(5)
-
-    for s in sequences:
-        for command in s:
-            if command == "close":
-                os.close()
-            elif command == "or":
-                os.open(OPEN4_SHARE_ACCESS_READ)
-            elif command == "ow":
-                os.open(OPEN4_SHARE_ACCESS_WRITE)
-            elif command == "ob":
-                os.open(OPEN4_SHARE_ACCESS_BOTH)
-            elif command == "dr":
-                os.downgrade(OPEN4_SHARE_ACCESS_READ)
-            elif command == "dw":
-                os.downgrade(OPEN4_SHARE_ACCESS_WRITE)
