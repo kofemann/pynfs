@@ -43,7 +43,6 @@ def testImplicitBind(t, env):
     # send SEQUENCE2 over unbound connection 
     res = env.c1.compound([sess.seq_op()], pipe=rogue)
     check(res)
-    env.c1.close(rogue)
     
 def testBadSession(t, env):
     """SEQUENCE sent on unknown session
