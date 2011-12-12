@@ -27,32 +27,6 @@ def testNotFirst(t, env):
     res = sess.compound([sess.seq_op()])
     check(res, NFS4ERR_SEQUENCE_POS)
 
-def testNotBound(t, env):
-    """SEQUENCE sent on unbound connection
-
-    FLAGS: sequence all
-    CODE: SEQ3
-    """
-    fail("TODO - need to set up state-protection")
-    c = env.c1
-    # EXCHANGE_ID
-    eir = exchange_id(c, env.testname(t))
-    # CREATE_SESSION, using connection binding
-    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid,
-                         hashlist=[hash_algs["sha256"]])
-    check(res)
-    sid = res.resarray[0].csr_sessionid
-    # SEQUENCE1
-    res = c.compound([op.sequence(sid, 1, 0, 0, True)])
-    check(res)
-    # create an unbound connection
-    rogue = c.connect(c.server_address)
-    # send SEQUENCE2 over unbound connection 
-    seqid = res.resarray[0].sr_sequenceid
-    res = c.compound([op.sequence(sid, seqid, 0, 0, True)], pipe=rogue)
-    check(res, NFS4ERR_CONN_NOT_BOUND_TO_SESSION)
-    c.close(rogue)
-
 def testImplicitBind(t, env):
     """SEQUENCE sent on unbound connection will bind it if no enforcing done
 
@@ -70,58 +44,6 @@ def testImplicitBind(t, env):
     res = env.c1.compound([sess.seq_op()], pipe=rogue)
     check(res)
     env.c1.close(rogue)
-    
-def testImplicitBind4a(t, env):
-    """SEQUENCE sent on unbound connection will bind it if no enforcing done
-
-    FLAGS: sequence all
-    CODE: SEQ4a
-    """
-    c = env.c1.new_client(env.testname(t))
-    sess = c.create_session()
-    res = sess.compound([])
-    check(res)
-    
-    # create an unbound connection
-    print "B1"
-    rogue = env.c1.connect(env.c1.server_address)
-    print "B2"
-    # send SEQUENCE2 over unbound connection 
-    res = env.c1.compound([sess.seq_op()], pipe=rogue)
-    print "B3"
-    check(res)
-    print "B4"
-    env.c1.close(rogue)
-    print "B5"
-    
-def xtestImplicitBind(t, env):
-    """SEQUENCE sent on unbound connection will bind it if no enforcing done
-
-    FLAGS: sequence all
-    CODE: SEQ4
-    """
-    c = env.c1.new_client(env.testname(t))
-    sess = c.create_session()
-    res = sess.compound([])
-    check(res)
-
-    c = env.c1
-    # EXCHANGE_ID
-    eir = exchange_id(c, env.testname(t))
-    # CREATE_SESSION, using connection binding
-    res = create_session(c, eir.eir_clientid, eir.eir_sequenceid)
-    check(res)
-    sid = res.resarray[0].csr_sessionid
-    # SEQUENCE1
-    res = c.compound([op.sequence(sid, 1, 0, 0, True)])
-    check(res)
-    # create an unbound connection
-    rogue = c.connect(c.server_address)
-    # send SEQUENCE2 over unbound connection 
-    seqid = res.resarray[0].sr_sequenceid
-    res = c.compound([op.sequence(sid, seqid, 0, 0, True)], pipe=rogue)
-    check(res)
-    c.close(rogue)
     
 def testBadSession(t, env):
     """SEQUENCE sent on unknown session
