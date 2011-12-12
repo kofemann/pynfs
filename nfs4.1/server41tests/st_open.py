@@ -244,7 +244,7 @@ def testOpenAndClose(t, env):
     """test current state id processing by having OPEN and CLOSE
        in a single compound
 
-    FLAGS: open all
+    FLAGS: currentstateid open all
     CODE: OPEN31
     """
     current_stateid = stateid4(1, '\0' * 12)
@@ -258,7 +258,7 @@ def testLockLockU(t, env):
     """test current state id processing by having LOCK and LOCKU
        in a single compound
 
-    FLAGS: open all
+    FLAGS: currentstateid open all
     CODE: OPEN32
     """
     current_stateid = stateid4(1, '\0' * 12)
@@ -280,7 +280,7 @@ def testOpenWriteClose(t, env):
     """test current state id processing by having OPEN, WRITE and CLOSE
        in a single compound
 
-    FLAGS: open all
+    FLAGS: currentstateid open all
     CODE: OPEN33
     """
     current_stateid = stateid4(1, '\0' * 12)
@@ -296,7 +296,7 @@ def testLockWriteLocku(t, env):
     """test current state id processing by having LOCK, WRITE and LOCKU
        in a single compound
 
-    FLAGS: open all
+    FLAGS: currentstateid open all
     CODE: OPEN34
     """
     current_stateid = stateid4(1, '\0' * 12)
