@@ -275,3 +275,19 @@ def testLockLockU(t, env):
 	op.locku(WRITE_LT, 0, current_stateid, 0, NFS4_UINT64_MAX) ]
     res = sess1.compound([op.putfh(fh)] + lock_ops)
     check(res, NFS4_OK)
+
+def testOpenWriteClose(t, env):
+    """test current state id processing by having OPEN, WRITE and CLOSE
+       in a single compound
+
+    FLAGS: open all
+    CODE: OPEN33
+    """
+    current_stateid = stateid4(1, '\0' * 12)
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    data = "write test data"
+    open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
+    res = sess1.compound(open_op + [op.write(current_stateid, 5, FILE_SYNC4, data),
+        op.close(0, current_stateid)])
+    check(res, NFS4_OK)
