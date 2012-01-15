@@ -130,3 +130,19 @@ def testOpenLayoutGet(t, env):
            [op.layoutget(False, LAYOUT4_NFSV4_1_FILES, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, current_stateid, 0xffff)])
     check(res, NFS4_OK)
+
+def testOpenSetattr(t, env):
+    """test current state id processing by having OPEN and SETATTR
+       in a single compound
+
+    FLAGS: currentstateid all
+    CODE: CSID8
+    """
+    size = 8
+    sess = env.c1.new_client_session(env.testname(t),
+                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+
+    open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
+    res = sess.compound( open_op +
+           [ op.setattr(current_stateid, {FATTR4_SIZE: size})])
+    check(res, NFS4_OK)
