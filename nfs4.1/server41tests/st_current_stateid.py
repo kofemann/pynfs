@@ -84,3 +84,33 @@ def testLockWriteLocku(t, env):
         op.close(0, stateid)]
     res = sess1.compound([op.putfh(fh)] + lock_ops)
     check(res, NFS4_OK)
+
+def testOpenPutrootfhClose(t, env):
+    """test current state id processing by having OPEN, PUTROOTFH and CLOSE
+       in a single compound
+
+    FLAGS: currentstateid all
+    CODE: CSID5
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
+    res = sess1.compound(open_op + [op.putrootfh(), op.close(0, current_stateid)])
+    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+
+def testCloseNoStateid(t, env):
+    """test current state id processing by having CLOSE
+       without operation which provides stateid
+
+    FLAGS: currentstateid all
+    CODE: CSID6
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    res = create_file(sess1, env.testname(t))
+    check(res)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+
+    res = sess1.compound([op.putfh(fh), op.close(0, current_stateid)])
+    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
