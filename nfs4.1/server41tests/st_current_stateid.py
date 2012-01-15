@@ -114,3 +114,19 @@ def testCloseNoStateid(t, env):
 
     res = sess1.compound([op.putfh(fh), op.close(0, current_stateid)])
     checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+
+def testOpenLayoutGet(t, env):
+    """test current state id processing by having OPEN and LAYOUTGET
+       in a single compound
+
+    FLAGS: currentstateid all
+    CODE: CSID7
+    """
+    sess = env.c1.new_client_session(env.testname(t),
+                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+
+    open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
+    res = sess.compound( open_op + 
+           [op.layoutget(False, LAYOUT4_NFSV4_1_FILES, LAYOUTIOMODE4_RW,
+                        0, 8192, 8192, current_stateid, 0xffff)])
+    check(res, NFS4_OK)
