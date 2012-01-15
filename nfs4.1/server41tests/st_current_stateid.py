@@ -146,3 +146,16 @@ def testOpenSetattr(t, env):
     res = sess.compound( open_op +
            [ op.setattr(current_stateid, {FATTR4_SIZE: size})])
     check(res, NFS4_OK)
+
+def testOpenFreestateidClose(t, env):
+    """test current state id processing by having OPEN, FREE_STATEID and CLOSE
+       in a single compound
+
+    FLAGS: currentstateid all
+    CODE: CSID9
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
+    res = sess1.compound(open_op + [op.free_stateid(current_stateid), op.close(0, current_stateid)])
+    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
