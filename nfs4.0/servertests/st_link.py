@@ -212,7 +212,7 @@ def testLongName(t, env):
 def testInvalidUtf8(t, env):
     """LINK with bad UTF-8 name strings should return NFS4ERR_INVAL
 
-    FLAGS: link utf8 all
+    FLAGS: link utf8
     DEPEND: LINKS LOOKFILE MKDIR
     CODE: LINK8
     """

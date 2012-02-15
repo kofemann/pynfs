@@ -247,7 +247,7 @@ def testNotDir(t, env):
 def testInvalidUtf8(t, env):
     """OPEN with bad UTF-8 name strings should return NFS4ERR_INVAL
 
-    FLAGS: open utf8 all
+    FLAGS: open utf8
     DEPEND: MKDIR
     CODE: OPEN13
     """

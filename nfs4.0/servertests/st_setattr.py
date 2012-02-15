@@ -412,7 +412,7 @@ def testNonUTF8(t, env):
     OWNER and GROUP are subject to too many restrictions to use.
     Similarly for ACL.
 
-    FLAGS: setattr utf8 all
+    FLAGS: setattr utf8
     DEPEND: MKFILE
     CODE: SATT9
     """

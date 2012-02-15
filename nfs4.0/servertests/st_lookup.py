@@ -221,7 +221,7 @@ def testNonAccessable(t, env):
 def testInvalidUtf8(t, env):
     """LOOKUP with bad UTF-8 name strings should return NFS4ERR_INVAL
 
-    FLAGS: lookup utf8 all
+    FLAGS: lookup utf8
     DEPEND:
     CODE: LOOK7
     """

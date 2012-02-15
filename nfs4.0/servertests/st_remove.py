@@ -195,7 +195,7 @@ def testZeroLengthTarget(t, env):
 def testNonUTF8(t, env):
     """REMOVE with non-UTF8 components should return NFS4ERR_INVAL
 
-    FLAGS: remove utf8 all
+    FLAGS: remove utf8
     DEPEND: MKDIR
     CODE: RM5
     """
