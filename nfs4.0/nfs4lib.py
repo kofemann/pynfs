@@ -293,7 +293,6 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         self.cb_control = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while 1:
             try:
-                time.sleep(1)
                 self.cb_control.connect(('127.0.0.1', self.cb_server.port))
                 break
             except socket.error:
