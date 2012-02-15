@@ -219,17 +219,3 @@ def testOldStateid(t, env):
     fh, stateid = c.confirm(t.code, res)
     res = c.read_file(fh, stateid=oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "READ with old stateid")
-
-def testOpenMode(t, env):
-    """READ with file opened in WRITE mode should return NFS4_OK or NFS4ERR_OPENMODE
-
-    FLAGS: read all
-    DEPEND: MKFILE
-    CODE: RD12
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
-    res = c.read_file(fh, stateid=stateid)
-    check(res, NFS4ERR_OPENMODE, "READ with file opened in WRITE mode",
-          [NFS4_OK])
