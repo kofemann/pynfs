@@ -119,7 +119,7 @@ def testOpenLayoutGet(t, env):
     """test current state id processing by having OPEN and LAYOUTGET
        in a single compound
 
-    FLAGS: currentstateid all
+    FLAGS: currentstateid pnfs
     CODE: CSID7
     """
     sess = env.c1.new_client_session(env.testname(t),

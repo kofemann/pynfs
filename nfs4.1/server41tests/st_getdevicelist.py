@@ -10,7 +10,7 @@ from nfs4lib import state00
 def testGetDevList(t, env):
     """Check devlist
 
-    FLAGS: getdevicelist all
+    FLAGS: pnfs
     CODE: GETDLIST1
     """
     # Make sure E_ID returns MDS capabilities
@@ -36,7 +36,7 @@ def testGetDevList(t, env):
 def testGetDevInfo(t, env):
     """Check devlist
 
-    FLAGS: getdevicelist all
+    FLAGS: pnfs
     DEPEND: GETDLIST1
     CODE: GETDINFO1
     """
@@ -73,7 +73,7 @@ def testGetDevInfo(t, env):
 ## def xxxtestLayout(t, env):
 ##     """Verify layout handling
 
-##     FLAGS: layout all
+##     FLAGS: pnfs
 ##     CODE: GETLAYOUT1
 ##     """
 ##     # Make sure E_ID returns MDS capabilities
@@ -105,7 +105,7 @@ def testGetDevInfo(t, env):
 def testGetLayout(t, env):
     """Verify layout handling
 
-    FLAGS: getlayout all
+    FLAGS: pnfs
     CODE: GETLAYOUT1
     """
     # Make sure E_ID returns MDS capabilities
@@ -187,7 +187,7 @@ def testLayoutReturnFile(t, env):
     """
     Return a file's layout
     
-    FLAGS: layoutreturn all
+    FLAGS: pnfs
     DEPEND: GETLAYOUT1
     CODE: LAYOUTRET1
     """
@@ -220,7 +220,7 @@ def testLayoutReturnFsid(t, env):
     """
     Return all of a filesystem's layouts
     
-    FLAGS: layoutreturn all
+    FLAGS: pnfs
     DEPEND: GETLAYOUT1
     CODE: LAYOUTRET2
     """
@@ -252,7 +252,7 @@ def testLayoutReturnAll(t, env):
     """
     Return all of a client's layouts
     
-    FLAGS: layoutreturn all
+    FLAGS: pnfs
     DEPEND: GETLAYOUT1
     CODE: LAYOUTRET3
     """
@@ -283,7 +283,7 @@ def testLayoutCommit(t, env):
     """
     Do some commits
 
-    FLAGS: layoutcommit all
+    FLAGS: pnfs
     CODE: LAYOUTCOMMIT1
     """
     # Make sure E_ID returns MDS capabilities
