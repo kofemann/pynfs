@@ -191,7 +191,6 @@ class CBServer(rpc.RPCServer):
             raise "Bad name %s" % name
 
     def run(self):
-        print "Starting Call Back server stub on port %i" % self.port
         rpc.RPCServer.run(self)
 
     def handle_0(self, data, cred):
