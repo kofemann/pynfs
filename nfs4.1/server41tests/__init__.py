@@ -9,6 +9,7 @@ __all__ = ["st_exchange_id.py", # draft 21
            "st_sequence.py",
 	   "st_trunking.py",
            "st_open.py",
+           "st_delegation.py",
            "st_verify.py",
            "st_getdevicelist.py",
            "st_lookupp.py",
