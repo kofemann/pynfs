@@ -142,3 +142,25 @@ def testAnyDeleg(t, env):
     # Now get OPEN reply
     res = sess2.listen(slot)
     checklist(res, [NFS4_OK, NFS4ERR_DELAY])
+
+def testNoDeleg(t, env):
+    """Test no delgation handout
+
+    FLAGS: open deleg all
+    CODE: DELEG4
+    """
+    c1 = env.c1.new_client("%s_1" % env.testname(t))
+    sess1 = c1.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
+    res = create_file(sess1, env.testname(t),
+                      access=OPEN4_SHARE_ACCESS_READ |
+                      OPEN4_SHARE_ACCESS_WANT_NO_DELEG)
+    check(res)
+    fh = res.resarray[-1].object
+    deleg = res.resarray[-2].delegation
+    if deleg.delegation_type == OPEN_DELEGATE_NONE:
+        fail("Got no delegation, expected OPEN_DELEGATE_NONE_EXT")
+    if deleg.delegation_type != OPEN_DELEGATE_NONE_EXT:
+        fail("Got a delegation (type "+str(deleg.delegation_type)+") despite asking for none")
+    if deleg.ond_why != WND4_NOT_WANTED:
+        fail("Wrong reason ("+str(deleg.ond_why)+") for giving no delegation")
