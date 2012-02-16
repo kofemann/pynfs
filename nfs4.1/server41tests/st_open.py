@@ -141,7 +141,7 @@ def testReadDeleg(t, env):
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
-    if deleg.delegation_type == OPEN_DELEGATE_NONE:
+    if deleg.delegation_type == OPEN_DELEGATE_NONE or deleg.delegation_type == OPEN_DELEGATE_NONE_EXT:
         fail("Could not get delegation")
     # c2 - OPEN - WRITE
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
