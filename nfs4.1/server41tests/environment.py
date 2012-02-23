@@ -550,6 +550,18 @@ def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     return fh, res.resarray[-2].stateid
     return fh, openstateid
 
+def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+                   access=OPEN4_SHARE_ACCESS_BOTH,
+                   deny=OPEN4_SHARE_DENY_NONE,
+                   mode=GUARDED4):
+    """Create (using open) a regular file, confirm the open, and close
+
+    Returns the fhandle
+    """
+    fh, stateid = create_confirm(sess, owner, path, attrs, access, deny, mode)
+    close_file(sess, fh, stateid=stateid)
+    return fh;
+
 def _getname(owner, path):
     if path is None:
         return owner
@@ -580,7 +592,7 @@ def maketree(sess, tree, root=None, owner=None):
             check(res)
             maketree(sess, obj[1:], root + [obj[0]], owner)
         else:
-            create_confirm(sess, owner, root + [obj])
+            create_close(sess, owner, root + [obj])
 
 def lookup_obj(sess, path):
     compound = [op.putrootfh()]
