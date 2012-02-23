@@ -185,7 +185,7 @@ def testCfhFile(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usefile + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
@@ -198,7 +198,7 @@ def testCfhLink(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.uselink + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
@@ -211,7 +211,7 @@ def testCfhBlock(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.useblock + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
@@ -224,7 +224,7 @@ def testCfhChar(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usechar + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
@@ -237,7 +237,7 @@ def testCfhFifo(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usefifo + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
@@ -250,7 +250,7 @@ def testCfhSocket(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    res = create_obj(sess, [name])
+    res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.usesocket + [name])
     check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
