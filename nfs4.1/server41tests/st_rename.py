@@ -201,7 +201,8 @@ def testCfhLink(t, env):
     res = create_obj(sess, env.c1.homedir + [name])
     check(res)
     res = rename_obj(sess, env.c1.homedir + [name], env.opts.uselink + [name])
-    check(res, NFS4ERR_NOTDIR, "RENAME with non-dir <cfh>")
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
+                                "RENAME with non-dir <cfh>")
 
 def testCfhBlock(t, env):
     """RENAME with non-dir (cfh) should return NFS4ERR_NOTDIR
