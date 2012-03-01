@@ -1,0 +1,27 @@
+- Create a new INFO result, lower-priority than WARN or FAIL, but that
+  might tell you interesting things about the server.  (E.g., whether it
+  supports some optional feature.  In which case further tests may
+  depend on it in some way.) ?
+
+- make block/char/etc tests more automatic: use an INFO level test to
+  probe whether the server allows creating these things as a regular
+  user, or as root, give an INFO level result, and make further tests
+  depend on this somehow.
+
+- Search for other similar pieces between 4.0 and 4.1 which can obviously be
+  shared--any .x files?
+- compound length problem:
+	- everything should start with putfh of root of testdir rather
+	  than of root!
+		- first make use_obj an NFS4Client method, or replace it
+		  by one that is.
+		- then teach it to do absolute lookups (paths beginning
+		  with one '' component) and lookups relative to test root,
+		  simultaneously making all paths absolute (probably
+		  that's just --useXXX paths and homedir path).
+		- then slowly start using relative paths in various
+		  places.
+	- break up lookup into multiple compounds?
+	- consider also whether server could allow more.
+- Also track down remaining failures, reexamine skip lists.
+- Basic v4.0 DRC test.
