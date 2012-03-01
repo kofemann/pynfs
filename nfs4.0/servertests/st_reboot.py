@@ -104,28 +104,6 @@ def testRebootWait(t, env):
                       deleg_type=OPEN_DELEGATE_NONE)
     check(res, NFS4ERR_NO_GRACE, "Reclaim after grace period has expired")
 
-def testRebootInvalid(t, env):
-    """REBOOT with invalid CLAIM_PREVIOUS
-
-    FLAGS: reboot
-    DEPEND: MKFILE
-    CODE: REBT4
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ)
-    sleeptime = _waitForReboot(c, env)
-    try:
-        c.init_connection()
-        res = c.open_file(t.code, fh, access=OPEN4_SHARE_ACCESS_WRITE,
-                          claim_type=CLAIM_PREVIOUS,
-                          deleg_type=OPEN_DELEGATE_NONE)
-        check(res, NFS4ERR_RECLAIM_CONFLICT,
-              "Reclaim with write access, when only had read access",
-              [NFS4ERR_RECLAIM_BAD])
-    finally:
-        env.sleep(sleeptime, "Waiting for grace period to end")
-
 def testEdge1(t, env):
     """REBOOT with first edge condition from RFC 3530
 
