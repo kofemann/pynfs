@@ -195,3 +195,17 @@ def testOPENClaimFH(t, env):
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 
+def testCloseWithZeroSeqid(t, env):
+    """OPEN followed by CLOSE with stateid.seq = 0
+
+    FLAGS: open all
+    CODE: OPEN8
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+    res = create_file(sess1, env.testname(t))
+    check(res)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    stateid.seqid = 0
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)

@@ -190,7 +190,6 @@ class Environment(testmod.Environment):
                 log.warning("could not create /%s" % '/'.join(path))
         # Make file-object in /tree
         fh, stateid = create_confirm(sess, 'maketree', tree + ['file'])
-        # stateid.seqid = 0
         ops = [op.putfh(fh),
                op.write(stateid, 0, FILE_SYNC4, self.filedata)]
         res = sess.compound(ops)
