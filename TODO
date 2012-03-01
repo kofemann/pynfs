@@ -1,7 +1,15 @@
 - Create a new INFO result, lower-priority than WARN or FAIL, but that
   might tell you interesting things about the server.  (E.g., whether it
   supports some optional feature.  In which case further tests may
-  depend on it in some way.) ?
+  depend on it in some way.) ?  Actually, note there's already an
+  UNSUPPORTED result--maybe we just need to make better use of that.
+
+- Just out of curiosity--it would be interesting to open a file and then
+  rename it, to see whether a server allows it or returns
+  NFS4ERR_FILE_OPEN.  (Either is OK.)
+
+- I suspect we're sloppy about cleaning up state.  E.g. make sure opens
+  are normally closed.
 
 - make block/char/etc tests more automatic: use an INFO level test to
   probe whether the server allows creating these things as a regular
