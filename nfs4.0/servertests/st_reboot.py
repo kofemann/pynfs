@@ -93,12 +93,13 @@ def testRebootWait(t, env):
     fh, stateid = c.create_confirm(t.code)
     sleeptime = _waitForReboot(c, env)
     try:
+       env.sleep(sleeptime/2, "Waiting till halfway through grace period")
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                        deleg_type=OPEN_DELEGATE_NONE)
         check(res, NFS4ERR_STALE_CLIENTID, "Reclaim using old clientid")
         c.init_connection()
     finally:
-        env.sleep(sleeptime, "Waiting for grace period to end")
+        env.sleep(sleeptime/2 + 1, "Waiting for grace period to end")
     res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                       deleg_type=OPEN_DELEGATE_NONE)
     check(res, NFS4ERR_NO_GRACE, "Reclaim after grace period has expired")
