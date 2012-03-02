@@ -14,6 +14,7 @@ from nfs4_const import *
 from nfs4_type import *
 import rpc
 import nfs4client
+import sys
 import os
 import nfs4lib
 from nfs4lib import use_obj
@@ -212,6 +213,21 @@ class Environment(testmod.Environment):
         log.info("Sleeping for %i seconds: %s" % (sec, msg))
         time.sleep(sec)
         log.info("Woke up")
+
+    def serverhelper(self, args):
+        """Perform a special operation on the server side (such as
+        rebooting the server)"""
+        if self.opts.serverhelper is None:
+            print "Manual operation required on server:"
+            print args + " and hit ENTER when done"
+            sys.stdin.readline()
+            print "Continuing with test"
+        else:
+            cmd = self.opts.serverhelper
+            if self.opts.serverhelperarg:
+                cmd += ' ' + self.opts.serverhelperarg
+            cmd += ' ' + args
+            os.system(cmd);
 
     def new_verifier(self):
         """Returns a never before used verifier"""
