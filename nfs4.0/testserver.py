@@ -43,7 +43,7 @@ import socket
 import rpc
 import cPickle as pickle
 
-VERSION="0.2"
+VERSION="0.2" #How/when update this?
 
 # Auth_sys defaults
 HOST = socket.gethostname()
@@ -134,15 +134,15 @@ def scan_options(p):
                  help="Skip initial cleanup of test directory")
     p.add_option("--nocleanup", action="store_true", default=False,
                  help="Skip final cleanup of test directory")
-    p.add_option("--outfile", "--out", default="out_last", metavar="FILE",
-                 help="Store test results in FILE [out_last]")
+    p.add_option("--outfile", "--out", default=None, metavar="FILE",
+                 help="Store test results in FILE [%default]")
     p.add_option("--debug_fail", action="store_true", default=False,
                  help="Force some checks to fail")
 
     g = OptionGroup(p, "Security flavor options",
                     "These options choose or affect the security flavor used.")
     g.add_option("--security", default='sys',
-                 help="Choose security flavor such as krb5i [sys]")
+                 help="Choose security flavor such as krb5i [%default]")
     g.add_option("--uid", default=UID, type='int',
                  help="uid for auth_sys [%i]" % UID)
     g.add_option("--gid", default=GID, type='int',
@@ -150,7 +150,7 @@ def scan_options(p):
     g.add_option("--machinename", default=HOST, metavar="HOST",
                  help="Machine name to use for auth_sys [%s]" % HOST)
     p.add_option_group(g)
-    
+
     g = OptionGroup(p, "Test selection options",
                     "These options affect how flags are interpreted.")
     g.add_option("--force", action="store_true", default=False,
@@ -241,7 +241,7 @@ class Argtype(object):
     def __init__(self, obj, run=True, flag=True):
         self.isflag = flag  # True if flag, False if a test
         self.run = run      # True for inclusion, False for exclusion
-        self.obj = obj      # The flag or test itself
+        self.obj = obj      # The flag mask or test itself
 
     def __str__(self):
         return "Isflag=%i, run=%i" % (self.isflag, self.run)
@@ -384,6 +384,7 @@ def main():
         print "Initialization failed, no tests run."
         if not opt.maketree:
             print "Perhaps you need to use the --maketree option"
+        raise
         print sys.exc_info()[1]
         sys.exit(1)
     if opt.outfile is not None:
