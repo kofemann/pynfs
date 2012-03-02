@@ -305,10 +305,11 @@ def testGraceSeqid(t, env):
         check(res, msg="Reclaim using newly created clientid")
         res = c.open_file(t.code)
         check(res, NFS4ERR_GRACE, "First OPEN during grace period")
+       env.sleep(sleeptime/2, "Waiting till halfway through grace period")
         res = c.open_file(t.code)
         check(res, NFS4ERR_GRACE, "Second OPEN during grace period")
     finally:
-        env.sleep(sleeptime, "Waiting for grace period to end")
+        env.sleep(sleeptime/2 + 1, "Waiting for grace period to end")
     res = c.open_file(t.code)
     check(res, NFS4_OK, "OPEN after grace period")
      
