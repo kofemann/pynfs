@@ -378,6 +378,7 @@ def main():
     except socket.gaierror, e:
         if e.args[0] == -2:
             print "Unknown server '%s'" % opt.server
+        print sys.exc_info()[1]
         sys.exit(1)
     except Exception, e:
         print "Initialization failed, no tests run."
