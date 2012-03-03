@@ -43,7 +43,7 @@ import socket
 import rpc
 import cPickle as pickle
 
-VERSION="0.2" #How/when update this?
+VERSION="0.2" # How/when update this?
 
 # Auth_sys defaults
 HOST = socket.gethostname()
@@ -89,42 +89,6 @@ def unixpath2comps(str, pathcomps=None):
 
 def scan_options(p):
     """Parse command line options
-
-    Sets the following:
-    .showflags = (False)
-    .showcodes = (False)
-    .noinit    = (False)
-    .nocleanup = (False)
-    .outfile   = (None)
-    .debug_fail = (False)
-    
-    .security = (sys)
-    .uid = (UID)
-    .gid = (GID)
-    .machinename = (HOST)
-
-    .force   = (False)
-    .rundeps = (False)
-    
-    .verbose  = (False)
-    .showpass = (True)
-    .showwarn = (True)
-    .showfail = (True)
-    .showomit = (False)
-
-    .maketree  = (False)
-    .uselink   = (None)
-    .useblock  = (None)
-    .usechar   = (None)
-    .usesocket = (None)
-    .usefifo   = (None)
-    .usefile   = (None)
-    .usedir    = (None)
-    .usespecial= (None)
-
-    .serverhelper = (None)
-    .serverhelperarg = (None)
-
     """
     p.add_option("--showflags", action="store_true", default=False,
                  help="Print a list of all possible flags and exit")
