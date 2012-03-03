@@ -159,11 +159,18 @@ def scan_options(p):
 ##                  help="Try to use 'secure' port number <1024 for client [False]")
 ##     p.add_option_group(g)
 
+    g = OptionGroup(p, "Server reboot script options",
+                    "When running reboot scripts, these options determine "
+                    "the scripts and arguments used to control how the "
+                    "server is restarted.")
+
     g.add_option("--serverhelper", default=None, metavar="FILE",
                  help="Use script to perform special actions on server")
 
     g.add_option("--serverhelperarg", default=None, metavar="ARG",
                  help="Pass ARG as first argument to serverhelper");
+
+    p.add_option_group(g)
 
     return p.parse_args()
 
