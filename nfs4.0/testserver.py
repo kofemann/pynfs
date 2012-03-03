@@ -48,11 +48,11 @@ VERSION="0.2" # How/when update this?
 # Auth_sys defaults
 HOST = socket.gethostname()
 if not hasattr(os, "getuid"):
-    UID = 0
+    UID = 4321
 else:
     UID = os.getuid()
 if not hasattr(os, "getgid"):
-    GID = 0
+    GID = 42
 else:
     GID = os.getgid()
 
