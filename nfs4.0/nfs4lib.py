@@ -322,6 +322,9 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         # Make the actual call
         compoundargs = COMPOUND4args(argarray=argarray, tag=tag,
                                      minorversion=minorversion)
+        if SHOW_TRAFFIC:
+            print
+            print compoundargs
         p = self.nfs4packer
         un_p = self.nfs4unpacker
         p.reset()
@@ -329,6 +332,8 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         res = self.call(NFSPROC4_COMPOUND, p.get_buffer())
         un_p.reset(res)
         res = un_p.unpack_COMPOUND4res()
+        if SHOW_TRAFFIC:
+            print res
         un_p.done()
 
         # Do some error checking

@@ -36,6 +36,7 @@ if  __name__ == "__main__":
         sys.path.insert(1, os.path.join(sys.path[0], 'lib'))
 
 import re
+import nfs4lib
 import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
 import servertests.environment as environment
@@ -144,6 +145,10 @@ def scan_options(p):
                  help="Show omitted tests")
     g.add_option("--hideomit", action="store_false", dest="showomit",
                  help="Hide omitted tests [default]")
+    g.add_option("--showtraffic", action="store_true", default=False,
+                 help="Show NFS packet information")
+    g.add_option("--hidetraffic", action="store_false", dest="showtraffic",
+                 help="Hide NFS packet information [default]")
     p.add_option_group(g)
 
     g = OptionGroup(p, "Test tree options",
@@ -247,6 +252,7 @@ def main():
                      formatter=IndentedHelpFormatter(2, 25)
                      )
     opt, args = scan_options(p)
+    nfs4lib.SHOW_TRAFFIC = opt.showtraffic
 
     # Create test database
     tests, fdict, cdict = testmod.createtests('servertests')
