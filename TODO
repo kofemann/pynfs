@@ -33,3 +33,8 @@
 	- consider also whether server could allow more.
 - Also track down remaining failures, reexamine skip lists.
 - Basic v4.0 DRC test.
+
+- More reorganization to make 4.0&4.1 directories parallel:
+	- note nfs4client.py is false parallelism.
+	- make testserver.py work for both, move to top level?
+	- revisit Fred's email
