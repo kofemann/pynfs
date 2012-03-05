@@ -76,7 +76,7 @@ def testManyClaims(t, env):
             c.init_connection(badid)
             res = c.open_file(t.code, badfh, claim_type=CLAIM_PREVIOUS,
                               deleg_type=OPEN_DELEGATE_NONE)
-            checklist(res, [NFS4ERR_RECLAIM_CONFLICT, NFS4ERR_RECLAIM_BAD],
+            checklist(res, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
                       "Reclaim with bad clientid %s" % badid)
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
@@ -144,7 +144,7 @@ def testEdge1(t, env):
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
                             deleg_type=OPEN_DELEGATE_NONE)
-        check(res1, NFS4ERR_RECLAIM_BAD,
+        checklist(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
               "Reclaim lock that has been interfered with")
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
@@ -190,7 +190,7 @@ def testEdge2(t, env):
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
                             deleg_type=OPEN_DELEGATE_NONE)
-        check(res1, NFS4ERR_RECLAIM_BAD,
+        checklist(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
               "Reclaim lock that has been interfered with")
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
