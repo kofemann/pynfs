@@ -664,6 +664,10 @@ class RootFS(FileSystem):
     def __init__(self):
         self._nextid = 0
         FileSystem.__init__(self)
+        self.fattr4_maxwrite = 4096
+        self.fattr4_maxread = 4096
+        self.fattr4_supported_attrs |= 1 << FATTR4_MAXWRITE
+        self.fattr4_supported_attrs |= 1 << FATTR4_MAXREAD
         self.fsid = (0,0)
         self.read_only = True
 
