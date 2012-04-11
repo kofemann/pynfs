@@ -440,7 +440,7 @@ def testDirToFullDir(t, env):
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir1'], ['dir2', ['foo']]])
     res = rename_obj(sess, basedir + ['dir1'], basedir + ['dir2'])
-    check(res, NFS4ERR_EXIST, "RENAME dir1 into existing, nonempty dir2")
+    checklist(res, [NFS4ERR_EXIST, NFS4ERR_NOTEMPTY], "RENAME dir1 into existing, nonempty dir2")
 
 def testFileToFullDir(t, env):
     """RENAME file into existing, nonempty dir should return NFS4ERR_EXIST
