@@ -1,7 +1,7 @@
 from nfs4_const import *
 import nfs4_ops as op
 import time
-from environment import check, fail
+from environment import check, checklist, fail
 from nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids
@@ -9,6 +9,15 @@ from nfs4lib import NFS4Error, hash_oids, encrypt_oids
 def _getleasetime(sess):
     res = sess.compound([op.putrootfh(), op.getattr(1 << FATTR4_LEASE_TIME)])
     return res.resarray[-1].obj_attributes[FATTR4_LEASE_TIME]
+
+def _raw_exchange_id(c, name, verf=None, cred=None, protect=None, flags=0):
+    if verf is None:
+        verf = c.verifier
+    owner = client_owner4(verf, name)
+    if protect is None:
+        protect = state_protect4_a(SP4_NONE)
+    return c.compound([op.exchange_id(owner, flags, protect,
+                                            [c.impl_id])], cred)
 
 def testSupported(t, env):
     """Do a simple EXCHANGE_ID - no flags
@@ -378,10 +387,10 @@ def testUpdate100(t, env):
     sess1 = c1.create_session()
     # confirmed==True, verf != old_verf, princ != old_princ
     # This is an example of case 8 from draft-21
-    c2 = env.c1.new_client(env.testname(t), verf=env.new_verifier(),
+    res = _raw_exchange_id(env.c1, env.testname(t), verf=env.new_verifier(),
                            cred=env.cred2,
-                           flags=EXCHGID4_FLAG_UPD_CONFIRMED_REC_A,
-                           expect=NFS4ERR_NOT_SAME)
+                           flags=EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
+    checklist(res, [NFS4ERR_NOT_SAME, NFS4ERR_PERM])
     
 def testUpdate101(t, env):
     """
