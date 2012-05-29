@@ -239,6 +239,28 @@ def testNoUpdate101(t, env):
     check(res)
     # FIXME - more checks here
 
+def testNoUpdate101b(t, env):
+    """
+    
+    FLAGS: exchange_id all
+    CODE: EID5fb
+    """
+    c1 = env.c1.new_client(env.testname(t))
+    sess1 = c1.create_session()
+
+    # confirmed==True, verf != old_verf, princ == old_princ
+    # This is case 5 from draft 21
+    c2 = env.c1.new_client(env.testname(t), verf=env.new_verifier())
+
+    if c1.clientid == c2.clientid:
+        fail("Expected clientid %i to change" % c1.clientid)
+
+    sess2 = c2.create_session()
+
+    # Old session state should be discarded:
+    res = sess1.compound([])
+    check(res, NFS4ERR_BADSESSION)
+
 def testNoUpdate110(t, env):
     """
     
