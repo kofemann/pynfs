@@ -329,11 +329,11 @@ class ClientRecord(object):
                  for handle in handles]
         self.ssv_creds.extend(creds)
 
-    def create_session(self,
+    def _create_session(self,
                        flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
-                       fore_attrs=None, back_attrs=None, sec=None, prog=None):
-        max_retries = 10
-        delay_time = 1
+                       fore_attrs=None, back_attrs=None, sec=None,
+                       prog=None,
+                       max_retries=1, delay_time=1):
         chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
         if fore_attrs is None:
             fore_attrs = chan_attrs
@@ -352,6 +352,14 @@ class ClientRecord(object):
             if res.status != NFS4ERR_DELAY:
                 break
             time.sleep(delay_time)
+        return res;
+
+    def create_session(self,
+                       flags=CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
+                       fore_attrs=None, back_attrs=None, sec=None, prog=None):
+        res = self._create_session(flags=flags,
+                        fore_attrs=fore_attrs, back_attrs=back_attrs,
+                        sec=sec, prog=prog, max_retries=10);
         nfs4lib.check(res)
         return self._add_session(res.resarray[0])
 

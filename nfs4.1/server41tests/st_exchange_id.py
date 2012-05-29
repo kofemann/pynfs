@@ -204,6 +204,8 @@ def testNoUpdate100(t, env):
     """
     c1 = env.c1.new_client(env.testname(t), cred=env.cred1)
     sess1 = c1.create_session()
+    res = c1.c.compound([op.destroy_session(sess1.sessionid)])
+    check(res)
     # confirmed==True, verf != old_verf, princ != old_princ, no state
     # This is an example of case 3 from draft 21
     c2 = env.c1.new_client(env.testname(t), cred=env.cred2,
@@ -211,8 +213,8 @@ def testNoUpdate100(t, env):
     if c2.clientid == c1.clientid:
         fail("Record replacement should create new clientid")
     # Check that cred1 state is destroyed
-    res = sess1.compound([])
-    check(res, NFS4ERR_BADSESSION)
+    res = c1._create_session()
+    check(res, NFS4ERR_STALE_CLIENTID)
 
 # Need similar tests of 100 for expired lease, existing state (IN_USE)
 
@@ -245,6 +247,8 @@ def testNoUpdate110(t, env):
     """
     c1 = env.c1.new_client(env.testname(t), cred=env.cred1)
     sess1 = c1.create_session()
+    res = c1.c.compound([op.destroy_session(sess1.sessionid)])
+    check(res)
     # confirmed==True, verf == old_verf, princ != old_princ
     # This is an example of case 3 from draft 21
     c2 = env.c1.new_client(env.testname(t), cred=env.cred2)
