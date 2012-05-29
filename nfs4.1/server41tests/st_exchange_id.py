@@ -232,10 +232,9 @@ def testNoUpdate101(t, env):
     if c1.clientid == c2.clientid:
         fail("Expected clientid %i to change" % c1.clientid)
 
-    # Old session state should have been discarded
-    # BUG - first have to confirm new state
+    # Old session state should not be discarded until confirm:
     res = sess1.compound([])
-    check(res, NFS4ERR_BADSESSION)
+    check(res)
     # FIXME - more checks here
 
 def testNoUpdate110(t, env):
