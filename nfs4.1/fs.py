@@ -1386,7 +1386,8 @@ class FSLayoutFSObj(FSObject):
         # as it facilitates commits, returns, recalls etc.
         l_offset = 0
         l_len = NFS4_UINT64_MAX
-        l_mode = LAYOUTIOMODE4_RW
+        # use requested iomode
+        l_mode = arg.loga_iomode
         l_type = LAYOUT4_NFSV4_1_FILES
         self.current_layout = (l_type, l_offset, l_len, l_mode)
         return layout4(l_offset, l_len, l_mode,
