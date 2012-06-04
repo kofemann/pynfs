@@ -514,7 +514,7 @@ class ConnectionHandler(object):
                         data = self.sockets[fd].recv_records(self.rsize)
                     except socket.error:
                         data = None
-                    if data:
+                    if data is not None:
                         self._event_read(data, fd)
                     else:
                         self._event_close(fd)
