@@ -786,6 +786,8 @@ class Info(object):
             if t.type in name_dict:
                 p = name_dict[t.type]
                 if p.parent and p.type == 'enum':
+                    if t.array:
+                        return "','.join([const.%s.get(x, x) for x in self.%s])" % (p.id, t.id)
                     return "const.%s.get(self.%s, self.%s)" % (p.id, t.id, t.id)
             return "repr(self.%s)" % t.id
         indent2 = prefix + indent
