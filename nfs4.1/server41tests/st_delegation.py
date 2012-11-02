@@ -43,7 +43,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess):
     checklist(res, [NFS4_OK, NFS4ERR_DELAY])
 
 def testReadDeleg(t, env):
-    """Test read delgation handout and return
+    """Test read delegation handout and return
 
     FLAGS: open deleg all
     CODE: DELEG1
@@ -52,7 +52,7 @@ def testReadDeleg(t, env):
         OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH)
 
 def testWriteDeleg(t, env):
-    """Test write delgation handout and return
+    """Test write delegation handout and return
 
     FLAGS: open deleg all
     CODE: DELEG2
@@ -61,7 +61,7 @@ def testWriteDeleg(t, env):
        OPEN4_SHARE_ACCESS_WANT_WRITE_DELEG, OPEN4_SHARE_ACCESS_READ)
 
 def testAnyDeleg(t, env):
-    """Test any delgation handout and return
+    """Test any delegation handout and return
 
     FLAGS: open deleg all
     CODE: DELEG3
@@ -70,7 +70,7 @@ def testAnyDeleg(t, env):
         OPEN4_SHARE_ACCESS_WANT_ANY_DELEG, OPEN4_SHARE_ACCESS_BOTH);
 
 def testNoDeleg(t, env):
-    """Test no delgation handout
+    """Test no delegation handout
 
     FLAGS: open deleg all
     CODE: DELEG4
