@@ -20,7 +20,6 @@ def testReadDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    # c1 - OPEN - READ
     c1 = env.c1.new_client("%s_1" % env.testname(t))
     c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
     c1.cb_post_hook(OP_CB_RECALL, post_hook)
@@ -34,7 +33,6 @@ def testReadDeleg(t, env):
     deleg = res.resarray[-2].delegation
     if deleg.delegation_type == OPEN_DELEGATE_NONE or deleg.delegation_type == OPEN_DELEGATE_NONE_EXT:
         fail("Could not get delegation")
-    # c2 - OPEN - WRITE
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
@@ -65,7 +63,6 @@ def testWriteDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    # c1 - OPEN - WRITE
     c1 = env.c1.new_client("%s_1" % env.testname(t))
     c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
     c1.cb_post_hook(OP_CB_RECALL, post_hook)
@@ -79,7 +76,6 @@ def testWriteDeleg(t, env):
     deleg = res.resarray[-2].delegation
     if deleg.delegation_type == OPEN_DELEGATE_NONE or deleg.delegation_type == OPEN_DELEGATE_NONE_EXT:
         fail("Could not get delegation")
-    # c2 - OPEN - READ
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
@@ -110,7 +106,6 @@ def testAnyDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    # c1 - OPEN - READ
     c1 = env.c1.new_client("%s_1" % env.testname(t))
     c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
     c1.cb_post_hook(OP_CB_RECALL, post_hook)
@@ -124,7 +119,6 @@ def testAnyDeleg(t, env):
     deleg = res.resarray[-2].delegation
     if deleg.delegation_type == OPEN_DELEGATE_NONE or deleg.delegation_type == OPEN_DELEGATE_NONE_EXT:
         fail("Could not get delegation")
-    # c2 - OPEN - WRITE
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
