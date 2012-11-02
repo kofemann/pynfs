@@ -38,3 +38,17 @@
 	- note nfs4client.py is false parallelism.
 	- make testserver.py work for both, move to top level?
 	- revisit Fred's email
+
+- Add pynfs test to make sure server allows reclaims on next
+  reboot iff client has done reclaim_complete?  Unfortunately
+  I think this would be linux-specific.  What to do?:
+        - lock(file, range 0-2)
+        - send reclaim_complete
+        - reboot
+        - reclaim lock(file, range 3-4)
+        - reboot
+        - reclaim lock(file, range 3-4)
+        - if second succeeds (so server does not track individual
+          locks), then second should fail (because client did
+          not reclaim_complete)
+  ? But that's still not completely right
