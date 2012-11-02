@@ -20,11 +20,9 @@ def testReadDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
-    c1.cb_post_hook(OP_CB_RECALL, post_hook)
-    sess1 = c1.create_session()
-    sess1.compound([op.reclaim_complete(FALSE)])
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
@@ -63,11 +61,9 @@ def testWriteDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
-    c1.cb_post_hook(OP_CB_RECALL, post_hook)
-    sess1 = c1.create_session()
-    sess1.compound([op.reclaim_complete(FALSE)])
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_BOTH |
                       OPEN4_SHARE_ACCESS_WANT_WRITE_DELEG)
@@ -106,11 +102,9 @@ def testAnyDeleg(t, env):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c1.cb_pre_hook(OP_CB_RECALL, pre_hook)
-    c1.cb_post_hook(OP_CB_RECALL, post_hook)
-    sess1 = c1.create_session()
-    sess1.compound([op.reclaim_complete(FALSE)])
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_ANY_DELEG)
@@ -143,9 +137,7 @@ def testNoDeleg(t, env):
     FLAGS: open deleg all
     CODE: DELEG4
     """
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    sess1 = c1.create_session()
-    sess1.compound([op.reclaim_complete(FALSE)])
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_NO_DELEG)
