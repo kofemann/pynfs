@@ -635,6 +635,7 @@ class ConnectionHandler(object):
         call_info.header_size = msg.length
         call_info.payload_size = len(msg_data)
         call_info.connection = pipe
+        call_info.raw_cred = msg.body.cred
         notify = None
         try:
             # Check for reasons to DENY the call
