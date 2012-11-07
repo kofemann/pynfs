@@ -18,7 +18,7 @@ def _create_file_with_deleg(sess, name, access):
         fail("Could not get delegation")
     return fh
 
-def _testDeleg(t, env, openaccess, want, breakaccess, sec = None):
+def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     recall = threading.Event()
     def pre_hook(arg, env):
         recall.stateid = arg.stateid # NOTE this must be done before set()
@@ -29,6 +29,8 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None):
     sess1 = env.c1.new_client_session("%s_1" % env.testname(t), sec = sec)
     sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
     sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
+    if sec2:
+        sess1.compound([op.backchannel_ctl(env.c1.prog, sec2)])
     fh = _create_file_with_deleg(sess1, env.testname(t), openaccess | want)
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
@@ -124,3 +126,23 @@ def testCBSecParmsNull(t, env):
     if recall.cred.flavor != AUTH_NONE:
         fail("expected callback flavor %d, got %d"
                 % (AUTH_NONE, recall.cred.flavor))
+
+def testCBSecParmsChange(t, env):
+    """Test changing of auth_sys callbacks with backchannel_ctl
+
+    FLAGS: create_session open deleg backchannel_ctl all
+    CODE: DELEG7
+    """
+    uid1 = 17
+    gid1 = 19
+    sys_cred1 = cbsp_sy_cred = authsys_parms(13, "fake name", uid1, gid1, [])
+    uid2 = 29
+    gid2 = 31
+    sys_cred2 = cbsp_sy_cred = authsys_parms(13, "fake name", uid2, gid2, [])
+    recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
+        OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
+        sec  = [callback_sec_parms4(AUTH_SYS, sys_cred1)],
+        sec2 = [callback_sec_parms4(AUTH_SYS, sys_cred2)])
+    if recall.cred.body.uid != uid2 or recall.cred.body.gid != gid2:
+        fail("expected callback with uid, gid == %d, %d, got %d, %d"
+                % (uid2, gid2, recall.cred.body.uid, recall.cred.body.gid))
