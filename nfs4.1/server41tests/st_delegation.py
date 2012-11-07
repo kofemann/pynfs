@@ -18,14 +18,15 @@ def _create_file_with_deleg(sess, name, access):
         fail("Could not get delegation")
     return fh
 
-def _testDeleg(t, env, openaccess, want, breakaccess):
+def _testDeleg(t, env, openaccess, want, breakaccess, sec = None):
     recall = threading.Event()
     def pre_hook(arg, env):
         recall.stateid = arg.stateid # NOTE this must be done before set()
+        recall.cred = env.cred.raw_cred.body
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t), sec = sec)
     sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
     sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
     fh = _create_file_with_deleg(sess1, env.testname(t), openaccess | want)
@@ -45,6 +46,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess):
     # Now get OPEN reply
     res = sess2.listen(slot)
     checklist(res, [NFS4_OK, NFS4ERR_DELAY])
+    return recall
 
 def testReadDeleg(t, env):
     """Test read delegation handout and return
@@ -102,39 +104,10 @@ def testCBSecParms(t, env):
     """
     uid = 17
     gid = 19
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
     sys_cred = cbsp_sys_cred = authsys_parms(13, "fake name", uid, gid, [])
-    sess1 = c1.create_session(sec = [callback_sec_parms4(AUTH_SYS, sys_cred)])
-    sess1.compound([op.reclaim_complete(FALSE)])
-
-    recall = threading.Event()
-    def pre_hook(arg, env):
-        recall.stateid = arg.stateid
-        recall.cred = env.cred.raw_cred.body
-        env.notify = recall.set
-    def post_hook(arg, env, res):
-        return res
-
-    sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
-    sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
-    fh = _create_file_with_deleg(sess1, env.testname(t),
-            OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
-    claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
-    how = openflag4(OPEN4_NOCREATE)
-    open_op = op.open(0, OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE, owner, how, claim)
-    slot = sess2.compound_async(env.home + [open_op])
-    # Wait for recall, and return delegation
-    recall.wait() # STUB - deal with timeout
-    # Getting here means CB_RECALL reply is in the send queue.
-    # Give it a moment to actually be sent
+    recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
+        OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
+        sec = [callback_sec_parms4(AUTH_SYS, sys_cred)])
     if recall.cred.uid != uid or recall.cred.gid != gid:
         fail("expected callback with uid, gid == %d, %d, got %d, %d"
                 % (uid, gid, recall.cred.uid, recall.cred.gid))
-    env.sleep(.1)
-    res = sess1.compound([op.putfh(fh), op.delegreturn(recall.stateid)])
-    check(res)
-    # Now get OPEN reply
-    res = sess2.listen(slot)
-    checklist(res, [NFS4_OK, NFS4ERR_DELAY])

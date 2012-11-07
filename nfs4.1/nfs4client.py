@@ -289,9 +289,9 @@ class NFS4Client(rpc.Client, rpc.Server):
         else:
             return None
 
-    def new_client_session(self, name, flags=0):
+    def new_client_session(self, name, flags=0, sec=None):
         c = self.new_client(name, flags=flags)
-        s = c.create_session()
+        s = c.create_session(sec=sec)
         s.compound([op.reclaim_complete(FALSE)])
         return s
 
