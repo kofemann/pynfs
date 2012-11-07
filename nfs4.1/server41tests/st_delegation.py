@@ -40,7 +40,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None):
     recall.wait() # STUB - deal with timeout
     # Getting here means CB_RECALL reply is in the send queue.
     # Give it a moment to actually be sent
-    env.sleep(1)
+    env.sleep(.1)
     res = sess1.compound([op.putfh(fh), op.delegreturn(recall.stateid)])
     check(res)
     # Now get OPEN reply
