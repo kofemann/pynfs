@@ -104,7 +104,7 @@ def testCBSecParms(t, env):
     """
     uid = 17
     gid = 19
-    sys_cred = cbsp_sys_cred = authsys_parms(13, "fake name", uid, gid, [])
+    sys_cred = authsys_parms(13, "fake name", uid, gid, [])
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
         OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
         sec = [callback_sec_parms4(AUTH_SYS, sys_cred)])
