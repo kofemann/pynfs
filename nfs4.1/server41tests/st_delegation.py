@@ -111,3 +111,16 @@ def testCBSecParms(t, env):
     if recall.cred.body.uid != uid or recall.cred.body.gid != gid:
         fail("expected callback with uid, gid == %d, %d, got %d, %d"
                 % (uid, gid, recall.cred.body.uid, recall.cred.body.gid))
+
+def testCBSecParmsNull(t, env):
+    """Test auth_null callbacks
+
+    FLAGS: create_session open deleg all
+    CODE: DELEG6
+    """
+    recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
+        OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
+        sec = [callback_sec_parms4(AUTH_NONE)])
+    if recall.cred.flavor != AUTH_NONE:
+        fail("expected callback flavor %d, got %d"
+                % (AUTH_NONE, recall.cred.flavor))
