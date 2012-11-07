@@ -22,7 +22,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None):
     recall = threading.Event()
     def pre_hook(arg, env):
         recall.stateid = arg.stateid # NOTE this must be done before set()
-        recall.cred = env.cred.raw_cred.body
+        recall.cred = env.cred.raw_cred
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
@@ -108,6 +108,6 @@ def testCBSecParms(t, env):
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
         OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
         sec = [callback_sec_parms4(AUTH_SYS, sys_cred)])
-    if recall.cred.uid != uid or recall.cred.gid != gid:
+    if recall.cred.body.uid != uid or recall.cred.body.gid != gid:
         fail("expected callback with uid, gid == %d, %d, got %d, %d"
-                % (uid, gid, recall.cred.uid, recall.cred.gid))
+                % (uid, gid, recall.cred.body.uid, recall.cred.body.gid))
