@@ -8,6 +8,16 @@ import nfs4_ops as op
 import nfs4lib
 import threading
 
+def _create_file_with_deleg(sess, name, access):
+    res = create_file(sess, name, access = access)
+    check(res)
+    fh = res.resarray[-1].object
+    deleg = res.resarray[-2].delegation
+    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
+           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
+        fail("Could not get delegation")
+    return fh
+
 def _testDeleg(t, env, openaccess, want, breakaccess):
     recall = threading.Event()
     def pre_hook(arg, env):
@@ -18,13 +28,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess):
     sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
     sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
     sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
-    res = create_file(sess1, env.testname(t), access = openaccess | want)
-    check(res)
-    fh = res.resarray[-1].object
-    deleg = res.resarray[-2].delegation
-    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
-           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
-        fail("Could not get delegation")
+    fh = _create_file_with_deleg(sess1, env.testname(t), openaccess | want)
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
@@ -113,13 +117,8 @@ def testCBSecParms(t, env):
 
     sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
     sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
-    res = create_file(sess1, env.testname(t), access = OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    check(res)
-    fh = res.resarray[-1].object
-    deleg = res.resarray[-2].delegation
-    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
-           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
-        fail("Could not get delegation")
+    fh = _create_file_with_deleg(sess1, env.testname(t),
+            OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
