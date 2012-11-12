@@ -330,7 +330,10 @@ def makeStaleId(stateid):
 
     NOTE this looks into server opaque data, thus is very specific
     to the CITI linux server.  All tests which use this function have
-    the flag 'staleid'
+    the flag 'staleid'. This is also valid for Ganesha (and probably
+    other server implementations, putting a 32 bit epoch into the
+    first 32 bits of the stateid is the easiest way to detect stale
+    stateid after reboot).
     """
     # The first 4 bytes of the linux stateid correspond to a time.
     # Choose a value older than any reasonable time, without
@@ -343,12 +346,28 @@ def makeBadID(stateid):
     """Given a good stateid, makes it bad
 
     NOTE this looks into server opaque data, thus is very specific
-    to the CITI linux server.  All tests which use this function have
-    the flag 'badid'
+    to server implementation. Consider this version of the function
+    an example.
     """
 
     boottime = stateid.other[0:4]
-    bad = stateid4(stateid.seqid , boottime+"\0\0\0\0\0\0\0\0")
+    bad = stateid4(stateid.seqid , boottime+"\07\07\07\07\07\07\07\07")
+    return bad
+
+def makeBadIDganesha(stateid):
+    """Given a good stateid, makes it bad
+
+    NOTE this looks into server opaque data, thus is very specific
+    to the Ganesha server.  All tests which use this function have
+    the flag 'ganesha'
+    """
+
+    # Ganesha encodes the clientid into the first 64 bits of the 96 bit
+    # other field, and then a 32 bit counter. We set that counter to 0
+    # to simulate a bad stateid.
+
+    clientid = stateid.other[0:8]
+    bad = stateid4(stateid.seqid , clientid+"\0\0\0\0")
     return bad
 
 def compareTimes(time1, time2):
