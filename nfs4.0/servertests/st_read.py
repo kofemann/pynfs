@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, makeBadID, makeStaleId
+from environment import check, checklist, makeBadID, makeBadIDganesha, makeStaleId
 
 def _compare(t, res, expect, eof=True):
     def shorten(str):
@@ -181,6 +181,18 @@ def testNoFh(t, env):
 # RD9 requires a server specific manipulation of the stateid
 #     each server will have it's own implementation, there is
 #     no general version.
+def testBadStateidGanesha(t, env):
+    """READ with bad stateid should return NFS4ERR_BAD_STATEID
+
+    FLAGS: ganesha
+    DEPEND: MKFILE
+    CODE: RD9g
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    res = c.read_file(fh, stateid=makeBadIDganesha(stateid))
+    check(res, NFS4ERR_BAD_STATEID, "READ with bad stateid")
 
 def testStaleStateid(t, env):
     """READ with stale stateid should return NFS4ERR_STALE_STATEID

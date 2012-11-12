@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, compareTimes, makeBadID, makeStaleId
+from environment import check, checklist, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 
 _text = 'write data' # len=10
 
@@ -276,6 +276,18 @@ def testShareDeny(t, env):
 # WRT10 requires a server specific manipulation of the stateid
 #       each server will have it's own implementation, there is
 #       no general version.
+def testBadStateidGanesha(t, env):
+    """WRITE with bad stateid should return NFS4ERR_BAD_STATEID
+
+    FLAGS: ganesha
+    DEPEND: MKFILE
+    CODE: WRT10g
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    res = c.write_file(fh, _text, 0, makeBadIDganesha(stateid))
+    check(res, NFS4ERR_BAD_STATEID, "WRITE with bad stateid")
     
 def testStaleStateid(t, env):
     """WRITE with stale stateid should return NFS4ERR_STALE_STATEID

@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import stateid4
-from environment import check, checklist, get_invalid_clientid, makeStaleId
+from environment import check, checklist, get_invalid_clientid, makeStaleId, makeBadIDganesha
 import time
 
 def testFile(t, env):
@@ -341,6 +341,19 @@ def testBadStateid(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     res = c.lock_file(t.code, fh, stateid4(0, ''))
+    check(res, NFS4ERR_BAD_STATEID, "LOCK with a bad stateid")
+
+def testBadStateidganesha(t, env):
+    """LOCK should return NFS4ERR_BAD_STATEID if use a bad id
+
+    FLAGS: ganesha
+    DEPEND: MKFILE
+    CODE: LOCK11g
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    res = c.lock_file(t.code, fh, makeBadIDganesha(stateid))
     check(res, NFS4ERR_BAD_STATEID, "LOCK with a bad stateid")
 
 def testStaleLockStateid(t, env):
