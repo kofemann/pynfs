@@ -178,18 +178,9 @@ def testNoFh(t, env):
     res = c.read_file(None)
     check(res, NFS4ERR_NOFILEHANDLE, "READ with no <cfh>")
 
-def testBadStateid(t, env):
-    """READ with bad stateid should return NFS4ERR_BAD_STATEID
-
-    FLAGS: read badid all
-    DEPEND: MKFILE
-    CODE: RD9
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.read_file(fh, stateid=makeBadID(stateid))
-    check(res, NFS4ERR_BAD_STATEID, "READ with bad stateid")
+# RD9 requires a server specific manipulation of the stateid
+#     each server will have it's own implementation, there is
+#     no general version.
 
 def testStaleStateid(t, env):
     """READ with stale stateid should return NFS4ERR_STALE_STATEID

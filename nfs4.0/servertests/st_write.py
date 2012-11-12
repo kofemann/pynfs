@@ -273,18 +273,9 @@ def testShareDeny(t, env):
     res = c.write_file(fh, _text)
     check(res, NFS4ERR_LOCKED, "WRITE to file with DENY set")
     
-def testBadStateid(t, env):
-    """WRITE with bad stateid should return NFS4ERR_BAD_STATEID
-
-    FLAGS: write badid all
-    DEPEND: MKFILE
-    CODE: WRT10
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.write_file(fh, _text, 0, makeBadID(stateid))
-    check(res, NFS4ERR_BAD_STATEID, "WRITE with bad stateid")
+# WRT10 requires a server specific manipulation of the stateid
+#       each server will have it's own implementation, there is
+#       no general version.
     
 def testStaleStateid(t, env):
     """WRITE with stale stateid should return NFS4ERR_STALE_STATEID
