@@ -98,7 +98,8 @@ def testNoSfh(t, env):
     CODE: LINK2
     """
     c = env.c1
-    ops = [c.putrootfh_op(), c.link_op(t.code)]
+    ops = c.go_home()
+    ops += [c.link_op(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LINK with no <sfh>")
 
