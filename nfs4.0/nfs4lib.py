@@ -472,6 +472,9 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
     def lookup_path(self, dir):
         return [self.lookup_op(comp) for comp in dir]
 
+    def lookupp_path(self, dir):
+    	return [self.lookupp_op() for comp in dir]
+
     def go_home(self):
         """Return LOOKUP ops to get to homedir"""
         return [self.putrootfh_op()] + self.lookup_path(self.homedir)
