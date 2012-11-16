@@ -207,7 +207,7 @@ class Environment(testmod.Environment):
 
     def sleep(self, sec, msg=''):
         """Sleep for given seconds"""
-        print "Sleeping for %i seconds:" % sec, msg
+        print "Sleeping for %g seconds:" % sec, msg
         time.sleep(sec)
         print "Woke up"
 
