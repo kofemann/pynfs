@@ -1,8 +1,8 @@
 from nfs4_const import *
 from environment import check, checklist
-from nfs4_type import exist_lock_owner4, locker4
+from nfs4_type import *
 
-def _replay(c, ops, error=NFS4_OK):
+def _replay(env, c, ops, error=NFS4_OK):
     # Can send in an error list, but replays must return same error as orig
     if type(error) is list:
         check_funct = checklist
@@ -15,8 +15,19 @@ def _replay(c, ops, error=NFS4_OK):
     orig_funct = c.get_new_xid
     try:
         c.get_new_xid = lambda : xid
+
+        # note: this is really cheesy: we happen to know the current
+        # Linux server implementation will drop a replay if it comes
+        # "too quickly" (<.02 seconds).
+        # Also, note no 4.0 client should really be replaying like this
+        # without reconnecting first, so this test is really acting like
+        # a buggy client and a server would probably be in its rights to
+        # ignore these replays or return unexpected errors:
+
+        env.sleep(.3)
         res = c.compound(ops)
         check(res, error, "Replay the first time")
+        env.sleep(.3)
         res = c.compound(ops)
         check(res, error, "Replay the second time")
     finally:
@@ -33,7 +44,7 @@ def testOpen(t, env):
     c.init_connection()
     ops = c.use_obj(c.homedir)
     ops += [c.open(t.code, type=OPEN4_CREATE), c.getfh_op()]
-    _replay(c, ops)
+    _replay(env, c, ops)
     # Note that seqid is now off on this and other replay tests
 
 
@@ -49,7 +60,7 @@ def testReplayState1(t, env):
     c.maketree([t.code])
     ops = c.use_obj(c.homedir + [t.code])
     ops += [c.open(t.code, 'vapor'), c.getfh_op()]
-    _replay(c, ops, NFS4ERR_NOENT)
+    _replay(env, c, ops, NFS4ERR_NOENT)
     
 def testReplayState2(t, env):
     """REPLAY an erroneous OPEN of a dir
@@ -63,7 +74,7 @@ def testReplayState2(t, env):
     c.maketree([t.code])
     ops = c.use_obj(c.homedir)
     ops += [c.open(t.code), c.getfh_op()]
-    _replay(c, ops, NFS4ERR_ISDIR)
+    _replay(env, c, ops, NFS4ERR_ISDIR)
 
 def testReplayNonState(t, env):
     """REPLAY an erroneous LOOKUP
@@ -75,7 +86,7 @@ def testReplayNonState(t, env):
     c = env.c1
     c.maketree([t.code])
     ops = c.use_obj(c.homedir + [t.code, 'vapor'])
-    _replay(c, ops, NFS4ERR_NOENT)
+    _replay(env, c, ops, NFS4ERR_NOENT)
 
 def testLock(t, env):
     """REPLAY a LOCK command
@@ -95,7 +106,7 @@ def testLock(t, env):
     lock_owner = exist_lock_owner4(res.lockid, 1)
     locker = locker4(FALSE, lock_owner=lock_owner)
     ops += [c.lock_op(WRITE_LT, FALSE, 0, 10, locker)]
-    _replay(c, ops)
+    _replay(env, c, ops)
     
 def testLockDenied(t, env):
     """REPLAY a LOCK command that fails
@@ -117,7 +128,7 @@ def testLockDenied(t, env):
     lock_owner = exist_lock_owner4(res1.lockid, 1)
     locker = locker4(FALSE, lock_owner=lock_owner)
     ops += [c.lock_op(WRITE_LT, FALSE, 0, 10, locker)]
-    _replay(c, ops, NFS4ERR_DENIED)
+    _replay(env, c, ops, NFS4ERR_DENIED)
     
 def testUnlock(t, env):
     """REPLAY a LOCKU command
@@ -133,7 +144,7 @@ def testUnlock(t, env):
     check(res, msg="Locking file %s" % t.code)
     ops = c.use_obj(fh)
     ops += [c.locku_op(READ_LT, 1, res.lockid, 0, 0xffffffffffffffff)]
-    _replay(c, ops)
+    _replay(env, c, ops)
 
 def testUnlockWait(t, env):
     """REPLAY a LOCKU command after lease has expired
@@ -151,7 +162,7 @@ def testUnlockWait(t, env):
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
     ops += [c.locku_op(READ_LT, 1, res.lockid, 0, 0xffffffffffffffff)]
-    _replay(c, ops, [NFS4_OK, NFS4ERR_EXPIRED])
+    _replay(env, c, ops, [NFS4_OK, NFS4ERR_EXPIRED])
 
 def testClose(t, env):
     """REPLAY a CLOSE command
@@ -165,7 +176,7 @@ def testClose(t, env):
     fh, stateid = c.create_confirm(t.code)
     ops = c.use_obj(fh)
     ops += [c.close_op(c.get_seqid(t.code), stateid)]
-    _replay(c, ops)
+    _replay(env, c, ops)
     
 def testCloseWait(t, env):
     """REPLAY a CLOSE command after lease has expired
@@ -181,7 +192,7 @@ def testCloseWait(t, env):
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
     ops += [c.close_op(c.get_seqid(t.code), stateid)]
-    _replay(c, ops, [NFS4_OK, NFS4ERR_EXPIRED])
+    _replay(env, c, ops, [NFS4_OK, NFS4ERR_EXPIRED])
     
 def testCloseFail(t, env):
     """REPLAY a CLOSE command that fails
@@ -195,7 +206,7 @@ def testCloseFail(t, env):
     fh, stateid = c.create_confirm(t.code)
     ops = c.use_obj(fh)
     ops += [c.close_op(c.get_seqid(t.code)+1, stateid)]
-    _replay(c, ops, NFS4ERR_BAD_SEQID)
+    _replay(env, c, ops, NFS4ERR_BAD_SEQID)
     
 def testOpenConfirm(t, env):
     """REPLAY an OPEN_CONFIRM command
@@ -215,7 +226,7 @@ def testOpenConfirm(t, env):
         t.pass_warn("OPEN did not require CONFIRM")
     ops = c.use_obj(fh)
     ops += [c.open_confirm_op(stateid, c.get_seqid(t.code))]
-    _replay(c, ops)
+    _replay(env, c, ops)
     
 def testOpenConfirmFail(t, env):
     """REPLAY an OPEN_CONFIRM command that fails
@@ -235,4 +246,16 @@ def testOpenConfirmFail(t, env):
         t.pass_warn("OPEN did not require CONFIRM")
     ops = c.use_obj(fh)
     ops += [c.open_confirm_op(stateid, c.get_seqid(t.code)+1)]
-    _replay(c, ops, NFS4ERR_BAD_SEQID)
+    _replay(env, c, ops, NFS4ERR_BAD_SEQID)
+
+def testMkdirReplay(t, env):
+    """REPLAY a succesful directory CREATE
+
+    FLAGS: replay all
+    DEPEND: MKDIR
+    CODE: RPLY14
+    """
+    c = env.c1
+    c.init_connection()
+    ops = c.go_home() + [c.create_op(createtype4(NF4DIR), t.code, {})]
+    _replay(env, c, ops)
