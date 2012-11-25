@@ -15,7 +15,7 @@ def testStale(t, env):
 def testBadConfirm(t, env):
     """SETCLIENTID_CONFIRM with case not covered in RFC
 
-    FLAGS: setclientidconfirm all
+    FLAGS:
     CODE: CIDCF2
     """
     c = env.c1
