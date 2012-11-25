@@ -551,7 +551,7 @@ def testReadLocks2(t, env):
 def testFairness(t, env):
     """MULTIPLE blocking locks may or may not be fair
 
-    FLAGS: lock all
+    FLAGS: fairlocks
     DEPEND: MKFILE
     CODE: LOCK18
     """
@@ -590,7 +590,7 @@ def testFairness(t, env):
 def testBlockPoll(t, env):
     """Can we handle blocking lock polling
 
-    FLAGS: lock timed all
+    FLAGS: fairlocks
     DEPEND: MKFILE
     CODE: LOCK19
     """
@@ -677,7 +677,7 @@ def testBlockTimeout(t, env):
 def testBlockingQueue(t, env):
     """MULTIPLE blocking locks queued up
 
-    FLAGS: lock all
+    FLAGS: fairlocks
     DEPEND: MKFILE
     CODE: LOCK21
     """
@@ -734,7 +734,7 @@ def testBlockingQueue(t, env):
 def testLongPoll(t, env):
     """Check queue not prematurely reaped
 
-    FLAGS: lock timed all citi
+    FLAGS: fairlocks
     DEPEND: MKFILE
     CODE: LOCK22
     """
