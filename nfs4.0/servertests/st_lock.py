@@ -237,7 +237,7 @@ def testBadOpenSeqid(t, env):
 def testNonzeroLockSeqid(t, env):
     """LOCK with newlockowner should set lockid to 0
 
-    FLAGS: lock seqid all
+    FLAGS:
     DEPEND: MKFILE
     CODE: LOCK8c
     """
