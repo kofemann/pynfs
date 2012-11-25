@@ -1,4 +1,5 @@
 from nfs4_const import *
+from nfs4_type import *
 from environment import check, checklist, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 
 _text = 'write data' # len=10
@@ -317,3 +318,20 @@ def testOldStateid(t, env):
     fh, stateid = c.confirm(t.code, res)
     res = c.write_file(fh, _text, 0, oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "WRITE with old stateid")
+
+def testDoubleWrite(t, env):
+    """Two WRITEs in a compound
+
+    FLAGS: write all
+    DEPEND: MKFILE
+    CODE: WRT13
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    ops = c.use_obj(fh)
+    ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, 'one')]
+    ops += [c.write_op(stateid4(0, ''), 3, UNSTABLE4, 'two')]
+    res = c.compound(ops)
+    res = c.read_file(fh, 0, 6)
+    _compare(t, res, 'onetwo', True)
