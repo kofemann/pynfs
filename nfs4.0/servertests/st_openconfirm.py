@@ -37,95 +37,13 @@ def testNoFh(t, env):
     res = _confirm(t, c, None, stateid)
     check(res, NFS4ERR_NOFILEHANDLE, "OPEN_CONFIRM with no <cfh>")
 
-def testDir(t, env):
-    """OPEN_CONFIRM of a dir should return NFS4ERR_ISDIR
-
-    FLAGS: openconfirm dir all
-    DEPEND: LOOKDIR
-    CODE: OPCF3d
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.usedir, stateid)
-    check(res, NFS4ERR_ISDIR, "OPEN_CONFIRM of a dir")
-
-def testLink(t, env):
-    """OPEN_CONFIRM of a nonfile object should return NFS4ERR_INVAL
-
-    FLAGS: openconfirm symlink all
-    DEPEND: LOOKLINK
-    CODE: OPCF3a
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.uselink, stateid)
-    check(res, NFS4ERR_INVAL, "OPEN_CONFIRM of a nonfile object")
-
-def testFifo(t, env):
-    """OPEN_CONFIRM of a nonfile object should return NFS4ERR_INVAL
-
-    FLAGS: openconfirm fifo all
-    DEPEND: LOOKFIFO
-    CODE: OPCF3f
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.usefifo, stateid)
-    check(res, NFS4ERR_INVAL, "OPEN_CONFIRM of a nonfile object")
-
-def testBlock(t, env):
-    """OPEN_CONFIRM of a nonfile object should return NFS4ERR_INVAL
-
-    FLAGS: openconfirm block all
-    DEPEND: LOOKBLK
-    CODE: OPCF3b
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.useblock, stateid)
-    check(res, NFS4ERR_INVAL, "OPEN_CONFIRM of a nonfile object")
-
-def testChar(t, env):
-    """OPEN_CONFIRM of a nonfile object should return NFS4ERR_INVAL
-
-    FLAGS: openconfirm char all
-    DEPEND: LOOKCHAR
-    CODE: OPCF3c
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.usechar, stateid)
-    check(res, NFS4ERR_INVAL, "OPEN_CONFIRM of a nonfile object")
-
-def testSocket(t, env):
-    """OPEN_CONFIRM of a nonfile object should return NFS4ERR_INVAL
-
-    FLAGS: openconfirm socket all
-    DEPEND: LOOKSOCK
-    CODE: OPCF3s
-    """
-    c = env.c1
-    c.init_connection()
-    res = c.create_file(t.code)
-    check(res)
-    stateid = res.resarray[-2].switch.switch.stateid
-    res = _confirm(t, c, env.opts.usesocket, stateid)
-    check(res, NFS4ERR_INVAL, "OPEN_CONFIRM of a nonfile object")
+# retiring test codes, please don't reuse:
+# OPCF3d
+# OPCF3a
+# OPCF3f
+# OPCF3b
+# OPCF3c
+# OPCF3s
 
 def testBadSeqid(t, env):
     """OPEN_CONFIRM with a bad seqid should return NFS4ERR_BAD_SEQID
