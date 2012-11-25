@@ -103,7 +103,7 @@ def testDir(t, env):
 def testLink(t, env):
     """SETATTR(FATTR4_MODE) on symlink
 
-    FLAGS: setattr symlink all
+    FLAGS:
     DEPEND: MODE MKLINK
     CODE: SATT1a
     """
