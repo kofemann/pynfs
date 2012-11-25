@@ -118,89 +118,13 @@ def testNoFh(t, env):
     res = c.downgrade_file(t.code, None, stateid)
     check(res, NFS4ERR_NOFILEHANDLE, "OPENDOWNGRADE with no <cfh>")
 
-def testDir(t, env):
-    """OPENDOWNGRADE using dir
-
-    FLAGS: opendowngrade dir all
-    DEPEND: MKFILE LOOKDIR
-    CODE: OPDG9d
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.usedir, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
-    
-def testLink(t, env):
-    """OPENDOWNGRADE using non-file object
-
-    FLAGS: opendowngrade symlink all
-    DEPEND: MKFILE LOOKLINK
-    CODE: OPDG9a
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.uselink, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
-    
-def testBlock(t, env):
-    """OPENDOWNGRADE using non-file object
-
-    FLAGS: opendowngrade block all
-    DEPEND: MKFILE LOOKBLK
-    CODE: OPDG9b
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.useblock, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
-    
-def testChar(t, env):
-    """OPENDOWNGRADE using non-file object
-
-    FLAGS: opendowngrade char all
-    DEPEND: MKFILE LOOKCHAR
-    CODE: OPDG9c
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.usechar, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
-    
-def testFifo(t, env):
-    """OPENDOWNGRADE using non-file object
-
-    FLAGS: opendowngrade fifo all
-    DEPEND: MKFILE LOOKFIFO
-    CODE: OPDG9f
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.usefifo, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
-    
-def testSocket(t, env):
-    """OPENDOWNGRADE using non-file object
-
-    FLAGS: opendowngrade socket all
-    DEPEND: MKFILE LOOKSOCK
-    CODE: OPDG9s
-    """
-    c = env.c1
-    c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, env.opts.usesocket, stateid)
-    check(res, NFS4ERR_INVAL, "OPENDOWNGRADE with nonfile object",
-          [NFS4ERR_BAD_STATEID])
+# NOTE: retired test codes, please do not reuse:
+# OPDG9a
+# OPDG9b
+# OPDG9c
+# OPDG9d
+# OPDG9f
+# OPDG9s
 
 class open_sequence:
     def __init__(self, client, owner):
