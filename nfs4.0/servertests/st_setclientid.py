@@ -31,9 +31,8 @@ def testClientReboot(t, env):
     # This should clean out client state, invalidating stateid
     c.init_connection(verifier='')
     res = c.close_file(t.code, fh, stateid)
-    check(res, NFS4ERR_OLD_STATEID,
-          "Trying to use old stateid after SETCLIENTID_CONFIRM purges state",
-          [NFS4ERR_BAD_STATEID])
+    check(res, NFS4ERR_EXPIRED,
+          "Trying to use old stateid after SETCLIENTID_CONFIRM purges state")
     
 def testClientUpdateCallback(t, env):
     """SETCLIENTID - make sure updating callback info does not invalidate state
