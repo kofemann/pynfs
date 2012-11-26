@@ -482,7 +482,22 @@ def testFSLocations(t, env):
         t.fail_support("fs_locations not a supported attribute")
     # print res.resarray[-1].obj_attributes
 
-    
+def testLotsofGetattrsFile(t, env):
+    """Send lots of getattrs
+
+    FLAGS: getattr file all
+    DEPEND: LOOKFILE
+    CODE: GATT9
+    """
+    c = env.c1
+    mandatory = [attr.bitnum for attr in env.attr_info if attr.mandatory]
+    ops = c.use_obj(env.opts.usefile)
+    for i in range(90):
+        ops += [c.getattr(mandatory)]
+    res = c.compound(ops)
+    check(res)
+
+
 ####################################################
 
     def xxxtestMountedOnFileid(self):
