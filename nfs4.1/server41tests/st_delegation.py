@@ -62,7 +62,7 @@ def testReadDeleg(t, env):
 def testWriteDeleg(t, env):
     """Test write delegation handout and return
 
-    FLAGS: open deleg all
+    FLAGS: writedelegations
     CODE: DELEG2
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_WRITE,
