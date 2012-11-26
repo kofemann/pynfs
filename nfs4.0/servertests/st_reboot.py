@@ -198,7 +198,7 @@ def testEdge2(t, env):
 def testRootSquash(t, env):
     """REBOOT root squash does not work after grace ends?
 
-    FLAGS: reboot
+    FLAGS:
     DEPEND: MKFILE MKDIR
     CODE: REBT7
     """
