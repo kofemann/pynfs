@@ -571,7 +571,8 @@ def testSizeLink(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "SETATTR(FATTR4_SIZE) of a symlink")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK],
+            "SETATTR(FATTR4_SIZE) of a symlink")
     
 def testSizeBlock(t, env):
     """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
