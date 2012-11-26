@@ -54,7 +54,8 @@ def testLink(t, env):
     c = env.c1
     ops = c.use_obj(env.opts.uselink) + [c.lookupp_op()]
     res = c.compound(ops)
-    check(res, NFS4ERR_NOTDIR, "LOOKUPP with non-dir <cfh>")
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
+                "LOOKUPP with non-dir <cfh>")
     
 def testBlock(t, env):
     """LOOKUPP with non-dir (cfh)
