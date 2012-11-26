@@ -310,8 +310,8 @@ def testClaimPrev(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS, deleg_type=OPEN_DELEGATE_NONE)
-    check(res, NFS4ERR_RECLAIM_BAD, "Trying to OPEN with CLAIM_PREVIOUS",
-          [NFS4ERR_NO_GRACE])
+    checklist(res, [NFS4ERR_RECLAIM_BAD, NFS4ERR_NO_GRACE],
+            "Trying to OPEN with CLAIM_PREVIOUS")
 
 def testModeChange(t, env):
     """OPEN conflicting with mode bits
