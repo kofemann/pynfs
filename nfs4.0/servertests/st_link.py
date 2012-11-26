@@ -143,7 +143,8 @@ def testCfhLink(t, env):
     CODE: LINK4a
     """
     res = env.c1.link(env.opts.usefile, env.opts.uselink + [t.code])
-    check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
+    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
+                "LINK with <cfh> not a directory")
 
 def testCfhBlock(t, env):
     """LINK should fail with NFS4ERR_NOTDIR if cfh is not dir
