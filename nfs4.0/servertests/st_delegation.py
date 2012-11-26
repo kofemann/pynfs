@@ -429,7 +429,7 @@ def testWriteDeleg1(t, env):
     Get write delegation, then have conflicting open recall it.
     Respond properly and send DELEGRETURN.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG11
     """
     _write_deleg(t, env, _recall)
@@ -440,7 +440,7 @@ def testWriteDeleg2(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return OK, but client never sends DELEGRETURN.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG12
     """
     _write_deleg(t, env)
@@ -451,7 +451,7 @@ def testWriteDeleg3a(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return error.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG13a
     """
     _write_deleg(t, env, None, NFS4ERR_RESOURCE)
@@ -462,7 +462,7 @@ def testWriteDeleg3b(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return error.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG13b
     """
     _write_deleg(t, env, None, NFS4ERR_SERVERFAULT)
@@ -473,7 +473,7 @@ def testWriteDeleg3c(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return error.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG13c
     """
     _write_deleg(t, env, None, NFS4ERR_BADXDR)
@@ -484,7 +484,7 @@ def testWriteDeleg3d(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return error.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG13d
     """
     _write_deleg(t, env, None, NFS4ERR_BAD_STATEID)
@@ -495,7 +495,7 @@ def testWriteDeleg3e(t, env):
     Get write delegation, then have conflicting open recall it.
     Have callback server return error.
 
-    FLAGS: delegations
+    FLAGS: writedelegations
     CODE: DELEG13e
     """
     _write_deleg(t, env, None, NFS4ERR_BADHANDLE)
