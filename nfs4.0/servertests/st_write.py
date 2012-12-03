@@ -384,3 +384,34 @@ def testSizes(t, env):
         ops += [c.getattr([FATTR4_SIZE]), c.getattr([FATTR4_SIZE])]
         res = c.compound(ops)
         check(res, msg="length %d WRITE" % i)
+
+def testLargeReadWrite(t, env):
+    """Compound with large READ and large WRITE
+
+    FLAGS: write
+    DEPEND: MKFILE
+    CODE: WRT16
+    """
+    c = env.c1
+    c.init_connection()
+    maxread, maxwrite = _get_iosize(t, c, c.homedir)
+    # linux server really should be able to handle (maxread, maxwrite)
+    # but can't:
+    size = min(maxread/4, maxwrite/4)
+    writedata = 'A'*size
+    attrs = {FATTR4_SIZE: size}
+    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+                                    deny=OPEN4_SHARE_DENY_NONE)
+    ops = c.use_obj(fh)
+    ops += [c.read_op(stateid, 0, size)]
+    ops += [c.write_op(stateid, 0, UNSTABLE4, writedata)]
+    res = c.compound(ops)
+    check(res)
+    data = res.resarray[-2].switch.switch.data
+    if len(data) != len(writedata):
+	    t.fail("READ returned %d bytes, expected %d" %
+                                    (len(data), len(writedata)))
+    if (data != '\0'*size):
+        t.fail("READ returned unexpected data")
+    res = c.read_file(fh, 0, size)
+    _compare(t, res, writedata, True)
