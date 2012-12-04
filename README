@@ -17,3 +17,5 @@ statements about the protocol--if you find that a server fails a test,
 you should consult the rfc's and think carefully before assuming that
 the server is at fault.  (However, we do appreciate patches if you find
 a test that requires incorrect behavior.)
+
+See COPYING for copyright and license information.
