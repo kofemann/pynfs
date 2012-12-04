@@ -335,3 +335,26 @@ def testDoubleWrite(t, env):
     res = c.compound(ops)
     res = c.read_file(fh, 0, 6)
     _compare(t, res, 'onetwo', True)
+
+def _get_iosize(t, c, path):
+    d = c.do_getattrdict(path, [FATTR4_MAXREAD, FATTR4_MAXWRITE])
+    # I can't find any official minimums, so these are arbitrary:
+    if FATTR4_MAXREAD not in d:
+        d[FATTR4_MAXREAD] = 128
+    if FATTR4_MAXWRITE not in d:
+        d[FATTR4_MAXWRITE] = 128
+    return d[FATTR4_MAXREAD], d[FATTR4_MAXWRITE]
+
+def testLargeWrite(t, env):
+    """large WRITE
+
+    FLAGS: write all
+    DEPEND: MKFILE
+    CODE: WRT14
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    maxread, maxwrite = _get_iosize(t, c, c.homedir)
+    res = c.write_file(fh, 'A'*maxwrite, how=UNSTABLE4)
+    check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
