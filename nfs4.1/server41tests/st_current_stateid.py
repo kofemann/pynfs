@@ -158,4 +158,4 @@ def testOpenFreestateidClose(t, env):
 
     open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
     res = sess1.compound(open_op + [op.free_stateid(current_stateid), op.close(0, current_stateid)])
-    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+    check(res, NFS4ERR_LOCKS_HELD)
