@@ -128,20 +128,23 @@ def testNoFh(t, env):
 
 class open_sequence:
     def __init__(self, client, owner):
-	self.client = client
+        self.client = client
         self.owner = owner
     def open(self, access):
-	self.fh, self.stateid = self.client.create_confirm(self.owner,
+        self.fh, self.stateid = self.client.create_confirm(self.owner,
 						access=access,
 						deny=OPEN4_SHARE_DENY_NONE,
 						mode=UNCHECKED4)
     def downgrade(self, access):
-	res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
+	    res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
 					access=access,
 					deny=OPEN4_SHARE_DENY_NONE)
-	self.stateid = res.stateid
+	    self.stateid = res.stateid
     def close(self):
-	self.client.close_file(self.owner, self.fh, self.stateid)
+        self.client.close_file(self.owner, self.fh, self.stateid)
+    def lock(self, type):
+        self.client.lock_file(self.owner, self.fh, self.stateid,
+                    type=type)
 	
 
 def testOpenDowngradeSequence(t, env):
@@ -162,4 +165,19 @@ def testOpenDowngradeSequence(t, env):
     os.open(     OPEN4_SHARE_ACCESS_WRITE)
     os.downgrade(OPEN4_SHARE_ACCESS_WRITE)
     os.open(     OPEN4_SHARE_ACCESS_READ)
+    os.close()
+
+def testOpenDowngradeLock(t, env):
+    """Try open, lock, open, downgrade, close
+
+    FLAGS: opendowngrade all lock
+    CODE: OPDG11
+    """
+    c= env.c1
+    c.init_connection()
+    os = open_sequence(c, t.code)
+    os.open(OPEN4_SHARE_ACCESS_BOTH)
+    os.lock(READ_LT)
+    os.open(OPEN4_SHARE_ACCESS_READ)
+    os.downgrade(OPEN4_SHARE_ACCESS_READ)
     os.close()
