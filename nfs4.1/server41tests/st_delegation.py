@@ -146,3 +146,63 @@ def testCBSecParmsChange(t, env):
     if recall.cred.body.uid != uid2 or recall.cred.body.gid != gid2:
         fail("expected callback with uid, gid == %d, %d, got %d, %d"
                 % (uid2, gid2, recall.cred.body.uid, recall.cred.body.gid))
+
+def testDelegRevocation(t, env):
+    """Allow a delegation to be revoked, check that TEST_STATEID and
+       FREE_STATEID have the required effect.
+
+    FLAGS: deleg all
+    CODE: DELEG8
+    """
+
+    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    res = create_file(sess1, env.testname(t),
+            access = OPEN4_SHARE_ACCESS_READ |
+                    OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
+    fh = res.resarray[-1].object
+    deleg = res.resarray[-2].delegation
+    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
+           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
+        fail("Could not get delegation")
+    delegstateid = deleg.read.stateid
+    sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
+    claim = open_claim4(CLAIM_NULL, env.testname(t))
+    owner = open_owner4(0, "My Open Owner 2")
+    how = openflag4(OPEN4_NOCREATE)
+    open_op = op.open(0, OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE,
+                        owner, how, claim)
+    while 1:
+        res = sess2.compound(env.home + [open_op])
+        if res.status == NFS4_OK:
+            break;
+        checklist(res, [NFS4_OK, NFS4ERR_DELAY])
+	# just to keep sess1 renewed.  This is a bit fragile, as we
+        # depend on the above compound waiting no longer than the
+        # server's lease period:
+        res = sess1.compound([])
+    slot, seq_op = sess1._prepare_compound({})
+    res = sess1.c.compound([seq_op])
+    flags = res.resarray[0].sr_status_flags;
+    if not(flags & SEQ4_STATUS_RECALLABLE_STATE_REVOKED):
+        fail("SEQ4_STATUS_RECALLABLE_STATE_REVOKED should be set after"
+             " sucess of open conflicting with delegation")
+    flags &= ~SEQ4_STATUS_RECALLABLE_STATE_REVOKED
+    if flags:
+	print("WARNING: unexpected status flag(s) 0x%x set" % flags);
+    res = sess1.update_seq_state(res, slot)
+    res = sess1.compound([op.test_stateid([delegstateid])])
+    stateid_stat = res.resarray[0].tsr_status_codes[0]
+    if stateid_stat != NFS4ERR_DELEG_REVOKED:
+        fail("TEST_STATEID on revoked stateid should report status"
+             " NFS4ERR_DELEG_REVOKED, instead got %s" %
+             nfsstat4[stateid_stat]);
+    res = sess1.compound([op.free_stateid(delegstateid)])
+    check(res)
+    slot, seq_op = sess1._prepare_compound({})
+    res = sess1.c.compound([seq_op])
+    flags = res.resarray[0].sr_status_flags
+    if flags & SEQ4_STATUS_RECALLABLE_STATE_REVOKED:
+	fail("SEQ4_STATUS_RECALLABLE_STATE_REVOKED should be cleared after"
+	     " FREE_STATEID")
+    if flags & ~SEQ4_STATUS_RECALLABLE_STATE_REVOKED:
+        print("WARNING: unexpected status flag(s) 0x%x set" % flags)
