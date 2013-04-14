@@ -1,0 +1,48 @@
+
+Note the ietf's nfs4.x doesn't work unchanged.  I'm not sure whether
+these are bugs in rpcgen.py or in the .x file itself, or something else:
+
+---
+diff --git a/nfs4.1/nfs4.x b/nfs4.1/nfs4.x
+index 96b037d..88cb58b 100644
+--- a/nfs4.1/nfs4.x
++++ b/nfs4.1/nfs4.x
+@@ -58,16 +58,32 @@
+ %typedef struct authsys_parms authsys_parms;
+ %#endif /* _AUTH_SYS_DEFINE_FOR_NFSv41 */
+ 
++/* See nfs4.x.diff for changes made from ietf version: */
++
++const FALSE = 0;
++const TRUE = 1;
++
++const AUTH_NONE  = 0;
++const AUTH_SYS   = 1;
++const RPCSEC_GSS = 6;
++
++struct authsys_parms {
++        unsigned int stamp;
++        string machinename<255>;
++        unsigned int uid;
++        unsigned int gid;
++        unsigned int gids<16>;
++};
++
++
+ /*
+  * Basic typedefs for RFC 1832 data type definitions
+  */
+ 
+-/*
+- * typedef int                  int32_t;
+- * typedef unsigned int         uint32_t;
+- * typedef hyper                int64_t;
+- * typedef unsigned hyper       uint64_t;
+- */
++typedef int                  int32_t;
++typedef unsigned int         uint32_t;
++typedef hyper                int64_t;
++typedef unsigned hyper       uint64_t;
+ 
+ /*
+  * Sizes
