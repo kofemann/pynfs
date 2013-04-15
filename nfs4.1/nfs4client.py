@@ -260,7 +260,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         # AT this point we are not allowed to return an error
         env.caching = arg.csa_cachethis
         env.session = session
-        res = CB_SEQUENCE4resok(session.sessionid, inc_u32(slot.seqid),
+        res = CB_SEQUENCE4resok(session.sessionid, slot.seqid,
                                 arg.csa_slotid,
                                 channel.maxrequests, channel.maxrequests)# STUB
         res = self.posthook(arg, env, res)
