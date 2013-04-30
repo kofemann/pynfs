@@ -378,7 +378,7 @@ def testDotsNewname(t, env):
           [NFS4_OK])
 
 def testDirToObj(t, env):
-    """RENAME dir into existing nondir should return NFS4ERR_EXIST
+    """RENAME dir into existing nondir should fail
 
     FLAGS: rename all
     CODE: RNM12
@@ -388,7 +388,8 @@ def testDirToObj(t, env):
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir'], 'file'])
     res = rename_obj(sess, basedir + ['dir'], basedir + ['file'])
-    check(res, NFS4ERR_EXIST, "RENAME dir into existing file")
+    # note rfc 3530 and 1813 specify EXIST, but posix specifies NOTDIR
+    checklist(res, [NFS4ERR_EXIST, NFS4ERR_NOTDIR], "RENAME dir into existing file")
 
 def testDirToDir(t, env):
     """RENAME dir into existing, empty dir should retrun NFS4_OK
@@ -404,7 +405,7 @@ def testDirToDir(t, env):
     check(res, msg="RENAME dir1 into existing, empty dir2")
 
 def testFileToDir(t, env):
-    """RENAME file into existing dir should return NFS4ERR_EXIST
+    """RENAME file into existing dir should fail
 
     FLAGS: rename all
     CODE: RNM14
@@ -414,7 +415,8 @@ def testFileToDir(t, env):
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, ['dir'], 'file'])
     res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
-    check(res, NFS4ERR_EXIST, "RENAME file into existing dir")
+    # note rfc 3530 and 1813 specify EXIST, but posix specifies ISDIR
+    checklist(res, [NFS4ERR_EXIST, NFS4ERR_ISDIR], "RENAME file into existing dir")
 
 def testFileToFile(t, env):
     """RENAME file into existing file should return NFS4_OK
@@ -443,7 +445,7 @@ def testDirToFullDir(t, env):
     checklist(res, [NFS4ERR_EXIST, NFS4ERR_NOTEMPTY], "RENAME dir1 into existing, nonempty dir2")
 
 def testFileToFullDir(t, env):
-    """RENAME file into existing, nonempty dir should return NFS4ERR_EXIST
+    """RENAME file into existing, nonempty dir should fail
 
     FLAGS: rename all
     CODE: RNM17
@@ -453,7 +455,9 @@ def testFileToFullDir(t, env):
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, 'file', ['dir', ['foo']]])
     res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
-    check(res, NFS4ERR_EXIST, "RENAME file into existing, nonempty dir")
+    # note rfc 3530 and 1813 specify EXIST, but posix specifies ISDIR
+    checklist(res, [NFS4ERR_EXIST, NFS4ERR_ISDIR], "RENAME file into existing, nonempty dir")
+
 
 def testSelfRenameDir(t, env):
     """RENAME that does nothing
