@@ -22,7 +22,7 @@ def testCommitOffset0(t, env):
 
     FLAGS: commit all
     DEPEND: MKFILE
-    CODE: CMT1a
+    CODE: CMT1aa
     """
     _commit(t, env.c1, 0)
 

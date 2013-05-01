@@ -143,7 +143,7 @@ def testTimedoutClose2(t, env):
     res = c.close_file(t.code, fh, stateid)
     check(res, NFS4ERR_EXPIRED, "CLOSE after lease timeout with lock held")
 
-def testReplaySeqid(t, env):
+def testReplaySeqid1(t, env):
     """replayed CLOSE should succeed
 
     FLAGS: close seqid all
@@ -176,7 +176,7 @@ def testNextSeqid(t, env):
     # should probably fail somehow, but in any case I'm happy
     # with anything that's not a server crash.
 
-def testReplaySeqid(t, env):
+def testReplaySeqid2(t, env):
     """replayed CLOSE should succeed
 
     The Linux server was only handling replays of the last close for a

@@ -792,15 +792,16 @@ def testLongPoll(t, env):
 ####################################
         
 # FRED - why again is this impossible?
-def xxtestLockowner2(t, env):
+def testLockowner2(t, env):
     """LOCK owner should not work if reused with 2nd file
 
     Lockowner is uniquely identified by clientid and an owner string.
     Each lockowner must have its own seqid.  Thus 2 file
     
-    FLAGS: lock all
+#    FLAGS: lock all
+    FLAGS: 
     DEPEND: MKFILE MKDIR
-    CODE: LOCK13
+    CODE: LOCK13a
     """
 
 

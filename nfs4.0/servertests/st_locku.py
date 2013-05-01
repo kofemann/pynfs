@@ -175,10 +175,11 @@ def testBadLockSeqid2(t, env):
 # Turns out should expect replay of LOCK command.
 # But nfs4lib will raise an error, and not allow checking of response
 # FRED - fix this
-def xxxtestBadLockSeqid3(t, env):
+def testBadLockSeqid3(t, env):
     """LOCKU with a bad lockseqid should return NFS4ERR_BAD_SEQID
 
-    FLAGS: locku seqid all
+#    FLAGS: locku seqid all
+    FLAGS:
     DEPEND: MKFILE
     CODE: LKU6c
     """
