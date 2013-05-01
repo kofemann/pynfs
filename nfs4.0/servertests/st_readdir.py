@@ -219,7 +219,7 @@ def testReservedCookies(t, env):
 def testUnaccessibleDir(t, env):
     """READDIR with (cfh) in unaccessible directory 
 
-    FLAGS: readdir all
+    FLAGS: readdir all mode000
     DEPEND: MKDIR MODE
     CODE: RDDR11
     """
@@ -231,12 +231,15 @@ def testUnaccessibleDir(t, env):
     check(res, msg="Setting mode=0 on directory %s" % t.code)
     ops = c.use_obj(path) + [c.readdir()]
     res = c.compound(ops)
-    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=0")
+    if env.opts.uid == 0:
+	    check(res, NFS4_OK, "READDIR of directory with mode=000", [NFS4ERR_ACCESS])
+    else:
+	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    
 def testUnaccessibleDirAttrs(t, env):
     """READDIR with (cfh) in unaccessible directory requesting attrs
 
-    FLAGS: readdir all
+    FLAGS: readdir all mode000
     DEPEND: MKDIR MODE
     CODE: RDDR12
     """
@@ -249,7 +252,10 @@ def testUnaccessibleDirAttrs(t, env):
     ops = c.use_obj(path) + \
           [c.readdir(attr_request=[FATTR4_RDATTR_ERROR, FATTR4_TYPE])]
     res = c.compound(ops)
-    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=0")
+    if env.opts.uid == 0:
+	    check(res, NFS4_OK, "READDIR of directory with mode=000", [NFS4ERR_ACCESS])
+    else:
+	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    
 ###########################################
 

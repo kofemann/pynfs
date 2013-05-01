@@ -316,7 +316,7 @@ def testClaimPrev(t, env):
 def testModeChange(t, env):
     """OPEN conflicting with mode bits
 
-    FLAGS: open all
+    FLAGS: open all mode000
     DEPEND: MODE MKFILE
     CODE: OPEN17
     """
@@ -330,7 +330,10 @@ def testModeChange(t, env):
     check(res, msg="Setting mode of file %s to 000" % t.code)
     res = c.open_file(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
                       deny=OPEN4_SHARE_DENY_NONE)
-    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=000" % t.code)
+    if env.opts.uid == 0:
+	    check(res, NFS4_OK, "Opening file %s with mode=000" % t.code, [NFS4ERR_ACCESS])
+    else:
+	    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=000" % t.code)
 
 def testShareConflict1(t, env):
     """OPEN conflicting with previous share

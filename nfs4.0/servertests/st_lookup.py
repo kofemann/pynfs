@@ -199,7 +199,7 @@ def testFifoNotDir(t, env):
 def testNonAccessable(t, env):
     """LOOKUP with non-accessable components should return NFS4ERR_ACCESS
 
-    FLAGS: lookup all
+    FLAGS: lookup all mode000
     DEPEND: MKDIR
     CODE: LOOK6
     """
@@ -216,7 +216,10 @@ def testNonAccessable(t, env):
     res = c.compound(c.use_obj(dir))
     check(res)
     res = c.compound(c.use_obj(dir + ['foo']))
-    check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=000")
+    if env.opts.uid == 0:
+	    check(res, NFS4_OK, "LOOKUP object in a dir with mode=000", [NFS4ERR_ACCESS])
+    else:
+	    check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=000")
 
 def testInvalidUtf8(t, env):
     """LOOKUP with bad UTF-8 name strings should return NFS4ERR_INVAL
@@ -265,7 +268,7 @@ def testDots(t, env):
 def testUnaccessibleDir(t, env):
     """LOOKUP with (cfh) in unaccessible directory 
 
-    FLAGS: lookup all
+    FLAGS: lookup all mode000
     DEPEND: MKDIR MODE
     CODE: LOOK9
     """
@@ -276,7 +279,10 @@ def testUnaccessibleDir(t, env):
     res = c.compound(ops)
     check(res, msg="Setting mode=0 on directory %s" % t.code)
     res = c.compound(c.use_obj(path + ['hidden']))
-    check(res, NFS4ERR_ACCESS, "LOOKUP off of dir with mode=0")
+    if env.opts.uid == 0:
+	    check(res, NFS4_OK, "LOOKUP off of dir with mode=000", [NFS4ERR_ACCESS])
+    else:
+	    check(res, NFS4ERR_ACCESS, "LOOKUP off of dir with mode=000")
 
 def testBadOpaque(t, env):
     """LOOKUP with a path component that has an incorrect array length
