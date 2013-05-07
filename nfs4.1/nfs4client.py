@@ -26,13 +26,13 @@ log_cb.setLevel(logging.DEBUG)
 
 SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
 class NFS4Client(rpc.Client, rpc.Server):
-    def __init__(self, host='localhost', port=2049, ctrl_proc=16):
+    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16):
         rpc.Client.__init__(self, 100003, 4)
         self.prog = 0x40000000
         self.versions = [1] # List of supported versions of prog
 
-        self.minorversion = 1
-        self.minor_versions = [1]
+        self.minorversion = minorversion
+        self.minor_versions = [minorversion]
         self.tag = "default tag"
         self.impl_id = nfs_impl_id4("citi.umich.edu", "pynfs X.X",
                                     nfs4lib.get_nfstime())
