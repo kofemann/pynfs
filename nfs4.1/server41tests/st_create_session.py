@@ -36,8 +36,9 @@ def testSupported2(t, env):
     sess1 = c1.create_session()
     # Create second session
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     cs_op = op.create_session(c1.clientid, c1.seqid, 0,
-                              chan_attrs, chan_attrs, c1.c.prog, [])
+                              chan_attrs, chan_attrs, c1.c.prog, sec)
     res = sess1.compound([cs_op])
     check(res)
     sess2 = c1._add_session(res.resarray[-1])
@@ -56,8 +57,9 @@ def testSupported2b(t, env):
     sess1 = c1.create_session()
     # Create second session
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     cs_op = op.create_session(c2.clientid, c2.seqid, 0,
-                              chan_attrs, chan_attrs, c2.c.prog, [])
+                              chan_attrs, chan_attrs, c2.c.prog, sec)
     res = sess1.compound([cs_op])
     check(res)
     sess2 = c2._add_session(res.resarray[-1])
@@ -120,11 +122,12 @@ def testReplay1a(t, env):
     # another CREATE_SESSION
     c.seqid = 2
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     res1 = create_session(c.c, c.clientid, c.seqid)
     check(res1)
     # REPLAY first CREATE_SESSION with SEQUENCE from 2nd session
     cs_op = op.create_session(c.clientid, c.seqid, 0,
-                              chan_attrs, chan_attrs, c.c.prog, [])
+                              chan_attrs, chan_attrs, c.c.prog, sec)
     res2 = sess1.compound([cs_op])
     check(res2)
     # Test results are equal (ignoring tags)
@@ -144,8 +147,9 @@ def testReplay1b(t, env):
     # another CREATE_SESSION with SEQUENCE from first session
     c.seqid = 2
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     cs_op = op.create_session(c.clientid, c.seqid, 0,
-                              chan_attrs, chan_attrs, c.c.prog, [])
+                              chan_attrs, chan_attrs, c.c.prog, sec)
     res1 = sess1.compound([cs_op])
     check(res1)
     # REPLAY second CREATE_SESSION without SEQUENCE

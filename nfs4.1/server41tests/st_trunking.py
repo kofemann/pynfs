@@ -9,9 +9,10 @@ import threading
 def create_session(c, clientid, sequenceid, cred=None, flags=0):
     """Send a simple CREATE_SESSION"""
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     res = c.compound([op.create_session(clientid, sequenceid, flags,
                                         chan_attrs, chan_attrs,
-                                        123, [])], cred)
+                                        123, sec)], cred)
     return res
 
 def testTwoSessions(t, env):

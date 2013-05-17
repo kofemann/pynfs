@@ -493,16 +493,17 @@ def testLeasePeriod(t, env):
 
     # CREATE_SESSION
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    sec = [callback_sec_parms4(0)]
     time.sleep(min(lease - 10, 1))
     # Inside lease period, create_session will success.
     res1 = c1.c.compound([op.create_session(c1.clientid, c1.seqid, 0,
                                         chan_attrs, chan_attrs,
-                                        123, [])], None)
+                                        123, sec)], None)
     check(res1)
 
     time.sleep(lease + 10)
     # After lease period, create_session will get error NFS4ERR_STALE_CLIENTID
     res2 = c2.c.compound([op.create_session(c2.clientid, c2.seqid, 0,
                                         chan_attrs, chan_attrs,
-                                        123, [])], None)
+                                        123, sec)], None)
     check(res2, NFS4ERR_STALE_CLIENTID)
