@@ -49,7 +49,7 @@ def testRebootValid(t, env):
     sess = c.create_session()
     reclaim_complete(sess)
     fh, stateid = create_confirm(sess, owner)
-    oldleasetime = _getleasetime(sess)
+    sleeptime = 5 + _getleasetime(sess)
     _waitForReboot(c, sess, env)
     try:
         res = create_session(c)
@@ -57,7 +57,7 @@ def testRebootValid(t, env):
         c = env.c1.new_client(env.testname(t))
         sess = c.create_session()
         newleasetime = _getleasetime(sess)
-        sleeptime = 5 + max(oldleasetime, newleasetime)
+        sleeptime = max(sleeptime, 5 + newleasetime)
         res = open_file(sess, owner, path=fh, claim_type=CLAIM_PREVIOUS,
                        access=OPEN4_SHARE_ACCESS_BOTH,
                        deny=OPEN4_SHARE_DENY_NONE,
