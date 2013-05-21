@@ -8,15 +8,26 @@ import nfs4_ops as op
 import nfs4lib
 import threading
 
-def _create_file_with_deleg(sess, name, access):
+def _got_deleg(deleg):
+    return (deleg.delegation_type != OPEN_DELEGATE_NONE and
+            deleg.delegation_type != OPEN_DELEGATE_NONE_EXT)
+
+def __create_file_with_deleg(sess, name, access):
     res = create_file(sess, name, access = access)
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
-    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
-           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
-        fail("Could not get delegation")
-    return fh
+    if (not _got_deleg(deleg)):
+        res = open_file(sess, name, access = access)
+        fh = res.resarray[-1].object
+        deleg = res.resarray[-2].delegation
+        if (not _got_deleg(deleg)):
+            fail("Could not get delegation")
+    return (fh, deleg)
+
+def _create_file_with_deleg(sess, name, access):
+	fh, deleg = __create_file_with_deleg(sess, name, access)
+	return fh
 
 def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     recall = threading.Event()
@@ -156,14 +167,8 @@ def testDelegRevocation(t, env):
     """
 
     sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
-    res = create_file(sess1, env.testname(t),
-            access = OPEN4_SHARE_ACCESS_READ |
-                    OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
-    fh = res.resarray[-1].object
-    deleg = res.resarray[-2].delegation
-    if    (deleg.delegation_type == OPEN_DELEGATE_NONE or
-           deleg.delegation_type == OPEN_DELEGATE_NONE_EXT):
-        fail("Could not get delegation")
+    fh, deleg = __create_file_with_deleg(sess1, env.testname(t),
+            OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
     delegstateid = deleg.read.stateid
     sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
