@@ -1,5 +1,6 @@
 from nfs4_const import *
 from environment import check, checklist, get_invalid_utf8strings
+import rpc
 
 def testDir(t, env):
     """LOOKUP testtree dir
@@ -307,7 +308,14 @@ def testBadOpaque(t, env):
         orig = p.pack_opaque
         p.pack_opaque = bad_opaque
         res = c.compound([c.putrootfh_op(), c.lookup_op("setlength=0xcccccccc")])
+        e = "operation erroneously suceeding"
         check(res, NFS4ERR_BADXDR)
+    except rpc.RPCAcceptError, e:
+        if e.stat == rpc.GARBAGE_ARGS:
+            # This is correct response
+            return
+        t.fail("Using bad opque should return GARBAGE_ARGS, "
+               "or NFS4ERR_BADXDR instead got %s" % e)
     finally:
         p.pack_opaque = orig
     
