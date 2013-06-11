@@ -218,7 +218,7 @@ def testNonAccessable(t, env):
     check(res)
     res = c.compound(c.use_obj(dir + ['foo']))
     if env.opts.uid == 0:
-	    check(res, NFS4_OK, "LOOKUP object in a dir with mode=000", [NFS4ERR_ACCESS])
+	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP object in a dir with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=000")
 
@@ -281,7 +281,7 @@ def testUnaccessibleDir(t, env):
     check(res, msg="Setting mode=0 on directory %s" % t.code)
     res = c.compound(c.use_obj(path + ['hidden']))
     if env.opts.uid == 0:
-	    check(res, NFS4_OK, "LOOKUP off of dir with mode=000", [NFS4ERR_ACCESS])
+	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP off of dir with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "LOOKUP off of dir with mode=000")
 

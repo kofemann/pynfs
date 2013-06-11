@@ -232,7 +232,7 @@ def testUnaccessibleDir(t, env):
     ops = c.use_obj(path) + [c.readdir()]
     res = c.compound(ops)
     if env.opts.uid == 0:
-	    check(res, NFS4_OK, "READDIR of directory with mode=000", [NFS4ERR_ACCESS])
+	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    
@@ -253,7 +253,7 @@ def testUnaccessibleDirAttrs(t, env):
           [c.readdir(attr_request=[FATTR4_RDATTR_ERROR, FATTR4_TYPE])]
     res = c.compound(ops)
     if env.opts.uid == 0:
-	    check(res, NFS4_OK, "READDIR of directory with mode=000", [NFS4ERR_ACCESS])
+	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    
