@@ -1,6 +1,7 @@
 from nfs4_const import *
 from nfs4_type import *
 from environment import check, checklist, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
+import struct
 
 _text = 'write data' # len=10
 
@@ -358,3 +359,28 @@ def testLargeWrite(t, env):
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
     res = c.write_file(fh, 'A'*maxwrite, how=UNSTABLE4)
     check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
+
+def testSizes(t, env):
+    """bunch of various-sized writes
+
+    FLAGS: write all
+    DEPEND: MKFILE
+    CODE: WRT15
+    """
+
+    min = 0;
+    max = 8192;
+    buf = ""
+    # I've found it helpful when tracking down decoding errors to know
+    # where in the packet a given word or data came from; this helps:
+    for i in range(0, (max+3)/4):
+        buf += struct.pack('>L', i);
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    for i in range(0, 8192):
+        ops = c.use_obj(fh)
+        ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
+        ops += [c.getattr([FATTR4_SIZE])]
+        res = c.compound(ops)
+        check(res, msg="length %d WRITE" % i)
