@@ -5,7 +5,6 @@ passes we expect to merge the two code bases.
 
 You can prepare both for use with
 	./setup.py build
-	./setup.py build_ext --inplace
 which will create auto-generated files and compile any shared libraries
 in place.
 
