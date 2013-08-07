@@ -86,11 +86,9 @@ def testSSV(t, env):
     protect = state_protect4_a(SP4_SSV, spa_ssv_parms=ssv_parms)
     c = env.c1.new_client(env.testname(t), protect=protect)
 
-    # CREATE_SESSION
     sess = c.create_session() # Can we use ssv cred for cb_sec here?
     # This should fail if not using GSS?  What about E_ID?
 
-    # SET_SSV
     res = sess.set_ssv('\x5a' * c.protect.context.ssv_len)
     print res
     
