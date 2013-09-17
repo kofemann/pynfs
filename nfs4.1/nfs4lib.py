@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import rpc
 import nfs4_const
 import nfs4_pack
 import nfs4_type
@@ -142,6 +143,49 @@ def set_flags(name, search_string=None):
 set_flags("exchgid")
 set_flags("create_session")
 set_flags("access", "ACCESS4_")
+
+class NFSException(rpc.RPCError):
+    pass
+
+class BadCompoundRes(NFSException):
+    """The COMPOUND procedure returned some kind of error, ie is not NFS4_OK"""
+    def __init__(self, operation, errcode, msg=None):
+        self.operation = operation
+        self.errcode = errcode
+        if msg:
+            self.msg = msg + ': '
+        else:
+            self.msg = ''
+    def __str__(self):
+        if self.operation is None:
+            return self.msg + "empty compound return with status %s" % \
+                   nfsstat4[self.errcode]
+        else:
+            return self.msg + \
+                   "operation %s should return NFS4_OK, instead got %s" % \
+                   (nfs_opnum4[self.operation], nfsstat4[self.errcode])
+
+class UnexpectedCompoundRes(NFSException):
+    """The COMPOUND procedure returned OK, but had unexpected data"""
+    def __init__(self, msg=""):
+        self.msg = msg
+    
+    def __str__(self):
+        if self.msg:
+            return "Unexpected COMPOUND result: %s" % self.msg
+        else:
+            return "Unexpected COMPOUND result"
+
+class InvalidCompoundRes(NFSException):
+    """The COMPOUND return is invalid, ie response is not to spec"""
+    def __init__(self, msg=""):
+        self.msg = msg
+    
+    def __str__(self):
+        if self.msg:
+            return "Invalid COMPOUND result: %s" % self.msg
+        else:
+            return "Invalid COMPOUND result"
 
 class FancyNFS4Packer(nfs4_pack.NFS4Packer):
     """Handle fattr4 and dirlist4 more cleanly than auto-generated methods"""

@@ -17,7 +17,7 @@ import nfs4client
 import sys
 import os
 import nfs4lib
-from nfs4lib import use_obj
+from nfs4lib import use_obj, UnexpectedCompoundRes
 import logging
 import struct
 from rpc.security import AuthSys, AuthGss
