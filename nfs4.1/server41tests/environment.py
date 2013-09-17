@@ -200,7 +200,11 @@ class Environment(testmod.Environment):
             
     def finish(self):
         """Run once after all tests are run"""
-        pass
+        if self.opts.nocleanup:
+            return
+        sess = self.c1.new_client_session("Environment.init_%i" % self.timestamp)
+        clean_dir(sess, self.opts.home)
+        sess.c.null()
 
     def startUp(self):
         """Run before each test"""
