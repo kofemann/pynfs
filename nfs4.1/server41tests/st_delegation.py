@@ -64,7 +64,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
 def testReadDeleg(t, env):
     """Test read delegation handout and return
 
-    FLAGS: open deleg all
+    FLAGS: open deleg
     CODE: DELEG1
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -73,7 +73,7 @@ def testReadDeleg(t, env):
 def testWriteDeleg(t, env):
     """Test write delegation handout and return
 
-    FLAGS: writedelegations
+    FLAGS: writedelegations deleg
     CODE: DELEG2
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_WRITE,
@@ -82,7 +82,7 @@ def testWriteDeleg(t, env):
 def testAnyDeleg(t, env):
     """Test any delegation handout and return
 
-    FLAGS: open deleg all
+    FLAGS: open deleg
     CODE: DELEG3
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -91,7 +91,7 @@ def testAnyDeleg(t, env):
 def testNoDeleg(t, env):
     """Test no delegation handout
 
-    FLAGS: open deleg all
+    FLAGS: open deleg
     CODE: DELEG4
     """
     sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
@@ -112,7 +112,7 @@ def testNoDeleg(t, env):
 def testCBSecParms(t, env):
     """Test auth_sys callbacks
 
-    FLAGS: create_session open deleg all
+    FLAGS: create_session open deleg
     CODE: DELEG5
     """
     uid = 17
@@ -128,7 +128,7 @@ def testCBSecParms(t, env):
 def testCBSecParmsNull(t, env):
     """Test auth_null callbacks
 
-    FLAGS: create_session open deleg all
+    FLAGS: create_session open deleg
     CODE: DELEG6
     """
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -141,7 +141,7 @@ def testCBSecParmsNull(t, env):
 def testCBSecParmsChange(t, env):
     """Test changing of auth_sys callbacks with backchannel_ctl
 
-    FLAGS: create_session open deleg backchannel_ctl all
+    FLAGS: create_session open deleg backchannel_ctl
     CODE: DELEG7
     """
     uid1 = 17
@@ -162,7 +162,7 @@ def testDelegRevocation(t, env):
     """Allow a delegation to be revoked, check that TEST_STATEID and
        FREE_STATEID have the required effect.
 
-    FLAGS: deleg all
+    FLAGS: deleg
     CODE: DELEG8
     """
 
