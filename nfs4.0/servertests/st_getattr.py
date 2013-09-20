@@ -497,6 +497,22 @@ def testLotsofGetattrsFile(t, env):
     res = c.compound(ops)
     check(res)
 
+def testOwnerName(t, env):
+    """GETATTR on owner
+
+    FLAGS: getattr all
+    DEPEND: LOOKFILE
+    CODE: GATT10
+    """
+    c = env.c1
+    ops = c.use_obj(env.opts.usefile)
+    ops += [c.getattr([FATTR4_OWNER])]
+    res = c.compound(ops)
+    checklist(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(owner)")
+    if res.status == NFS4ERR_ATTRNOTSUPP:
+        t.fail_support("owner not a supported attribute")
+    # print res.resarray[-1].obj_attributes
+
 
 ####################################################
 
