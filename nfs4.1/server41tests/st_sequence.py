@@ -163,7 +163,8 @@ def testReplayCache004(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    ops = [op.putrootfh(), op.savefh(), op.rename("", "foo")]
+    ops = env.home
+    ops += [op.savefh(), op.rename("", "foo")]
     res1 = sess1.compound(ops, cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound(ops, seq_delta=0)
