@@ -161,3 +161,21 @@ def testOpenFreestateidClose(t, env):
     open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
     res = sess1.compound(open_op + [op.free_stateid(current_stateid), op.close(0, current_stateid)])
     check(res, NFS4ERR_LOCKS_HELD)
+
+def testOpenSaveFHLookupRestoreFHClose(t, env):
+    """test current state id processing by having OPEN, SAVEFH, LOOKUP, RESTOREFH and CLOSE
+       in a single compound
+
+    FLAGS: currentstateid all
+    CODE: CSID10
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    fname = env.testname(t)
+    open_op = open_create_file_op(sess1, fname, open_create=OPEN4_CREATE)
+    lookup_op = env.home
+    res = sess1.compound(lookup_op + [op.getfh()])
+    check(res)
+    fh = res.resarray[-1].object
+    res = sess1.compound(open_op + [op.savefh(), op.putfh(fh), op.restorefh(), op.close(0, current_stateid)])
+    check(res)
