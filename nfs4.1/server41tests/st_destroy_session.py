@@ -164,6 +164,3 @@ def testDestoryNotSoleOps(t, env):
     sid = sess1.sessionid
     res = c.c.compound([op.destroy_session(sess1.sessionid), op.putrootfh()])
     check(res, NFS4ERR_NOT_ONLY_OP)
-
-    res = c.c.compound([op.putrootfh(), op.destroy_session(sess1.sessionid)])
-    check(res, NFS4ERR_NOT_ONLY_OP)
