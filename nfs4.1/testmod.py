@@ -438,6 +438,7 @@ def printresults(tests, opts, file=None):
 def xml_printresults(tests, file_name, suite='all'):
     with open(file_name, 'w') as fd:
         failures = 0
+        skipped = 0
         total_time = 0
         doc = xml.dom.minidom.Document()
         testsuite = doc.createElement("testsuite")
@@ -454,14 +455,19 @@ def xml_printresults(tests, file_name, suite='all'):
             testcase.setAttribute("time", str(t.time_taken))
 
             total_time += t.time_taken
-            if t.result not in (TEST_PASS, TEST_WARN):
+            if t.result == TEST_FAIL:
                 failures += 1
                 failure = doc.createElement("failure")
                 failure.setAttribute("message", t.result.msg)
                 err = doc.createCDATASection(''.join(t.result.tb))
                 failure.appendChild(err)
                 testcase.appendChild(failure)
+            elif t.result == TEST_OMIT:
+                skipped += 1
+                skip = doc.createElement("skipped")
+                testcase.appendChild(skip)
 
         testsuite.setAttribute("failures", str(failures))
+        testsuite.setAttribute("skipped", str(skipped))
         testsuite.setAttribute("time", str(total_time))
         fd.write(doc.toprettyxml(indent="  "))
