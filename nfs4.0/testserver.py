@@ -95,6 +95,8 @@ def scan_options(p):
                  help="Print a list of all possible flags and exit")
     p.add_option("--showcodes", action="store_true", default=False,
                  help="Print a list of all test codes and exit")
+    p.add_option("--showcodesflags", action="store_true", default=False,
+                 help="Print a list of all test codes with their flags and exit")
     p.add_option("--noinit", action="store_true", default=False,
                  help="Skip initial cleanup of test directory")
     p.add_option("--nocleanup", action="store_true", default=False,
@@ -269,6 +271,13 @@ def main():
         codes.sort()
         for c in codes:
             print c
+        sys.exit(0)
+
+    if opt.showcodesflags:
+        codes = cdict.keys()
+        codes.sort()
+        for c in codes:
+            print c, "FLAGS:", ', '.join(cdict[c].flags_list)
         sys.exit(0)
 
     # Grab server info and set defaults
