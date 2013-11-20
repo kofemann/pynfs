@@ -381,6 +381,6 @@ def testSizes(t, env):
     for i in range(0, max):
         ops = c.use_obj(fh)
         ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
-        ops += [c.getattr([FATTR4_SIZE])]
+        ops += [c.getattr([FATTR4_SIZE]), c.getattr([FATTR4_SIZE])]
         res = c.compound(ops)
         check(res, msg="length %d WRITE" % i)
