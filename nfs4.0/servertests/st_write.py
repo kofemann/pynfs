@@ -378,7 +378,7 @@ def testSizes(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
-    for i in range(0, 8192):
+    for i in range(0, max):
         ops = c.use_obj(fh)
         ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
         ops += [c.getattr([FATTR4_SIZE])]
