@@ -498,3 +498,44 @@ def testRepTooBigToCache(t, env):
     sid = res.resarray[0].csr_sessionid
     res = c.c.compound([op.sequence(sid, 1, 0, 0, True)])
     check(res, NFS4ERR_REP_TOO_BIG_TO_CACHE)
+
+def testTooSmallMaxReq(t, env):
+    """If client selects a value for ca_maxrequestsize such that
+       a replier on a channel could never send a request,
+       server SHOULD return NFS4ERR_TOOSMALL
+
+    FLAGS: create_session all
+    CODE: CSESS28
+    """
+    c = env.c1.new_client(env.testname(t))
+    # CREATE_SESSION with too small ca_maxrequestsize
+    chan_attrs = channel_attrs4(0,20,8192,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                          chan_attrs, chan_attrs,
+                                          123, [])], None)
+    check(res, NFS4ERR_TOOSMALL)
+
+def testDRCMemLeak(t, env):
+    """Test whether the replier put drc mem after checking back
+       channel attrs failed.
+
+    FLAGS: create_session all
+    CODE: CSESS29
+    """
+    c = env.c1.new_client(env.testname(t))
+    fchan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    # CREATE_SESSION with too small ca_maxrequestsize and ca_maxops
+    bchan_attrs = channel_attrs4(0,10,8192,8192,128,1,[])
+
+    N = 10000 # number of clients to create, all will denied with TOOSMALL
+    for i in range(N):
+        res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                              fchan_attrs, bchan_attrs,
+                                              123, [])], None)
+        check(res, NFS4ERR_TOOSMALL)
+
+    bchan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
+    res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
+                                          fchan_attrs, bchan_attrs,
+                                          123, [])], None)
+    check(res, NFS4_OK)
