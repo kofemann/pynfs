@@ -244,7 +244,12 @@ def testNoUpdate101(t, env):
     # Old session state should not be discarded until confirm:
     res = sess1.compound([])
     check(res)
-    # FIXME - more checks here
+
+    # Old session state should be discarded after confirm:
+    sess2 = c2.create_session()
+    check(res)
+    res = sess1.compound([])
+    check(res, NFS4ERR_BADSESSION)
 
 def testNoUpdate101b(t, env):
     """
