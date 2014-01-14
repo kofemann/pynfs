@@ -1161,6 +1161,13 @@ class NFS4Server(rpc.Server):
         env.set_cfh(self.root)
         return encode_status(NFS4_OK)
 
+    def op_secinfo_no_name(self, arg, env):
+        check_session(env)
+        # xxx add gss support
+        secinfo4_list = [ secinfo4(rpc.AUTH_SYS) ]
+        res = SECINFO_NO_NAME4res(NFS4_OK, secinfo4_list)
+        return encode_status(NFS4_OK, res)
+
     # op_putpubfh SHOULD be the same as op_putrootfh
     # See draft23, section 18.20.3, line 25005
     op_putpubfh = op_putrootfh
