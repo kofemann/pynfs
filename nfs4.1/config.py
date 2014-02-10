@@ -3,6 +3,7 @@ from nfs4_const import *
 import nfs4_const
 import nfs4lib
 from copy import deepcopy
+import os
 
 class ConfigAction(Exception):
     pass
@@ -129,7 +130,7 @@ class ServerConfig(object):
               ]
 
     def __init__(self):
-        self.minor_id = 0
+        self.minor_id = os.getpid()
         self.major_id = "PyNFSv4.1"
         self._owner = server_owner4(self.minor_id, self.major_id)
         self.scope = "Default_Scope"
