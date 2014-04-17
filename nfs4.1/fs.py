@@ -356,7 +356,7 @@ class FSObject(object):
         if not fs.fattr4_supported_attrs & (1 << FATTR4_FS_LAYOUT_TYPES):
             raise NFS4Error(NFS4ERR_LAYOUTUNAVAILABLE)
         try:
-            types = fs.fattr4_fs_layout_type
+            types = fs.fattr4_fs_layout_types
         except:
             raise NFS4Error(NFS4ERR_LAYOUTUNAVAILABLE)
         if arg.loga_layout_type not in types:
@@ -1279,7 +1279,7 @@ class BlockLayoutFS(FileSystem):
         self._nextid = 0
         FileSystem.__init__(self, objclass=LayoutFSObj)
         self.fsid = (3, fsid)
-        self.fattr4_fs_layout_type = [LAYOUT4_BLOCK_VOLUME]
+        self.fattr4_fs_layout_types = [LAYOUT4_BLOCK_VOLUME]
         self.fattr4_supported_attrs |= 1 << FATTR4_FS_LAYOUT_TYPES
         self.fattr4_layout_blksize = 4096
         self.fattr4_supported_attrs |= 1 << FATTR4_LAYOUT_BLKSIZE
@@ -1427,7 +1427,7 @@ class FileLayoutFS(FileSystem):
         self.dsdevice = dsdevice
         FileSystem.__init__(self, objclass=FSLayoutFSObj)
         self.fsid = (2, fsid)
-        self.fattr4_fs_layout_type = [LAYOUT4_NFSV4_1_FILES]
+        self.fattr4_fs_layout_types = [LAYOUT4_NFSV4_1_FILES]
         self.fattr4_supported_attrs |= 1 << FATTR4_FS_LAYOUT_TYPES
         self.fattr4_maxwrite = 8192
         self.fattr4_maxread = 8192
