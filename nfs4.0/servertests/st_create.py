@@ -161,6 +161,19 @@ def testZeroLength(t, env):
     res = c.create_obj(c.homedir + [''])
     check(res, NFS4ERR_INVAL, "CREATE with zero-length name")
 
+def testZeroLengthForLNK(t, env):
+    """CREATE with zero length name should return NFS4ERR_INVAL
+
+    FLAGS: create symlink all
+    CODE: CR9a
+    """
+    c = env.c1
+    ops = c.go_home()
+    objtype = createtype4(NF4LNK, **{'linkdata':''})
+    ops += [c.create_op(objtype, t.code, getDefaultAttr(c))]
+    res = c.compound(ops)
+    check(res, NFS4ERR_INVAL, "CREATE with zero-length name for SYMLINK")
+
 def testRegularFile(t, env):
     """CREATE should fail with NFS4ERR_BADTYPE for regular files
 
