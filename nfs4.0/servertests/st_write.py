@@ -415,3 +415,45 @@ def testLargeReadWrite(t, env):
         t.fail("READ returned unexpected data")
     res = c.read_file(fh, 0, size)
     _compare(t, res, writedata, True)
+
+def testMultipleReadWrites(t,env):
+    """Compound with multiple writes, then compound with multiple reads
+
+    FLAGS: write
+    DEPEND: MKFILE
+    CODE: WRT17
+    """
+    # note: some overlapping ranges might be a good idea too.
+
+    # random offsets, one on a 4096-byte page boundary:
+    offsets = [0, 516, 3025, 7026, 8192, 15284]
+    data = ""
+    for i in range(0, (offsets[-1] + 3)/4):
+        data += struct.pack('>L', i)
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    ops = c.use_obj(fh)
+    for i in range(0, len(offsets) - 1):
+        ops += [c.write_op(stateid, offsets[i], UNSTABLE4,
+					data[offsets[i]:offsets[i+1]])]
+    res = c.compound(ops)
+    check(res, msg="compound with multiple WRITE operations")
+    ops = c.use_obj(fh)
+    # read using different offsets, just for fun:
+    read_offsets = [0, 9010, 9011, 12288, 15284]
+    for i in range(0, len(read_offsets) - 1):
+        offset = read_offsets[i]
+        bytes = read_offsets[i+1] - offset;
+        ops += [c.read_op(stateid, offset, bytes)]
+    res = c.compound(ops)
+    check(res, msg="compound with multiple READ operations")
+    for i in range(0, len(read_offsets) - 2):
+        resdata = res.resarray[i + 1 - len(read_offsets)].switch.switch.data
+        expect = data[read_offsets[i]:read_offsets[i+1]]
+        if len(resdata) != len(expect):
+            t.fail("READ %d got %d bytes, expected %d" %
+                    (i+1, len(resdata), len(expect)))
+        if resdata != expect:
+            t.fail("READ %d returned %s, expected %s" %
+                    (i+1, repr(resdata), repr(expect)))
