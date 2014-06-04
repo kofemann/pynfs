@@ -12,12 +12,14 @@ def testACL(t, env):
     CODE: ACL5
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usefile)
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    ops = c.use_obj(fh)
     acl = [nfsace4(0, 0, 0,"123")]
     ops += [c.setattr({FATTR4_ACL: acl})]
     res = c.compound(ops)
     check(res)
-    ops = c.use_obj(env.opts.usefile)
+    ops = c.use_obj(fh)
     ops += [c.getattr([FATTR4_ACL])]
     res = c.compound(ops)
     check(res)
@@ -30,7 +32,9 @@ def testLargeACL(t, env):
     CODE: ACL10
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usefile)
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    ops = c.use_obj(fh)
     acl = []
     # using larger id's just to try for a larger reply:
     for i in range(200):
@@ -38,7 +42,7 @@ def testLargeACL(t, env):
     ops += [c.setattr({FATTR4_ACL: acl})]
     res = c.compound(ops)
     check(res)
-    ops = c.use_obj(env.opts.usefile)
+    ops = c.use_obj(fh)
     ops += [c.getattr([FATTR4_ACL])]
     res = c.compound(ops)
     check(res)
