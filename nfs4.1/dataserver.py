@@ -8,10 +8,12 @@ import logging
 import nfs4client
 import hashlib
 import sys
-import nfs4_ops as op
+import nfs_ops
 import socket
 
 log = logging.getLogger("Dataserver Manager")
+
+op4 = nfs_ops.NFS4ops()
 
 class DataServer41(object):
     def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None, summary=None):
@@ -122,12 +124,12 @@ class DataServer41(object):
                                exceptions=[const4.NFS4ERR_NOENT])
             if res.status == const4.NFS4ERR_NOENT:
                 cr_ops = nfs4lib.use_obj(existing_path[:-1]) + \
-                    [op.create(kind, comp, attrs)]
+                    [op4.create(kind, comp, attrs)]
                 self._execute(cr_ops)
-        res = self._execute(nfs4lib.use_obj(self.path) + [op.getfh()])
+        res = self._execute(nfs4lib.use_obj(self.path) + [op4.getfh()])
         self.path_fh = res.resarray[-1].object
         need = const4.ACCESS4_READ | const4.ACCESS4_LOOKUP | const4.ACCESS4_MODIFY | const4.ACCESS4_EXTEND
-        res = self._execute(nfs4lib.use_obj(self.path_fh) + [op.access(need)])
+        res = self._execute(nfs4lib.use_obj(self.path_fh) + [op4.access(need)])
         if res.resarray[-1].access != need:
             raise RuntimeError
         # XXX clean DS directory
@@ -144,10 +146,10 @@ class DataServer41(object):
         while True:
             if mds_fh in self.filehandles:
                 return
-            open_op = op.open(seqid, access, deny,
+            open_op = op4.open(seqid, access, deny,
                               type4.open_owner4(self.sess.client.clientid, owner),
                               openflag, type4.open_claim4(const4.CLAIM_NULL, name))
-            res = self._execute(nfs4lib.use_obj(self.path_fh) + [open_op, op.getfh()], exceptions=[const4.NFS4ERR_EXIST])
+            res = self._execute(nfs4lib.use_obj(self.path_fh) + [open_op, op4.getfh()], exceptions=[const4.NFS4ERR_EXIST])
             if res.status == const4.NFS4_OK:
                  ds_fh = res.resarray[-1].opgetfh.resok4.object
                  ds_openstateid = type4.stateid4(0, res.resarray[-2].stateid.other)
@@ -162,33 +164,33 @@ class DataServer41(object):
         """close the given file"""
         seqid=0 #FIXME: seqid must be !=0
         fh, stateid = self.filehandles[mds_fh]
-        ops = [op.putfh(fh)] + [op.close(seqid, stateid)]
+        ops = [op4.putfh(fh)] + [op4.close(seqid, stateid)]
         res = self._execute(ops)
         # ignoring return
         del self.filehandles[mds_fh]
 
     def read(self, fh, pos, count):
-        ops = [op.putfh(fh),
-               op.read(nfs4lib.state00, pos, count)]
+        ops = [op4.putfh(fh),
+               op4.read(nfs4lib.state00, pos, count)]
         # There are all sorts of error handling issues here
         res = self._execute(ops)
         data = res.resarray[-1].data
         return data
 
     def write(self, fh, pos, data):
-        ops = [op.putfh(fh),
-               op.write(nfs4lib.state00, pos, const4.FILE_SYNC4, data)]
+        ops = [op4.putfh(fh),
+               op4.write(nfs4lib.state00, pos, const4.FILE_SYNC4, data)]
         # There are all sorts of error handling issues here
         res = self._execute(ops)
 
     def truncate(self, fh, size):
-        ops = [op.putfh(fh),
-               op.setattr(nfs4lib.state00, {const4.FATTR4_SIZE: size})]
+        ops = [op4.putfh(fh),
+               op4.setattr(nfs4lib.state00, {const4.FATTR4_SIZE: size})]
         res = self._execute(ops)
 
     def get_size(self, fh):
-        ops = [op.putfh(fh),
-               op.getattr(1L << const4.FATTR4_SIZE)]
+        ops = [op4.putfh(fh),
+               op4.getattr(1L << const4.FATTR4_SIZE)]
         res = self._execute(ops)
         attrdict = res.resarray[-1].obj_attributes
         return attrdict.get(const4.FATTR4_SIZE, 0)

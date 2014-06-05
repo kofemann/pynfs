@@ -5,7 +5,7 @@ from nfs4lib import NFS4Error, NFS4Replay, inc_u32
 from xdrdef.nfs4_type import *
 from xdrdef.nfs4_const import *
 from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
-import nfs4_ops as op
+import nfs_ops
 import time, struct
 import threading
 import hmac
@@ -19,6 +19,8 @@ import logging
 logging.basicConfig(level=logging.INFO,
                     format="%(levelname)-7s:%(name)s:%(message)s")
 log_cb = logging.getLogger("nfs.client.cb")
+
+op4 = nfs_ops.NFS4ops()
 
 class NFS4Client(rpc.Client, rpc.Server):
     def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None):
@@ -275,7 +277,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         owner = client_owner4(verf, name)
         if protect is None:
             protect = state_protect4_a(SP4_NONE)
-        res = self.compound([op.exchange_id(owner, flags, protect,
+        res = self.compound([op4.exchange_id(owner, flags, protect,
                                             [self.impl_id])],
                             cred)
         nfs4lib.check(res, expect)
@@ -287,7 +289,7 @@ class NFS4Client(rpc.Client, rpc.Server):
     def new_client_session(self, name, flags=0, sec=None):
         c = self.new_client(name, flags=flags)
         s = c.create_session(sec=sec)
-        s.compound([op.reclaim_complete(FALSE)])
+        s.compound([op4.reclaim_complete(FALSE)])
         return s
 
 class ClientStateProtection(object):
@@ -339,7 +341,7 @@ class ClientRecord(object):
         if prog is None:
             prog = self.c.prog
         for item in xrange(max_retries):
-            res = self.c.compound([op.create_session(self.clientid, self.seqid,
+            res = self.c.compound([op4.create_session(self.clientid, self.seqid,
                                                  flags,
                                                  fore_attrs, back_attrs,
                                                  prog, sec)],
@@ -429,7 +431,7 @@ class SessionRecord(object):
             raise RuntimeError
             slot = self.fore_channel.slots[slot]
         # STUB, need to properly set highest
-        return op.sequence(self.sessionid, slot.get_seqid(seq_delta),
+        return op4.sequence(self.sessionid, slot.get_seqid(seq_delta),
                            slot.id, slot.id, cache_this)
 
     def set_ssv(self, ssv=None, *args, **kwargs):
@@ -442,7 +444,7 @@ class SessionRecord(object):
         p = nfs4lib.FancyNFS4Packer()
         p.pack_SEQUENCE4args(seq_op.opsequence)
         digest =  protect.context.hmac(p.get_buffer(), SSV4_SUBKEY_MIC_I2T)
-        ssv_op = op.set_ssv(ssv, digest)
+        ssv_op = op4.set_ssv(ssv, digest)
         res = self.c.compound([seq_op, ssv_op], *args, **kwargs)
         # STUB - do some checking
         protect.context.set_ssv(ssv)

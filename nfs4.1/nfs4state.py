@@ -8,11 +8,13 @@ from nfs4lib import NFS4Error
 #from xdrdef.nfs4_type import stateid4
 from xdrdef.nfs4_type import *
 from xdrdef.nfs4_const import *
-import nfs4_ops as op
+import nfs_ops
 import rpc
 import logging
 
 log = logging.getLogger("nfs.server.state")
+
+op4 = nfs_ops.NFS4ops()
 
 POSIXLOCK = False
 
@@ -748,9 +750,9 @@ class DelegEntry(StateTableEntry):
         # ANSWER - we care about self.status, which can be set to 
         # INVALID anytime by deleg_return
         slot = session.channel_back.choose_slot()
-        seq_op = op.cb_sequence(session.sessionid, slot.get_seqid(),
+        seq_op = op4.cb_sequence(session.sessionid, slot.get_seqid(),
                                 slot.id, slot.id, True, []) # STUB
-        recall_op = op.cb_recall(self.get_id(cb=True), False, self.file.fh)
+        recall_op = op4.cb_recall(self.get_id(cb=True), False, self.file.fh)
         if self.invalid:
             # Race here doesn't matter, but would like to avoid the
             # RPC if possible.

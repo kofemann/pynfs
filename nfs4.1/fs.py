@@ -1557,8 +1557,6 @@ class FileLayoutFile(object): # XXX This should inherit from fs_base.py
         vol = FilelayoutVolWrapper(self._obj, device.list[index])
         return vol, v_pos, remaining
 
-import nfs4_ops as op
-
 class FilelayoutVolWrapper(object):
     def __init__(self, obj, dataserver):
         self._obj = obj

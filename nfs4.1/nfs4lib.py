@@ -3,7 +3,7 @@ import rpc
 import xdrdef.nfs4_const
 from xdrdef.nfs4_pack import NFS4Packer, NFS4Unpacker
 import xdrdef.nfs4_type
-import nfs4_ops as op
+import nfs_ops
 import time
 import collections
 import hmac
@@ -29,6 +29,8 @@ state11 = xdrdef.nfs4_type.stateid4(0xffffffff, "\xff" * 12)
 state01 = xdrdef.nfs4_type.stateid4(1, "\0" * 12)
 
 import hashlib # Note this requires 2.5 or higher
+
+op4 = nfs_ops.NFS4ops()
 
 # Note that all the oid strings have tag and length bytes prepended, as
 # per description of sec_oid4 in draft26 sect 3.2
@@ -626,9 +628,9 @@ def use_obj(file):
     if file is None or file == [None]:
         return []
     elif type(file) is str:
-        return [op.putfh(file)]
+        return [op4.putfh(file)]
     else:
-        return [op.putrootfh()] + [op.lookup(comp) for comp in file]
+        return [op4.putrootfh()] + [op4.lookup(comp) for comp in file]
 
 ###############################################
 # Attribute information
