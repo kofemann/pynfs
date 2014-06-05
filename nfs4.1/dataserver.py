@@ -3,9 +3,12 @@ import nfs4lib
 import xdrdef.nfs4_type as type4
 from xdrdef.nfs4_pack import NFS4Packer
 import xdrdef.nfs4_const as const4
+import xdrdef.nfs3_type as type3
+import xdrdef.nfs3_const as const3
 import time
 import logging
 import nfs4client
+import nfs3client
 import hashlib
 import sys
 import nfs_ops
@@ -14,6 +17,7 @@ import socket
 log = logging.getLogger("Dataserver Manager")
 
 op4 = nfs_ops.NFS4ops()
+op3 = nfs_ops.NFS3ops()
 
 class DataServer(object):
     def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None, summary=None):
@@ -206,6 +210,102 @@ class DataServer41(DataServer):
         res = self._execute(ops)
         attrdict = res.resarray[-1].obj_attributes
         return attrdict.get(const4.FATTR4_SIZE, 0)
+
+class DataServer3(DataServer):
+    def _execute(self, procnum, procarg, exceptions=(), delay=5, maxretries=3):
+        """ execute the NFS call
+        If an error code is specified in the exceptions it means that the
+        caller wants to handle the error himself
+        """
+        retry_errors = []
+        while True:
+            res = self.c1.proc(procnum, procarg)
+            if res.status == const3.NFS3_OK or res.status in exceptions:
+                return res
+            elif res.status in retry_errors:
+                if maxretries > 0:
+                    maxretries -= 1
+                    time.sleep(delay)
+                else:
+                    log.error("Too many retries with DS %s" % self.server)
+                    raise Exception("Dataserver communication retry error")
+            else:
+                log.error("Unhandled status %s from DS %s" %
+                          (const3.nfsstat3[res.status], self.server))
+                raise Exception("Dataserver communication error")
+
+    def connect(self):
+        # only support root with AUTH_SYS for now
+        s1 = rpc.security.instance(rpc.AUTH_SYS)
+        self.cred1 = s1.init_cred(uid=0, gid=0)
+        self.c1 = nfs3client.NFS3Client(self.server, self.port,
+                                        summary=self.summary)
+        self.c1.set_cred(self.cred1)
+        self.rootfh = type3.nfs_fh3(self.c1.mntclnt.get_rootfh(self.path))
+        self.c1.null()
+
+    def make_root(self):
+        """ don't actually make a root path - we must use it as the export """
+        need = const3.ACCESS3_READ | const3.ACCESS3_LOOKUP | \
+               const3.ACCESS3_MODIFY | const3.ACCESS3_EXTEND
+        arg = op3.access(self.rootfh, need)
+        res = self._execute(const3.NFSPROC3_ACCESS, arg)
+        if res.resok.access != need:
+            raise RuntimeError
+        # XXX clean DS directory
+
+    def open_file(self, mds_fh):
+        name = self.fh_to_name(mds_fh)
+        where = type3.diropargs3(self.rootfh, name)
+        attr = type3.sattr3(mode=type3.set_mode3(True, 0777),
+                            uid=type3.set_uid3(True, 0),
+                            gid=type3.set_gid3(True, 0),
+                            size=type3.set_size3(False),
+                            atime=type3.set_atime(False),
+                            mtime=type3.set_mtime(False))
+        how = type3.createhow3(const3.GUARDED, attr)
+        arg = op3.create(where, how)
+        res = self._execute(const3.NFSPROC3_CREATE, arg,
+                            exceptions=(const3.NFS3ERR_EXIST,))
+
+        if res.status == const3.NFS3_OK:
+            self.filehandles[mds_fh] = (res.resok.obj.handle, None)
+
+        else:
+            arg = op3.lookup(type3.diropargs3(self.rootfh, name))
+            res = self._execute(const3.NFSPROC3_LOOKUP, arg)
+
+            self.filehandles[mds_fh] = (res.resok.object, None)
+
+    def close_file(self, mds_fh):
+        del self.filehandles[mds_fh]
+
+    def read(self, fh, pos, count):
+        arg = op3.read(fh, pos, count)
+        res = self._execute(const3.NFSPROC3_READ, arg)
+        # XXX check res.status?
+        return res.resok.data
+
+    def write(self, fh, pos, data):
+        arg = op3.write(fh, pos, len(data), const3.FILE_SYNC, data)
+        # There are all sorts of error handling issues here
+        res = self._execute(const3.NFSPROC3_WRITE, arg)
+
+    def truncate(self, fh, size):
+        attr = type3.sattr3(mode=type3.set_mode3(False),
+                            uid=type3.set_uid3(False),
+                            gid=type3.set_gid3(False),
+                            size=type3.set_size3(True, size),
+                            atime=type3.set_atime(False),
+                            mtime=type3.set_mtime(False))
+        arg = op3.setattr(fh, attr, type3.sattrguard3(check=False))
+        res = self._execute(const3.NFSPROC3_SETATTR, arg)
+
+    def get_size(self, fh):
+        arg = op3.getattr(fh)
+        res = self._execute(const3.NFSPROC3_GETATTR, arg)
+        # XXX check res.status?
+        return res.resok.obj_attributes.size
 
 
 class DSDevice(object):
