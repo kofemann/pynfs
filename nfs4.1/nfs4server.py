@@ -1867,27 +1867,6 @@ class NFS4Server(rpc.Server):
                                   new_cookie >= len(list))
         return encode_status(NFS4_OK, res)
 
-#     def op_getdeviceinfo(self, arg, env): # STUB
-#         check_session(env)
-#         # check_cfh(env)
-#         # fs = env.cfh.fs
-#         # STUB - only deals with block volumes
-#         kind = arg.gdia_layout_type
-#         if kind != LAYOUT4_BLOCK_VOLUME:
-#             return encode_status(NFS4ERR_INVAL)
-#         # STUB - want to pull this from fs, not block module
-#         d = block.devices.get(arg.gdia_device_id, None)
-#         if d is None:
-#             return encode_status(NFS4ERR_INVAL)
-#         address = device_addr4(LAYOUT4_BLOCK_VOLUME, d.get_addr())
-#         # Check that we don't exceed count
-#         p = nfs4lib.FancyNFS4Packer()
-#         p.pack_device_addr4(address)
-#         if len(p.get_buffer()) > arg.gdia_maxcount:
-#             return encode_status(NFS4ERR_TOOSMALL, gdir_mincount = len(p.get_buffer()))
-#         res = GETDEVICEINFO4resok(address, 0)
-#         return encode_status(NFS4_OK, res)
-
     def op_getdeviceinfo(self, arg, env): # STUB
         # STUB - ignoring notifications
         check_session(env)
