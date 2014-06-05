@@ -54,6 +54,7 @@ class DataServer(object):
         # as wide as the client/MDS channel (at least for linux client)
         fore_attrs = channel_attrs4(0, 16384, 16384, 2868, 8, 8, [])
         self.sess = c.create_session(fore_attrs=fore_attrs)
+        sess.compound([op.reclaim_complete(FALSE)])
         self.make_root()
 
     def disconnect(self):
