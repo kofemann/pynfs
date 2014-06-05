@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO,
 log_cb = logging.getLogger("nfs.client.cb")
 
 class NFS4Client(rpc.Client, rpc.Server):
-    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16):
+    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None):
         rpc.Client.__init__(self, 100003, 4)
         self.prog = 0x40000000
         self.versions = [1] # List of supported versions of prog
@@ -36,6 +36,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         self.c1 = self.connect(self.server_address)
         self.sessions = {} # XXX Really, this should be per server
         self.ctrl_proc = ctrl_proc
+        self.summary = summary
 
     def set_cred(self, credinfo):
         self.default_cred = credinfo
@@ -83,6 +84,10 @@ class NFS4Client(rpc.Client, rpc.Server):
         pipe = kwargs.get("pipe", None)
         res = self.listen(xid, pipe=pipe)
         log_cb.info("compound result = %r" % (res,))
+        if self.summary:
+            self.summary.show_op('call v4.1 %s:%s' % self.server_address,
+                [ nfs_opnum4[a.argop].lower()[3:] for a in args[0] ],
+                nfsstat4[res.status])
         return res
     
     def listen(self, xid, pipe=None, timeout=10.0):

@@ -502,6 +502,41 @@ class Slot(object):
 
     # STUB - for client, need to track slot usage
 
+class SummaryOutput:
+    def __init__(self, enabled=True):
+        self._enabled = enabled
+        self._last = None
+        self._last_role = None
+        self._repeat_count = 0
+
+    def show_op(self, role, opnames, status):
+        if not self._enabled:
+            return
+
+        summary_line = "  %s" % ', '.join(opnames)
+
+        if status != "NFS4_OK" and status != "NFS3_OK":
+            summary_line += " -> %s" % (status,)
+
+        print_summary_line = True
+        if summary_line != self._last or role != self._last_role:
+            if self._last and self._repeat_count:
+                print "  (repeated %u times)" % self._repeat_count
+            self._last = summary_line
+            self._repeat_count = 0
+        else:
+            print_summary_line = False
+            self._repeat_count += 1
+
+        if self._last_role != role:
+            print
+            print role
+            self._last_role = role
+
+        if print_summary_line:
+            print summary_line
+
+
 ##################################################
 # The primary class - it is excessively long     #
 ##################################################
@@ -526,6 +561,8 @@ class NFS4Server(rpc.Server):
             log_41.setLevel(logging.DEBUG) # XXX redundant?
             log_41.setLevel(9)
             log_cfg.setLevel(20)
+
+        self.summary = SummaryOutput(kwargs.pop('show_summary', False))
 
         rpc.Server.__init__(self, prog=NFS4_PROGRAM, versions=[4], port=port,
                             **kwargs)
@@ -776,6 +813,7 @@ class NFS4Server(rpc.Server):
             return env
         # Handle the individual operations
         status = NFS4_OK
+        opnames = []
         for arg in args.argarray:
             opname = nfs_opnum4.get(arg.argop, 'op_illegal')
             log_41.info("*** %s (%d) ***" % (opname, arg.argop))
@@ -805,10 +843,14 @@ class NFS4Server(rpc.Server):
                     result = encode_status_by_name(opname.lower()[3:],
                                                    NFS4ERR_SERVERFAULT)
             env.results.append(result)
+            opnames.append(opname.lower()[3:])
             status = result.status
             if status != NFS4_OK:
                 break
         log_41.info("Replying.  Status %s (%d)" % (nfsstat4[status], status))
+        client_addr = '%s:%s' % cred.connection._s.getpeername()[:2]
+        self.summary.show_op('handle v4.1 %s' % client_addr,
+                             opnames, nfsstat4[status])
         return env
 
     def delete_session(self, session, sessionid):
@@ -2059,6 +2101,8 @@ def scan_options():
                  help="Reset and clear any disk-based filesystems")
     p.add_option("-v", "--verbose", action="store_true", default=False,
                  help="Print debug info to screen and enter interpreter on ^C")
+    p.add_option("-s", "--show_summary", action="store_true", default=False,
+                 help="Print short summary of operations")
     p.add_option("--use_block", action="store_true", default=False,
                  help="Mount a block-pnfs fs")
     p.add_option("--use_files", action="store_true", default=False,
@@ -2092,7 +2136,8 @@ if __name__ == "__main__":
     S = NFS4Server(port=opts.port,
                    is_mds=opts.use_block or opts.use_files,
                    is_ds = opts.is_ds,
-                   verbose = opts.verbose)
+                   verbose = opts.verbose,
+                   show_summary = opts.show_summary)
     read_exports(S, opts)
     if True:
         S.start()

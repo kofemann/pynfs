@@ -13,8 +13,8 @@ import socket
 
 log = logging.getLogger("Dataserver Manager")
 
-class DataServer(object):
-    def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None):
+class DataServer41(object):
+    def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None, summary=None):
         self.mdsds = mdsds
         self.server = server
         self.port = int(port)
@@ -32,6 +32,8 @@ class DataServer(object):
         else:
             self.multipath_servers = []
 
+        self.summary = summary
+
         if active:
             self.up()
 
@@ -47,7 +49,8 @@ class DataServer(object):
         # only support root with AUTH_SYS for now
         s1 = rpc.security.instance(rpc.AUTH_SYS)
         self.cred1 = s1.init_cred(uid=0, gid=0)
-        self.c1 = nfs4client.NFS4Client(self.server, self.port)
+        self.c1 = nfs4client.NFS4Client(self.server, self.port,
+                                        summary=self.summary)
         self.c1.set_cred(self.cred1)
         self.c1.null()
         c = self.c1.new_client("DS.init_%s" % self.server)
@@ -173,7 +176,7 @@ class DSDevice(object):
         self.address_body = None # set by load()
         self.mdsds = mdsds # if you are both the DS and the MDS we are the only server
 
-    def load(self, filename):
+    def load(self, filename, server_obj):
         """ Read dataservers from configuration file:
         where each line has format e.g. server[:[port][/path]]
         """
@@ -195,8 +198,9 @@ class DSDevice(object):
                 try:
                     log.info("Adding dataserver ip:%s port:%s path:%s" %
                              (server, port, '/'.join(path)))
-                    ds = DataServer(server, port, path, mdsds=self.mdsds,
-                                    multipath_servers=server_list)
+                    ds = DataServer41(server, port, path, mdsds=self.mdsds,
+                                    multipath_servers=server_list,
+                                    summary=server_obj.summary)
                     self.list.append(ds)
                 except socket.error:
                     log.critical("cannot access %s:%i/%s" %
