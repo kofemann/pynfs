@@ -8,15 +8,13 @@ from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
 import nfs4_ops as op
 import time, struct
 import threading
-import collections
 import hmac
-from locking import Lock
 from nfs4commoncode import CBCompoundState as CompoundState, \
      cb_encode_status as encode_status, \
      cb_encode_status_by_name as encode_status_by_name
 
 
-import sys, traceback
+import traceback
 import logging
 logging.basicConfig(level=logging.INFO,
                     format="%(levelname)-7s:%(name)s:%(message)s")
