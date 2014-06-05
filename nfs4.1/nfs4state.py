@@ -13,7 +13,6 @@ import rpc
 import logging
 
 log = logging.getLogger("nfs.server.state")
-log.setLevel(10)
 
 POSIXLOCK = False
 

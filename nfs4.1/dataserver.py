@@ -182,7 +182,7 @@ class DSDevice(object):
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
-                print "Analyzing: %r" % line
+                log.info("Analyzing: %r" % line)
                 try:
                     server_list, path = nfs4lib.parse_nfs_url(line)
                 except:
@@ -192,7 +192,6 @@ class DSDevice(object):
                 # for now, just use the last path for local connections
                 server, port = server_list[-1]
                 server_list = server_list[:-1]
-                print server, port, path
                 try:
                     log.info("Adding dataserver ip:%s port:%s path:%s" %
                              (server, port, '/'.join(path)))

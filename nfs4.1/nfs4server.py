@@ -21,14 +21,11 @@ from nfs4commoncode import CompoundState, encode_status, encode_status_by_name
 from fs import RootFS, ConfigFS
 from config import ServerConfig, ServerPerClientConfig, OpsConfigServer, Actions
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.WARN,
                     format="%(levelname)-7s:%(name)s:%(message)s")
 log_41 = logging.getLogger("nfs.server")
-log_41.setLevel(logging.DEBUG)
-log_41.setLevel(9)
 
 log_cfg = logging.getLogger("nfs.server.opconfig")
-log_cfg.setLevel(20)
 
 ##################################################
 # Set various global constants and magic numbers #
@@ -116,9 +113,6 @@ class Recording(object):
     def add(self, call, reply):
         """Add call and reply strings to records"""
         if self.on:
-            print "Adding"
-            print repr(call)
-            print repr(reply)
             self.queue.appendleft((call, reply))
 
     def set_stamp(self, stamp):
@@ -269,13 +263,13 @@ class VerboseDict(dict):
         self.config = config
 
     def __setitem__(self, key, value):
-        if 0 or self.config.debug_state:
-            print "+++ Adding client.state[%r]" % key
+        if self.config.debug_state:
+            log_41.info("+++ Adding client.state[%r]" % key)
         dict.__setitem__(self, key, value)
 
     def __delitem__(self, key):
-        if 0 or self.config.debug_state:
-            print "+++ Removing client.state[%r]" % key
+        if self.config.debug_state:
+            log_41.info("+++ Removing client.state[%r]" % key)
         dict.__delitem__(self, key)
         
 class ClientRecord(object):
@@ -526,6 +520,13 @@ class NFS4Server(rpc.Server):
         port = kwargs.pop("port", NFS4_PORT)
         self.is_mds = kwargs.pop("is_mds", False)
         self.is_ds = kwargs.pop("is_ds", False)
+
+        self.verbose = kwargs.pop('verbose', False)
+        if self.verbose:
+            log_41.setLevel(logging.DEBUG) # XXX redundant?
+            log_41.setLevel(9)
+            log_cfg.setLevel(20)
+
         rpc.Server.__init__(self, prog=NFS4_PROGRAM, versions=[4], port=port,
                             **kwargs)
         self.root = RootFS().root # Root of exported filesystem tree
@@ -552,7 +553,7 @@ class NFS4Server(rpc.Server):
             rpc.Server.start(self)
         except KeyboardInterrupt:
             # Put user into console where can look at state of server
-            if not self.config.catch_ctrlc:
+            if not self.config.catch_ctrlc or not self.verbose:
                 raise
             import code
             import readline
@@ -1330,9 +1331,9 @@ class NFS4Server(rpc.Server):
         sid, deleg, flags = self.open_file(existing, arg.owner,
                                     arg.share_access, arg.share_deny)
         env.set_cfh(existing, sid)
-        if 0 or env.session.client.config.debug_state:
-            print "+++ client(id=%i).state =" %  env.session.client.clientid
-            print env.session.client.state
+        if env.session.client.config.debug_state:
+            log_41.info("+++ client(id=%i).state = %r" %
+                        (env.session.client.clientid, env.session.client.state))
         res = OPEN4resok(sid, cinfo, flags, bitmask, deleg)
         return encode_status(NFS4_OK, res)
 
@@ -1452,14 +1453,13 @@ class NFS4Server(rpc.Server):
         ret_dict = {}
         info = nfs4lib.attr_info
         for attr in attrs:
-            print "handling fattr4_%s : " % nfs4lib.attr_name(attr),
             if attr not in info:
                 # Ignore unknown attributes
-                print "Unknown"
+                log_41.info("Skipping unknown attr: %s" % (attr,))
                 continue
             if not info[attr].readable:
                 # XXX How deal with write-only attrs?
-                print "Write only"
+                log_41.info("Skipping write only attr: %s" % (attr,))
                 continue
             # Attributes hide in different places, call the place 'base'
             if info[attr].from_fs:
@@ -1471,24 +1471,14 @@ class NFS4Server(rpc.Server):
             name = "fattr4_%s" % nfs4lib.attr_name(attr)
             if hasattr(base, name) and (obj.fs.fattr4_supported_attrs & 1<<attr): # STUB we should be able to remove hasattr
                 ret_dict[attr] = getattr(base, name)
-                print ret_dict[attr]
             else:
                 if ignore:
                     # Must ignore for GETATTR (and READDIR) per 15.1
-                    print "ignored"
-                    if name == "fattr4_mounted_on_fileid":
-                        print base == obj
-                        print base.fattr4_mounted_on_fileid
-                    if name == "fattr4_layout_blksize":
-                        print base == obj
-                        print hasattr(base, name)
-                        print obj.fs.fattr4_supported_attrs
-                        print 1<<attr
-                        print obj.fs.fattr4_supported_attrs & 1<<attr
+                    log_41.info("ignored attr %s" % (name,))
                     continue
                 else:
                     # This is for VERIFY/NVERIFY
-                    print "NOT SUPP"
+                    log_41.info("attr NOT SUPP %s" % (name,))
                     raise NFS4Error(NFS4ERR_ATTRNOTSUPP)
         obj.fattr4_rdattr_error = NFS4_OK # XXX STUB Handle correctly
         return ret_dict
@@ -1953,14 +1943,14 @@ class NFS4Server(rpc.Server):
                 calls.append(call)
             if arg.dir & xdrdef.sctrl_const.DIR_REPLY:
                 replies.append(reply)
-        print calls
-        print replies
+        #print calls
+        #print replies
         grabres = xdrdef.sctrl_type.GRABres(calls, replies)
         return xdrdef.sctrl_const.CTRLSTAT_OK, \
                xdrdef.sctrl_type.resdata_t(arg.ctrlop, grab = grabres)
 
     def ctrl_illegal(self, arg):
-        print "ILLEGAL"
+        #print "ILLEGAL"
         return xdrdef.sctrl_const.CTRLSTAT_ILLEGAL, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
         
     def op_setclientid(self, arg, env):
@@ -2067,6 +2057,8 @@ def scan_options():
                     )
     p.add_option("-r", "--reset", action="store_true", default=False,
                  help="Reset and clear any disk-based filesystems")
+    p.add_option("-v", "--verbose", action="store_true", default=False,
+                 help="Print debug info to screen and enter interpreter on ^C")
     p.add_option("--use_block", action="store_true", default=False,
                  help="Mount a block-pnfs fs")
     p.add_option("--use_files", action="store_true", default=False,
@@ -2099,7 +2091,8 @@ if __name__ == "__main__":
         locking.DEBUG = True
     S = NFS4Server(port=opts.port,
                    is_mds=opts.use_block or opts.use_files,
-                   is_ds = opts.is_ds)
+                   is_ds = opts.is_ds,
+                   verbose = opts.verbose)
     read_exports(S, opts)
     if True:
         S.start()

@@ -19,9 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO,
                     format="%(levelname)-7s:%(name)s:%(message)s")
 log_cb = logging.getLogger("nfs.client.cb")
-log_cb.setLevel(logging.DEBUG)
 
-SHOW_TRAFFIC = True # Debugging aid, prints out client traffic
 class NFS4Client(rpc.Client, rpc.Server):
     def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16):
         rpc.Client.__init__(self, 100003, 4)
@@ -76,9 +74,7 @@ class NFS4Client(rpc.Client, rpc.Server):
             pipe = self.c1
         p = packer(check_enum=checks, check_array=checks)
         c4 = COMPOUND4args(tag, version, ops)
-        if SHOW_TRAFFIC:
-            print
-            print c4
+        log_cb.info("compound args = %r" % (c4,))
         p.pack_COMPOUND4args(c4)
         return self.send_call(pipe, 1, p.get_buffer(), credinfo)
 
@@ -86,19 +82,16 @@ class NFS4Client(rpc.Client, rpc.Server):
         xid = self.compound_async(*args, **kwargs)
         pipe = kwargs.get("pipe", None)
         res = self.listen(xid, pipe=pipe)
-        if SHOW_TRAFFIC:
-            print res
+        log_cb.info("compound result = %r" % (res,))
         return res
     
     def listen(self, xid, pipe=None, timeout=10.0):
         if pipe is None:
             pipe = self.c1
         header, data = pipe.listen(xid, timeout)
-        #print "HEADER", header
         if data:
             p = nfs4lib.FancyNFS4Unpacker(data)
             data = p.unpack_COMPOUND4res()
-        #print "DATA", repr(data)
         return data
 
     def handle_0(self, data, cred):

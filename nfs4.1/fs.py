@@ -13,7 +13,6 @@ from xdrdef.nfs4_pack import NFS4Packer
 log_o = logging.getLogger("fs.obj")
 log_fs = logging.getLogger("fs")
 logging.addLevelName(5, "FUNCT")
-log_fs.setLevel(20)
 
 class MetaData(object):
     """Contains everything that needs to be stored
@@ -743,7 +742,6 @@ class ConfigObj(FSObject):
             line = line.strip()
             if line and not line.startswith("#"):
                 lines.append(line)
-        print lines
         if len(lines) != 1:
             self._reset()
             return
@@ -1154,7 +1152,6 @@ class LayoutFSObj(FSObject):
                                             disk_offset,
                                             e.state))
         block_layout = pnfs_block_layout4(elist)
-        print block_layout
         p = block.Packer()
         p.pack_pnfs_block_layout4(block_layout)
 ##         if self.id <= 4:
@@ -1194,7 +1191,6 @@ class LayoutFSObj(FSObject):
                 log_o.exception("Problem decoding opaque")
                 raise NFS4Error(NFS4ERR_BADLAYOUT, tag="Error decoding opaque")
             upd_list = update.blu_commit_list
-            print upd_list
         # Error check
         for e in upd_list:
             if e.bex_state != block.PNFS_BLOCK_READWRITE_DATA:
