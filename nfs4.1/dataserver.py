@@ -15,7 +15,7 @@ log = logging.getLogger("Dataserver Manager")
 
 op4 = nfs_ops.NFS4ops()
 
-class DataServer41(object):
+class DataServer(object):
     def __init__(self, server, port, path, flavor=rpc.AUTH_SYS, active=True, mdsds=True, multipath_servers=None, summary=None):
         self.mdsds = mdsds
         self.server = server
@@ -43,55 +43,15 @@ class DataServer41(object):
         self.active = True
         if not self.mdsds:
             self.connect()
+            self.make_root()
 
     def down(self):
+        self.disconnect()
         self.active = False
 
-    def connect(self):
-        # only support root with AUTH_SYS for now
-        s1 = rpc.security.instance(rpc.AUTH_SYS)
-        self.cred1 = s1.init_cred(uid=0, gid=0)
-        self.c1 = nfs4client.NFS4Client(self.server, self.port,
-                                        summary=self.summary)
-        self.c1.set_cred(self.cred1)
-        self.c1.null()
-        c = self.c1.new_client("DS.init_%s" % self.server)
-        # This is a hack to ensure MDS/DS communication path is at least
-        # as wide as the client/MDS channel (at least for linux client)
-        fore_attrs = type4.channel_attrs4(0, 16384, 16384, 2868, 8, 8, [])
-        self.sess = c.create_session(fore_attrs=fore_attrs)
-        sess.compound([op.reclaim_complete(FALSE)])
-        self.make_root()
-
-    def disconnect(self):
-        pass
-
-    def _execute(self, ops, exceptions=[], delay=5, maxretries=3):
-        """ execute the NFS call
-        If an error code is specified in the exceptions it means that the
-        caller wants to handle the error himself
-        """
-        retry_errors = [const4.NFS4ERR_DELAY, const4.NFS4ERR_GRACE]
-        state_errors = [const4.NFS4ERR_STALE_CLIENTID, const4.NFS4ERR_BADSESSION,
-                        const4.NFS4ERR_BADSLOT, const4.NFS4ERR_DEADSESSION]
-        while True:
-            res = self.sess.compound(ops)
-            if res.status == const4.NFS4_OK or res.status in exceptions:
-                return res
-            elif res.status in retry_errors:
-                if maxretries > 0:
-                    maxretries -= 1
-                    time.sleep(delay)
-                else:
-                    log.error("Too many retries with DS %s" % self.server)
-                    raise Exception("Dataserver communication retry error")
-            elif res.status in state_errors:
-                self.disconnect()
-                self.connect()
-            else:
-                log.error("Unhandled status %s from DS %s" %
-                          (nfsstat4[res.status], self.server))
-                raise Exception("Dataserver communication error")
+    def reset(self):
+        self.down()
+        self.up()
 
     def get_netaddr4(self):
         # STUB server multipathing not supported yet
@@ -114,8 +74,59 @@ class DataServer41(object):
             netaddr4s.append(type4.netaddr4(proto, uaddr))
         return netaddr4s
 
+    def fh_to_name(self, mds_fh):
+        return hashlib.sha1("%r" % mds_fh).hexdigest()
 
-    def make_root(self, attrs={const4.FATTR4_MODE:0777}):
+    def connect(self):
+        raise NotImplemented
+
+    def disconnect(self):
+        pass
+
+class DataServer41(DataServer):
+    def _execute(self, ops, exceptions=[], delay=5, maxretries=3):
+        """ execute the NFS call
+        If an error code is specified in the exceptions it means that the
+        caller wants to handle the error himself
+        """
+        retry_errors = [const4.NFS4ERR_DELAY, const4.NFS4ERR_GRACE]
+        state_errors = [const4.NFS4ERR_STALE_CLIENTID, const4.NFS4ERR_BADSESSION,
+                        const4.NFS4ERR_BADSLOT, const4.NFS4ERR_DEADSESSION]
+        while True:
+            res = self.sess.compound(ops)
+            if res.status == const4.NFS4_OK or res.status in exceptions:
+                return res
+            elif res.status in retry_errors:
+                if maxretries > 0:
+                    maxretries -= 1
+                    time.sleep(delay)
+                else:
+                    log.error("Too many retries with DS %s" % self.server)
+                    raise Exception("Dataserver communication retry error")
+            elif res.status in state_errors:
+                self.reset()
+            else:
+                log.error("Unhandled status %s from DS %s" %
+                          (nfsstat4[res.status], self.server))
+                raise Exception("Dataserver communication error")
+
+    def connect(self):
+        # only support root with AUTH_SYS for now
+        s1 = rpc.security.instance(rpc.AUTH_SYS)
+        self.cred1 = s1.init_cred(uid=0, gid=0)
+        self.c1 = nfs4client.NFS4Client(self.server, self.port,
+                                        summary=self.summary)
+        self.c1.set_cred(self.cred1)
+        self.c1.null()
+        c = self.c1.new_client("DS.init_%s" % self.server)
+        # This is a hack to ensure MDS/DS communication path is at least
+        # as wide as the client/MDS channel (at least for linux client)
+        fore_attrs = type4.channel_attrs4(0, 16384, 16384, 2868, 8, 8, [])
+        self.sess = c.create_session(fore_attrs=fore_attrs)
+        self.sess.compound([op4.reclaim_complete(const4.FALSE)])
+
+    def make_root(self):
+        attrs = {const4.FATTR4_MODE:0777}
         existing_path = []
         kind = type4.createtype4(const4.NF4DIR)
         for comp in self.path:
@@ -134,12 +145,13 @@ class DataServer41(object):
             raise RuntimeError
         # XXX clean DS directory
 
-    def fh_to_name(self, mds_fh):
-        return hashlib.sha1("%r" % mds_fh).hexdigest()
-
-    def open_file(self, mds_fh, seqid=0,
-                  access=const4.OPEN4_SHARE_ACCESS_BOTH, deny=const4.OPEN4_SHARE_DENY_NONE,
-                  attrs={const4.FATTR4_MODE: 0777}, owner = "mds", mode=const4.GUARDED4):
+    def open_file(self, mds_fh):
+        seqid=0
+        access = const4.OPEN4_SHARE_ACCESS_BOTH
+        deny = const4.OPEN4_SHARE_DENY_NONE
+        attrs = {const4.FATTR4_MODE: 0777}
+        owner = "mds"
+        mode = const4.GUARDED4
         verifier = self.sess.c.verifier
         openflag = type4.openflag4(const4.OPEN4_CREATE, type4.createhow4(mode, attrs, verifier))
         name = self.fh_to_name(mds_fh)
