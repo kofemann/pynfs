@@ -59,7 +59,7 @@ class DataServer(object):
         self.make_root()
 
     def disconnect(self):
-        self.sess.destroy()
+        pass
 
     def execute(self, ops, exceptions=[], delay=5, maxretries=3):
         """ execute the NFS call
