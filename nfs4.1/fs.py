@@ -1567,12 +1567,7 @@ class FilelayoutVolWrapper(object):
         self._pos = 0
 
     def read(self, count):
-        # STUB stateid0 is illegal to a ds
-        ops = [op.putfh(self._fh),
-               op.read(nfs4lib.state00, self._pos, count)]
-        # There are all sorts of error handling issues here
-        res = self._ds.execute(ops)
-        data = res.resarray[-1].data
+        data = self._ds.read(self._fh, self._pos, count)
         self._pos += len(data)
         return data
 
@@ -1580,25 +1575,14 @@ class FilelayoutVolWrapper(object):
         self._pos = offset
 
     def write(self, data):
-        ops = [op.putfh(self._fh),
-               op.write(nfs4lib.state00, self._pos, FILE_SYNC4, data)]
-        # There are all sorts of error handling issues here
-        res = self._ds.execute(ops)
+        self._ds.write(self._fh, self._pos, data)
         self._pos += len(data)
-        return
 
     def truncate(self, size):
-        ops = [op.putfh(self._fh),
-               op.setattr(nfs4lib.state00, {FATTR4_SIZE: size})]
-        res = self._ds.execute(ops)
-        return
+        self._ds.truncate(self._fh, size)
 
     def get_size(self):
-        ops = [op.putfh(self._fh),
-               op.getattr(1L << FATTR4_SIZE)]
-        res = self._ds.execute(ops)
-        attrdict = res.resarray[-1].obj_attributes
-        return attrdict.get(FATTR4_SIZE, 0)
+        return self._ds.get_size(self._fh)
 
 ################################################
 

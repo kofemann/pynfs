@@ -64,7 +64,7 @@ class DataServer41(object):
     def disconnect(self):
         pass
 
-    def execute(self, ops, exceptions=[], delay=5, maxretries=3):
+    def _execute(self, ops, exceptions=[], delay=5, maxretries=3):
         """ execute the NFS call
         If an error code is specified in the exceptions it means that the
         caller wants to handle the error himself
@@ -118,16 +118,16 @@ class DataServer41(object):
         kind = createtype4(NF4DIR)
         for comp in self.path:
             existing_path.append(comp)
-            res = self.execute(nfs4lib.use_obj(existing_path),
+            res = self._execute(nfs4lib.use_obj(existing_path),
                                exceptions=[NFS4ERR_NOENT])
             if res.status == NFS4ERR_NOENT:
                 cr_ops = nfs4lib.use_obj(existing_path[:-1]) + \
                     [op.create(kind, comp, attrs)]
-                self.execute(cr_ops)
-        res = self.execute(nfs4lib.use_obj(self.path) + [op.getfh()])
+                self._execute(cr_ops)
+        res = self._execute(nfs4lib.use_obj(self.path) + [op.getfh()])
         self.path_fh = res.resarray[-1].object
         need = ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_EXTEND
-        res = self.execute(nfs4lib.use_obj(self.path_fh) + [op.access(need)])
+        res = self._execute(nfs4lib.use_obj(self.path_fh) + [op.access(need)])
         if res.resarray[-1].access != need:
             raise RuntimeError
         # XXX clean DS directory
@@ -147,7 +147,7 @@ class DataServer41(object):
             open_op = op.open(seqid, access, deny,
                               open_owner4(self.sess.client.clientid, owner),
                               openflag, open_claim4(CLAIM_NULL, name))
-            res = self.execute(nfs4lib.use_obj(self.path_fh) + [open_op, op.getfh()], exceptions=[NFS4ERR_EXIST])
+            res = self._execute(nfs4lib.use_obj(self.path_fh) + [open_op, op.getfh()], exceptions=[NFS4ERR_EXIST])
             if res.status == NFS4_OK:
                  ds_fh = res.resarray[-1].opgetfh.resok4.object
                  ds_openstateid = stateid4(0, res.resarray[-2].stateid.other)
@@ -163,9 +163,36 @@ class DataServer41(object):
         seqid=0 #FIXME: seqid must be !=0
         fh, stateid = self.filehandles[mds_fh]
         ops = [op.putfh(fh)] + [op.close(seqid, stateid)]
-        res = self.execute(ops)
+        res = self._execute(ops)
         # ignoring return
         del self.filehandles[mds_fh]
+
+    def read(self, fh, pos, count):
+        ops = [op.putfh(fh),
+               op.read(nfs4lib.state00, pos, count)]
+        # There are all sorts of error handling issues here
+        res = self._execute(ops)
+        data = res.resarray[-1].data
+        return data
+
+    def write(self, fh, pos, data):
+        ops = [op.putfh(fh),
+               op.write(nfs4lib.state00, pos, FILE_SYNC4, data)]
+        # There are all sorts of error handling issues here
+        res = self._execute(ops)
+
+    def truncate(self, fh, size):
+        ops = [op.putfh(fh),
+               op.setattr(nfs4lib.state00, {FATTR4_SIZE: size})]
+        res = self._execute(ops)
+
+    def get_size(self, fh):
+        ops = [op.putfh(fh),
+               op.getattr(1L << FATTR4_SIZE)]
+        res = self._execute(ops)
+        attrdict = res.resarray[-1].obj_attributes
+        return attrdict.get(FATTR4_SIZE, 0)
+
 
 class DSDevice(object):
     def __init__(self, mdsds):
