@@ -9,6 +9,7 @@ import nfs4client
 import hashlib
 import sys
 import nfs4_ops as op
+import socket
 
 log = logging.getLogger("Dataserver Manager")
 
@@ -198,7 +199,7 @@ class DSDevice(object):
                     ds = DataServer(server, port, path, mdsds=self.mdsds,
                                     multipath_servers=server_list)
                     self.list.append(ds)
-                except:
+                except socket.error:
                     log.critical("cannot access %s:%i/%s" %
                                  (server, port, '/'.join(path)))
                     sys.exit(1)
