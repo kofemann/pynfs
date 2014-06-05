@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 from environment import check, checklist, get_invalid_clientid, makeStaleId, \
     do_getattrdict, use_obj

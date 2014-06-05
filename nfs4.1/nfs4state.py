@@ -5,9 +5,9 @@ from locking import Lock
 import struct
 import nfs4lib
 from nfs4lib import NFS4Error
-#from nfs4_type import stateid4
-from nfs4_type import *
-from nfs4_const import *
+#from xdrdef.nfs4_type import stateid4
+from xdrdef.nfs4_type import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 import rpc
 import logging

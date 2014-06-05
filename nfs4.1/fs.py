@@ -1,6 +1,6 @@
 from nfs4state import FileState
-from nfs4_const import *
-from nfs4_type import fsid4, layout4, layout_content4, nfsv4_1_file_layout4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import fsid4, layout4, layout_content4, nfsv4_1_file_layout4
 import nfs4lib
 from nfs4lib import NFS4Error
 import struct
@@ -8,7 +8,7 @@ import logging
 from locking import Lock, RWLock
 from cStringIO import StringIO
 import time
-from nfs4_pack import NFS4Packer
+from xdrdef.nfs4_pack import NFS4Packer
 
 log_o = logging.getLogger("fs.obj")
 log_fs = logging.getLogger("fs")
@@ -1070,7 +1070,7 @@ class StubFS_Disk(FileSystem):
 
 ###################################################
 
-from pnfs_block_type import pnfs_block_extent4, pnfs_block_layout4
+from xdrdef.pnfs_block_type import pnfs_block_extent4, pnfs_block_layout4
 import block
 
 class my_ro_extent(object):

@@ -1,11 +1,11 @@
 from st_create_session import create_session
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 
 from environment import check, checklist, fail, create_file, open_file, close_file
 from environment import open_create_file_op, use_obj
-from nfs4_type import open_owner4, openflag4, createhow4, open_claim4
-from nfs4_type import creatverfattr, fattr4, stateid4, locker4, lock_owner4
-from nfs4_type import open_to_lock_owner4
+from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
+from xdrdef.nfs4_type import creatverfattr, fattr4, stateid4, locker4, lock_owner4
+from xdrdef.nfs4_type import open_to_lock_owner4
 import nfs4_ops as op
 import threading
 

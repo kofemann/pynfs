@@ -10,8 +10,8 @@
 
 import time
 import testmod
-from nfs4_const import *
-from nfs4_type import *
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
 import rpc
 import nfs4client
 import os

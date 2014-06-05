@@ -1,7 +1,7 @@
 from st_create_session import create_session
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, fail, bad_sessionid, create_file
-from nfs4_type import channel_attrs4
+from xdrdef.nfs4_type import channel_attrs4
 import nfs4_ops as op
 import nfs4lib
 

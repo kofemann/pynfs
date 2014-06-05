@@ -1,7 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, checklist, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
 import nfs4_ops as op
-from nfs4_type import *
+from xdrdef.nfs4_type import *
 
 def testValidDir(t, env):
     """RENAME : normal operation

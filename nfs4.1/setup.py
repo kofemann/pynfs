@@ -31,22 +31,25 @@ class build_py(_build_py):
                 self.build_module(module, module_file, package)
 
     def expand_xdr(self, dir):
+        print "expand = %r" % dir
         cwd = os.getcwd()
-        try:
-            if dir:
-                os.chdir(dir)
-            xdr_files = glob(os.path.join(dir, "*.x"))
-            for f in xdr_files:
-                # Can conditionalize this
-                # XXX need some way to pass options here
-                xdrgen.run(f)
-                try:
-                    os.remove("parser.out")
-                    os.remove("parsetab.py")
-                except:
-                    print "Remove parse* failed"
-        finally:
-            os.chdir(cwd)
+        xdrdir = os.path.join(cwd, dir, 'xdrdef')
+        print "xdrdir = %r" % xdrdir
+        if os.path.exists(xdrdir):
+            try:
+                os.chdir(xdrdir)
+                xdr_files = glob(os.path.join(xdrdir, "*.x"))
+                for f in xdr_files:
+                    # Can conditionalize this
+                    # XXX need some way to pass options here
+                    xdrgen.run(f)
+                    try:
+                        os.remove("parser.out")
+                        os.remove("parsetab.py")
+                    except:
+                        print "Remove parse* failed"
+            finally:
+                os.chdir(cwd)
 
 setup(name = "nfs4",
       version = "0.0.0", # import this?

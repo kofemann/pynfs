@@ -1,8 +1,8 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 import time
 from environment import check, checklist, fail
-from nfs4_type import *
+from xdrdef.nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids
 

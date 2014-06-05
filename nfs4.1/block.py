@@ -1,8 +1,8 @@
 from __future__ import with_statement
-from pnfs_block_pack import PNFS_BLOCKPacker as Packer
-from pnfs_block_pack import PNFS_BLOCKUnpacker as Unpacker
-from pnfs_block_type import *
-from pnfs_block_const import *
+from xdrdef.pnfs_block_pack import PNFS_BLOCKPacker as Packer
+from xdrdef.pnfs_block_pack import PNFS_BLOCKUnpacker as Unpacker
+from xdrdef.pnfs_block_type import *
+from xdrdef.pnfs_block_const import *
 
 import fs_base
 from threading import Lock

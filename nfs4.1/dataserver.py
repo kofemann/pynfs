@@ -1,8 +1,8 @@
 import rpc
 import nfs4lib
-from nfs4_type import *
-from nfs4_pack import NFS4Packer
-from nfs4_const import *
+from xdrdef.nfs4_type import *
+from xdrdef.nfs4_pack import NFS4Packer
+from xdrdef.nfs4_const import *
 import time
 import logging
 import nfs4client

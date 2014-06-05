@@ -1,9 +1,9 @@
 from st_create_session import create_session
 from st_open import open_claim4
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 
 from environment import check, checklist, fail, create_file, open_file, close_file
-from nfs4_type import *
+from xdrdef.nfs4_type import *
 import nfs4_ops as op
 import nfs4lib
 import threading

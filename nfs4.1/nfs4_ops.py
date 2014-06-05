@@ -2,8 +2,8 @@
 <name>() that returns the appropriate *_argop4 structure, hiding
 this routine packing from the user.
 """
-import nfs4_type as _type
-import nfs4_const as _const
+import xdrdef.nfs4_type as _type
+import xdrdef.nfs4_const as _const
 
 # This string is our general function template
 code = """\

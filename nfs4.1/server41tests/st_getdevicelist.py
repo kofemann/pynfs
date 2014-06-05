@@ -1,5 +1,5 @@
-from nfs4_const import *
-from nfs4_type import *
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
 from environment import check, fail, use_obj, open_file, create_file
 import nfs4_ops as op
 from block import Packer as BlockPacker, Unpacker as BlockUnpacker, \

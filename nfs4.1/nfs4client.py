@@ -2,10 +2,9 @@ import use_local # HACK so don't have to rebuild constantly
 import rpc
 import nfs4lib
 from nfs4lib import NFS4Error, NFS4Replay, inc_u32
-import nfs4_type, nfs4_const
-from nfs4_type import *
-from nfs4_const import *
-from sctrl_pack import SCTRLPacker, SCTRLUnpacker
+from xdrdef.nfs4_type import *
+from xdrdef.nfs4_const import *
+from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
 import nfs4_ops as op
 import time, struct
 import threading
@@ -545,8 +544,8 @@ sec.init_cred(call)
 
 """ EXCHANGE_ID
 import nfs4client
-from nfs4_type import *
-from nfs4_const import *
+from xdrdef.nfs4_type import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 owner = client_owner4("12345678","MyClientName")
 protect = state_protect4_a(SP4_NONE)

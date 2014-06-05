@@ -1,5 +1,5 @@
 from st_create_session import create_session
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, fail, open_file, create_file, create_confirm
 import nfs4_ops as op
 import nfs4lib

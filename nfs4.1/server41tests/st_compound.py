@@ -1,7 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 from environment import check, fail, get_invalid_utf8strings
-from nfs4_type import *
+from xdrdef.nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids, FancyNFS4Packer
 

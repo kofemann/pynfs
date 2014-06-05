@@ -1,8 +1,8 @@
 from __future__ import with_statement
 import rpc
-import nfs4_const
-import nfs4_pack
-import nfs4_type
+import xdrdef.nfs4_const
+from xdrdef.nfs4_pack import NFS4Packer, NFS4Unpacker
+import xdrdef.nfs4_type
 import nfs4_ops as op
 import time
 import collections
@@ -24,9 +24,9 @@ except ImportError:
             raise NotImplementedError("could not import Crypto.Cipher")
 
 # Special stateids
-state00 = nfs4_type.stateid4(0, "\0" * 12)
-state11 = nfs4_type.stateid4(0xffffffff, "\xff" * 12)
-state01 = nfs4_type.stateid4(1, "\0" * 12)
+state00 = xdrdef.nfs4_type.stateid4(0, "\0" * 12)
+state11 = xdrdef.nfs4_type.stateid4(0xffffffff, "\xff" * 12)
+state01 = xdrdef.nfs4_type.stateid4(1, "\0" * 12)
 
 import hashlib # Note this requires 2.5 or higher
 
@@ -105,9 +105,9 @@ def set_attrbit_dicts():
             { 1: "unpack_fattr4_type", 2: "unpack_fattr4_fh_expire_type", ...}
     """
     global attr2bitnum, bitnum2attr, bitnum2packer, bitnum2unpacker
-    for name in dir(nfs4_const):
+    for name in dir(xdrdef.nfs4_const):
         if name.startswith("FATTR4_"):
-            value = getattr(nfs4_const, name)
+            value = getattr(xdrdef.nfs4_const, name)
             # Sanity checking. Must be integer. 
             assert(type(value) is int)
             attrname = name[7:].lower()
@@ -130,9 +130,9 @@ def set_flags(name, search_string=None):
     mask = 0
     if search_string is None:
         search_string = "%s4_FLAG_" % name.upper()
-    for var in dir(nfs4_const):
+    for var in dir(xdrdef.nfs4_const):
         if var.startswith(search_string):
-            value = getattr(nfs4_const, var)
+            value = getattr(xdrdef.nfs4_const, var)
             flag_dict[value] = var
             mask |= value
     # Now we need to set the appropriate module level variable
@@ -187,7 +187,7 @@ class InvalidCompoundRes(NFSException):
         else:
             return "Invalid COMPOUND result"
 
-class FancyNFS4Packer(nfs4_pack.NFS4Packer):
+class FancyNFS4Packer(NFS4Packer):
     """Handle fattr4 and dirlist4 more cleanly than auto-generated methods"""
     def filter_bitmap4(self, data):
         out = []
@@ -208,11 +208,11 @@ class FancyNFS4Packer(nfs4_pack.NFS4Packer):
         for e in data.entries[::-1]:
             # print "handle", e
             # This reverses the direction of the list, so start with reversed
-            out = [nfs4_type.entry4(e.cookie, e.name, e.attrs, out)]
+            out = [xdrdef.nfs4_type.entry4(e.cookie, e.name, e.attrs, out)]
         # Must not modify original data structure
-        return nfs4_type.dirlist4(out, data.eof)
+        return xdrdef.nfs4_type.dirlist4(out, data.eof)
 
-class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
+class FancyNFS4Unpacker(NFS4Unpacker):
     def filter_bitmap4(self, data):
         """Put bitmap into single long, instead of array of 32bit chunks"""
         out = 0L
@@ -257,7 +257,7 @@ def dict2fattr(dict):
         getattr(packer, bitnum2packer[bitnum])(value)
         attr_vals += packer.get_buffer()
     attrmask = list2bitmap(attrs)
-    return nfs4_type.fattr4(attrmask, attr_vals); 
+    return xdrdef.nfs4_type.fattr4(attrmask, attr_vals); 
 
 def fattr2dict(obj):
     """Convert a fattr4 object to a dictionary with attribute name and values.
@@ -360,10 +360,10 @@ class SSVContext(object):
         """Compute getMIC token from given data"""
         # See draft26 2.10.9
         p = FancyNFS4Packer()
-        p.pack_ssv_mic_plain_tkn4(nfs4_type.ssv_mic_plain_tkn4(seqnum, data))
+        p.pack_ssv_mic_plain_tkn4(xdrdef.nfs4_type.ssv_mic_plain_tkn4(seqnum, data))
         hash = hmac.new(key, p.get_buffer(), self.hash).digest()
         p.reset()
-        p.pack_ssv_mic_tkn4(nfs4_type.ssv_mic_tkn4(seqnum, hash))
+        p.pack_ssv_mic_tkn4(xdrdef.nfs4_type.ssv_mic_tkn4(seqnum, hash))
         return p.get_buffer()
 
     def getMIC(self, data):
@@ -405,13 +405,13 @@ class SSVContext(object):
         p = FancyNFS4Packer()
         # We need to compute pad.  Easiest (though not fastest) way
         # is to pack w/o padding, determine padding needed, then repack.
-        input = nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, "")
+        input = xdrdef.nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, "")
         p.pack_ssv_seal_plain_tkn4(input)
         offset = len(p.get_buffer()) % blocksize
         if offset:
             pad = '\0' * (blocksize - offset)
             p.reset()
-            input = nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, pad)
+            input = xdrdef.nfs4_type.ssv_seal_plain_tkn4(cofounder, seqnum, data, pad)
             p.pack_ssv_seal_plain_tkn4(input)
         plain_xdr = p.get_buffer()
         p.reset()
@@ -421,7 +421,7 @@ class SSVContext(object):
         encrypted = obj.encrypt(plain_xdr)
         dir = (SSV4_SUBKEY_MIC_I2T if self.local else SSV4_SUBKEY_MIC_T2I)
         hash = hmac.new(keys[dir], plain_xdr, self.hash).digest()
-        token = nfs4_type.ssv_seal_cipher_tkn4(seqnum, iv, encrypted, hash)
+        token = xdrdef.nfs4_type.ssv_seal_cipher_tkn4(seqnum, iv, encrypted, hash)
         p.pack_ssv_seal_cipher_tkn4(token)
         return p.get_buffer()
 
@@ -491,7 +491,7 @@ def get_nfstime(t=None):
         t = time.time()
     sec = int(t)
     nsec = int((t - sec) * 1000000000)
-    return nfs4_type.nfstime4(sec, nsec)
+    return xdrdef.nfs4_type.nfstime4(sec, nsec)
 
 def parse_nfs_url(url):
     """Parse [nfs://]host:port/path, format taken from rfc 2224
@@ -565,7 +565,7 @@ def attr_name(bitnum):
 class NFS4Error(Exception):
     def __init__(self, status, attrs=0L, lock_denied=None, tag=None, check_msg=None):
         self.status = status
-        self.name = nfs4_const.nfsstat4[status]
+        self.name = xdrdef.nfs4_const.nfsstat4[status]
         if check_msg is None:
             self.msg = "NFS4 error code: %s" % self.name
         else:
@@ -602,19 +602,19 @@ class NFS4Principal(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-def check(res, expect=nfs4_const.NFS4_OK, msg=None):
+def check(res, expect=xdrdef.nfs4_const.NFS4_OK, msg=None):
     if res.status == expect:
         return
     if type(expect) is str:
         raise RuntimeError("You forgot to put 'msg=' in front "
                            "of check()'s string arg")
     # Get text representations
-    desired = nfs4_const.nfsstat4[expect]
-    received = nfs4_const.nfsstat4[res.status]
+    desired = xdrdef.nfs4_const.nfsstat4[expect]
+    received = xdrdef.nfs4_const.nfsstat4[res.status]
     if msg:
         failedop_name = msg
     elif res.resarray:
-        failedop_name = nfs4_const.nfs_opnum4[res.resarray[-1].resop]
+        failedop_name = xdrdef.nfs4_const.nfs_opnum4[res.resarray[-1].resop]
     else:
         failedop_name = 'Compound'
     msg = "%s should return %s, instead got %s" % \
@@ -647,7 +647,7 @@ class AttrConfig(object):
         self._s = (kind=="serv")
         self._fs = (kind=="fs")
     
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 
 A = AttrConfig
 attr_info = { FATTR4_SUPPORTED_ATTRS : A("r", "fs"),

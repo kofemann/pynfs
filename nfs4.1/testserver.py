@@ -190,7 +190,7 @@ def run_filter(test, options):
 
 def printflags(list):
     """Print all legal flag names, which are given in list"""
-    from nfs4_const import nfs_opnum4
+    from xdrdef.nfs4_const import nfs_opnum4
     command_names = [s.lower()[3:].replace('_', '') \
                      for s in nfs_opnum4.values()]
     list.sort()

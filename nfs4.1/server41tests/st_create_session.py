@@ -1,7 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 import nfs4_ops as op
 from environment import check, fail, create_file, open_file
-from nfs4_type import *
+from xdrdef.nfs4_type import *
 import random
 import nfs4lib
 import threading

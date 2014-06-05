@@ -1,6 +1,6 @@
-from nfs4_type import server_owner4, nfs_impl_id4
-from nfs4_const import *
-import nfs4_const
+from xdrdef.nfs4_type import server_owner4, nfs_impl_id4
+from xdrdef.nfs4_const import *
+import xdrdef.nfs4_const
 import nfs4lib
 from copy import deepcopy
 import os
@@ -37,7 +37,7 @@ def _statcode(value):
     try:
         return int(value)
     except ValueError:
-        rv = getattr(nfs4_const, value, None)
+        rv = getattr(xdr.nfs4_const, value, None)
         if rv is None or nfsstat4.get(rv, None) != value:
             raise
         else:

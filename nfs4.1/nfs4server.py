@@ -4,10 +4,10 @@ import use_local # HACK so don't have to rebuild constantly
 import nfs4lib
 from nfs4lib import inc_u32, NFS4Error, NFS4Replay
 import rpc
-from nfs4_const import *
-from nfs4_type import *
-from sctrl_pack import SCTRLPacker, SCTRLUnpacker
-import sctrl_type, sctrl_const
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
+from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
+import xdrdef.sctrl_type, xdrdef.sctrl_const
 import traceback, threading
 from locking import Lock, Counter
 import time
@@ -620,7 +620,7 @@ class NFS4Server(rpc.Server):
             return rpc.GARBAGE_ARGS, None
         log_cfg.info(repr(args))
         # Handle the given control operation
-        opname = sctrl_const.ctrl_opnum.get(args.ctrlop, 'ctrl_illegal')
+        opname = xdrdef.sctrl_const.ctrl_opnum.get(args.ctrlop, 'ctrl_illegal')
         funct = getattr(self, opname.lower(), None)
         if funct is None:
             # This shouldn't happen
@@ -633,8 +633,8 @@ class NFS4Server(rpc.Server):
             raise
         # Now pack and return the result
         p = SCTRLPacker()
-        # res = sctrl_type.CTRLres(status, sctrl_type.resdata_t(args.ctrlop))
-        res = sctrl_type.CTRLres(status, result)
+        # res = xdrdef.sctrl_type.CTRLres(status, xdrdef.sctrl_type.resdata_t(args.ctrlop))
+        res = xdrdef.sctrl_type.CTRLres(status, result)
         p.pack_CTRLres(res)
         return rpc.SUCCESS, p.get_buffer()
 
@@ -1926,22 +1926,22 @@ class NFS4Server(rpc.Server):
 
     def ctrl_reset(self, arg):
         self.recording.reset()
-        return sctrl_const.CTRLSTAT_OK, sctrl_type.resdata_t(arg.ctrlop)
+        return xdrdef.sctrl_const.CTRLSTAT_OK, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
 
     def ctrl_record(self, arg):
         self.recording.set_stamp(arg.stamp)
         self.recording.on = True
-        return sctrl_const.CTRLSTAT_OK, sctrl_type.resdata_t(arg.ctrlop)
+        return xdrdef.sctrl_const.CTRLSTAT_OK, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
 
     def ctrl_pause(self, arg):
         self.recording.on = False
-        return sctrl_const.CTRLSTAT_OK, sctrl_type.resdata_t(arg.ctrlop)
+        return xdrdef.sctrl_const.CTRLSTAT_OK, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
 
     def ctrl_grab(self, arg):
         queue = self.recording.queues.get(arg.stamp, None)
         if queue is None:
-            return sctrl_const.CTRLSTAT_NOT_AVAIL, \
-                   sctrl_type.resdata_t(arg.ctrlop, sctrl_type.GRABres([],[]))
+            return xdrdef.sctrl_const.CTRLSTAT_NOT_AVAIL, \
+                   xdrdef.sctrl_type.resdata_t(arg.ctrlop, xdrdef.sctrl_type.GRABres([],[]))
         max = arg.number
         if max == 0:
             max = len(queue)
@@ -1949,19 +1949,19 @@ class NFS4Server(rpc.Server):
         replies = []
         for i in range(max):
             call, reply = queue.pop()
-            if arg.dir & sctrl_const.DIR_CALL:
+            if arg.dir & xdrdef.sctrl_const.DIR_CALL:
                 calls.append(call)
-            if arg.dir & sctrl_const.DIR_REPLY:
+            if arg.dir & xdrdef.sctrl_const.DIR_REPLY:
                 replies.append(reply)
         print calls
         print replies
-        grabres = sctrl_type.GRABres(calls, replies)
-        return sctrl_const.CTRLSTAT_OK, \
-               sctrl_type.resdata_t(arg.ctrlop, grab = grabres)
+        grabres = xdrdef.sctrl_type.GRABres(calls, replies)
+        return xdrdef.sctrl_const.CTRLSTAT_OK, \
+               xdrdef.sctrl_type.resdata_t(arg.ctrlop, grab = grabres)
 
     def ctrl_illegal(self, arg):
         print "ILLEGAL"
-        return sctrl_const.CTRLSTAT_ILLEGAL, sctrl_type.resdata_t(arg.ctrlop)
+        return xdrdef.sctrl_const.CTRLSTAT_ILLEGAL, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
         
     def op_setclientid(self, arg, env):
         return encode_status(NFS4ERR_NOTSUPP)

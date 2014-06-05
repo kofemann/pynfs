@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, fail, use_obj, create_confirm, close_file
 import nfs4_ops as op
 

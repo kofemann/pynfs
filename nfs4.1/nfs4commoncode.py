@@ -4,10 +4,10 @@
 """
 
 import nfs4lib
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 import sys
-import nfs4_type, nfs4_const
-from nfs4_type import *
+import xdrdef.nfs4_type, xdrdef.nfs4_const
+from xdrdef.nfs4_type import *
 
 _d = {"CompoundState" : "CompoundState",
       "PairedResults" : "PairedResults",
@@ -34,8 +34,8 @@ def %(encode_status)s_by_name(name, status, *args, **kwargs):
     name_l = name.lower()
     name_u = name.upper()
     try:
-        res4 = getattr(nfs4_type, name_u + "4res")(status, *args, **kwargs)
-        result = %(nfs_resop4)s(getattr(nfs4_const, "OP_" + name_u))
+        res4 = getattr(xdrdef.nfs4_type, name_u + "4res")(status, *args, **kwargs)
+        result = %(nfs_resop4)s(getattr(xdrdef.nfs4_const, "OP_" + name_u))
         setattr(result, %(mangle)s, res4)
         # STUB XXX 4.1 has messed with the naming conventions,
         #      and added prefixes to the "status" variable. Grrr.
