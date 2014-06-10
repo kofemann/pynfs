@@ -220,6 +220,7 @@ class Test(object):
             environment.startUp()
             self.runtest(self, environment)
             self.result = self._pass_result
+	    environment.clean_sessions()
         except KeyboardInterrupt:
             raise
         except TestException, e:

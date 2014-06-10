@@ -248,7 +248,12 @@ class Environment(testmod.Environment):
     def testname(self, t):
         """Returns a name for the test that is unique between runs"""
         return "%s_%i" % (t.code, self.timestamp)
-    
+
+    def clean_sessions(self):
+        """Destroy client name env.c1"""
+        for sessionid in self.c1.sessions.keys():
+            self.c1.compound([op.destroy_session(sessionid)])
+
 #########################################
 debug_fail = False
 

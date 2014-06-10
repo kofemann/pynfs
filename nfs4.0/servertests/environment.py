@@ -226,6 +226,9 @@ class Environment(testmod.Environment):
             cmd += ' ' + args
             os.system(cmd);
 
+    def clean_sessions(self):
+        return
+
 #########################################
 debug_fail = False
 
