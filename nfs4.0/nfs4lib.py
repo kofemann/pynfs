@@ -39,6 +39,7 @@ import time
 import struct
 import socket
 import sys
+import re
 
 class NFSException(rpc.RPCError):
     pass
@@ -1013,4 +1014,51 @@ def bitmap2list(bitmap):
         bitmap >>= 1
     return out
 
+def parse_nfs_url(url):
+    """Parse [nfs://]host:port/path, format taken from rfc 2224
+       multipath addr:port pair are as such:
 
+      $ip1:$port1,$ip2:$port2..
+
+    Returns triple server, port, path.
+    """
+    p = re.compile(r"""
+    (?:nfs://)?               # Ignore an optionally prepended 'nfs://'
+    (?P<servers>[^/]+)
+    (?P<path>/.*)?            # set path=everything else, must start with /
+    $
+    """, re.VERBOSE)
+
+    m = p.match(url)
+    if m:
+        servers = m.group('servers')
+        server_list = []
+
+        for server in servers.split(','):
+            server = server.strip()
+
+            idx = server.rfind(':')
+            bracket_idx = server.rfind(']')
+
+            # the first : is before ipv6 addr ] -> no port specified
+            if bracket_idx > idx:
+                idx = -1
+
+            if idx >= 0:
+                host = server[:idx]
+                port = server[idx+1:]
+            else:
+                host = server
+                port = None
+
+            # remove brackets around IPv6 addrs, if they exist
+            if host.startswith('[') and host.endswith(']'):
+                host = host[1:-1]
+
+            port = (2049 if not port else int(port))
+            server_list.append((host, port))
+
+        path = m.group('path')
+        return tuple(server_list), path
+    else:
+        raise ValueError("Error parsing NFS URL: %s" % url)

@@ -35,7 +35,6 @@ if  __name__ == "__main__":
     if os.path.isfile(os.path.join(sys.path[0], 'lib', 'testmod.py')):
         sys.path.insert(1, os.path.join(sys.path[0], 'lib'))
 
-import re
 import nfs4lib
 import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
@@ -57,23 +56,6 @@ if not hasattr(os, "getgid"):
 else:
     GID = os.getgid()
 
-
-def parse_url(url):
-    """Parse [nfs://]host:port/path"""
-    p = re.compile(r"""
-    (?:nfs://)?      # Ignore an optionally prepended 'nfs://'
-    (?P<host>[^:]+)  # set host=everything up to next :
-    :?
-    (?P<port>[^/]*)  # set port=everything up to next /
-    (?P<path>/.*$|$) # set path=everything else
-    """, re.VERBOSE)
-
-    m = p.match(url)
-    if m:
-        return m.group('host'), m.group('port'), m.group('path')
-    else:
-        return None, None, None
-        
 def unixpath2comps(str, pathcomps=None):
     if pathcomps is None or str[0] == '/':
         pathcomps = []
@@ -284,9 +266,13 @@ def main():
     if not args:
         p.error("Need a server")
     url = args.pop(0)
-    opt.server, opt.port, opt.path = parse_url(url)
-    if not opt.server:
+    server_list, opt.path = nfs4lib.parse_nfs_url(url)
+
+    if not server_list:
         p.error("%s not a valid server name" % url)
+
+    opt.server, opt.port = server_list[0]
+
     if not opt.port:
         opt.port = 2049
     else:

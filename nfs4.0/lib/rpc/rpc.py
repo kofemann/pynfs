@@ -188,6 +188,9 @@ class RPCClient(object):
         self.debug = 0
         t = threading.currentThread()
         self.lock = threading.Lock()
+        self.af = socket.AF_INET;
+        if host.find(':') != -1:
+            self.af = socket.AF_INET6;
         self.remotehost = host
         self.remoteport = port
         self.timeout = timeout
@@ -206,6 +209,7 @@ class RPCClient(object):
         self.sec_list = sec_list
         self._init_security(self.sec_list) # Note this can make calls
         self.security = sec_list[0]
+
 
     def _init_security(self, list):
         # Each element of list must have functions:
@@ -235,8 +239,7 @@ class RPCClient(object):
         if t in self._socket:
             out = self._socket[t]
         else:
-            out = self._socket[t] = socket.socket(socket.AF_INET,
-                                                  socket.SOCK_STREAM)
+            out = self._socket[t] = socket.socket(self.af, socket.SOCK_STREAM)
             if self.uselowport:
                 self.bindsocket(out)
             out.connect((self.remotehost, self.remoteport))
@@ -301,8 +304,7 @@ class RPCClient(object):
         t = threading.currentThread()
         self.lock.acquire()
         self._socket[t].close()
-        out = self._socket[t] = socket.socket(socket.AF_INET,
-                                              socket.SOCK_STREAM)
+        out = self._socket[t] = socket.socket(self.af, socket.SOCK_STREAM)
         # out.bind
         out.connect((self.remotehost, self.remoteport))
         out.settimeout(self.timeout)
@@ -454,7 +456,10 @@ class RPCClient(object):
 
 class Server(object):
     def __init__(self, host='', port=51423, name="SERVER"):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        except:
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.s.bind((host, port))
         self.port = self.s.getsockname()[1]
