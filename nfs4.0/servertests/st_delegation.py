@@ -35,7 +35,7 @@ def _recall(c, op, cbid):
         print "CALLBACK error in _recall:", e
         res = None
     _lock.release()
-    if res.status != NFS4_OK:
+    if res is not None and res.status != NFS4_OK:
         t_error = _handle_error(c, res, ops)
         t = threading.Thread(target=t_error.run)
         t.setDaemon(1)
