@@ -249,6 +249,7 @@ def testManyReaddeleg(t, env, funct=_recall, response=NFS4_OK):
             
         # Get a read delegation
         res = c.open_file(t.code, access=OPEN4_SHARE_ACCESS_READ,
+                          deny=OPEN4_SHARE_DENY_NONE,
                           set_recall=True,
                           recall_funct=funct, recall_return=response)
         fh, stateid = c.confirm(t.code, res)
