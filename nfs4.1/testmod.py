@@ -97,10 +97,11 @@ class Test(object):
     _funct_result = Result(DEP_FUNCT, default=True)
     __re = re.compile(r'(\D*)(\d*)(.*)')
 
-    def __init__(self, function, module=""):
+    def __init__(self, suite, function, module=""):
         """Needs function to be run"""
         self.runtest = function
         self.name = function.__name__
+        self.suite = suite
         if module:
             self.fullname = module.split('.')[-1] + '.' + self.name
         else:
@@ -347,7 +348,7 @@ def createtests(testdir):
         for attr in dir(mod):
             if attr.startswith("test"):
                 f = getattr(mod, attr)
-                tests.append(Test(f, testmod))
+                tests.append(Test(testfile, f, testmod))
     # Reduce doc string info into format easier to work with
     used_codes = {}
     flag_dict = {}
@@ -451,8 +452,8 @@ def xml_printresults(tests, file_name, suite='all'):
         for t in tests:
             testcase = doc.createElement("testcase")
             testsuite.appendChild(testcase)
-            testcase.setAttribute("name", str(t))
-            testcase.setAttribute("classname", suite)
+            testcase.setAttribute("name", t.name)
+            testcase.setAttribute("classname", t.suite)
             testcase.setAttribute("time", str(t.time_taken))
 
             total_time += t.time_taken
