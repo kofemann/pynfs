@@ -305,7 +305,8 @@ class RPCClient(object):
         self.lock.acquire()
         self._socket[t].close()
         out = self._socket[t] = socket.socket(self.af, socket.SOCK_STREAM)
-        # out.bind
+        if self.uselowport:
+            self.bindsocket(out)
         out.connect((self.remotehost, self.remoteport))
         out.settimeout(self.timeout)
         self.lock.release()
