@@ -37,7 +37,7 @@ def testLargeACL(t, env):
     ops = c.use_obj(fh)
     acl = []
     # using larger id's just to try for a larger reply:
-    for i in range(200):
+    for i in range(20):
         acl += [nfsace4(0, 0, 0, "%d" % (i + 10000))]
     ops += [c.setattr({FATTR4_ACL: acl})]
     res = c.compound(ops)
