@@ -172,7 +172,7 @@ def testZeroLengthForLNK(t, env):
     objtype = createtype4(NF4LNK, **{'linkdata':''})
     ops += [c.create_op(objtype, t.code, getDefaultAttr(c))]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "CREATE with zero-length name for SYMLINK")
+    checklist(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
 
 def testRegularFile(t, env):
     """CREATE should fail with NFS4ERR_BADTYPE for regular files
