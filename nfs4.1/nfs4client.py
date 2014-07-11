@@ -77,7 +77,8 @@ class NFS4Client(rpc.Client, rpc.Server):
             pipe = self.c1
         p = packer(check_enum=checks, check_array=checks)
         c4 = COMPOUND4args(tag, version, ops)
-        log_cb.info("compound args = %r" % (c4,))
+        if SHOW_TRAFFIC:
+            log_cb.info("compound args = %r" % (c4,))
         p.pack_COMPOUND4args(c4)
         return self.send_call(pipe, 1, p.get_buffer(), credinfo)
 
@@ -85,7 +86,8 @@ class NFS4Client(rpc.Client, rpc.Server):
         xid = self.compound_async(*args, **kwargs)
         pipe = kwargs.get("pipe", None)
         res = self.listen(xid, pipe=pipe)
-        log_cb.info("compound result = %r" % (res,))
+        if SHOW_TRAFFIC:
+            log_cb.info("compound result = %r" % (res,))
         if self.summary:
             self.summary.show_op('call v4.1 %s:%s' % self.server_address,
                 [ nfs_opnum4[a.argop].lower()[3:] for a in args[0] ],
