@@ -1,6 +1,7 @@
 from xdrdef.nfs4_const import *
 from environment import check, fail
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testHome(t, env):
     """LOOKUP home directory

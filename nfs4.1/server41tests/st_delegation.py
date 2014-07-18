@@ -4,7 +4,8 @@ from xdrdef.nfs4_const import *
 
 from environment import check, checklist, fail, create_file, open_file, close_file
 from xdrdef.nfs4_type import *
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 import nfs4lib
 import threading
 

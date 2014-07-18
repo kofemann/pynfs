@@ -1,7 +1,8 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import *
 from environment import check, fail, use_obj, open_file, create_file
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 from block import Packer as BlockPacker, Unpacker as BlockUnpacker, \
     PNFS_BLOCK_INVALID_DATA, PNFS_BLOCK_READWRITE_DATA, \
     pnfs_block_layoutupdate4

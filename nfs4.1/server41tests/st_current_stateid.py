@@ -6,7 +6,8 @@ from environment import open_create_file_op, use_obj
 from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
 from xdrdef.nfs4_type import creatverfattr, fattr4, stateid4, locker4, lock_owner4
 from xdrdef.nfs4_type import open_to_lock_owner4
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 import threading
 
 

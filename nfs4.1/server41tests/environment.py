@@ -22,7 +22,8 @@ import logging
 import struct
 from rpc.security import AuthSys, AuthGss
 from threading import Lock
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 log = logging.getLogger("test.env")
 

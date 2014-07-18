@@ -1,5 +1,6 @@
 from xdrdef.nfs4_const import *
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 import time
 from environment import check, checklist, fail
 from xdrdef.nfs4_type import *

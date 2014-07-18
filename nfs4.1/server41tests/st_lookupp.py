@@ -1,6 +1,7 @@
 from xdrdef.nfs4_const import *
 from environment import check, fail, use_obj
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 # NOTE: most of these require the --maketree to be run first
 def testLookupp(t, env):

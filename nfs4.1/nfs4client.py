@@ -546,7 +546,8 @@ sec.init_cred(call)
 import nfs4client
 from xdrdef.nfs4_type import *
 from xdrdef.nfs4_const import *
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 owner = client_owner4("12345678","MyClientName")
 protect = state_protect4_a(SP4_NONE)
 C = nfs4client.NFS4Client()

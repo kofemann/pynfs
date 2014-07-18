@@ -1,6 +1,7 @@
 from xdrdef.nfs4_const import *
 from environment import check, fail, use_obj, create_confirm, close_file
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _try_put(t, sess, path):
     # Get fh via LOOKUP

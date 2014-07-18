@@ -4,7 +4,8 @@ from environment import check, checklist, fail, create_file, open_file, create_c
 import sys
 import os
 import nfs4lib
-import nfs4_ops as op
+import nfs_ops
+op = nfs_ops.NFS4ops()
 from rpc import RPCTimeout
 
 # NOTE - reboot tests are NOT part of the standard test suite
