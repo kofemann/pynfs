@@ -31,7 +31,7 @@ def create_session(c, cred=None, flags=0):
     return res
 
 def reclaim_complete(sess):
-    rc_op = op.reclaim_complete(rca_one_fs=False)
+    rc_op = op.reclaim_complete(FALSE)
     res = sess.compound([rc_op])
     check(res, msg="reclaim_complete")
 
