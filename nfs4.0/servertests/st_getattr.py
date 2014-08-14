@@ -43,10 +43,14 @@ def _try_empty(t, c, path):
 def _try_supported(t, env, path):
     c = env.c1
     mandatory = sum([attr.mask for attr in env.attr_info if attr.mandatory])
+    all = sum([attr.mask for attr in env.attr_info])
     supported = c.supportedAttrs(path)
     if mandatory & supported != mandatory:
         t.fail("GETATTR(FATTR4_SUPPORTED_ATTRS) did not return "
                "all mandatory attributes")
+    if supported > all:
+        t.fail("GETATTR(FATTR4_SUPPORTED_ATTRS) returned more than expected "
+               "supported attributes for the protocol")
 
 def _try_long(env, path):
     c = env.c1
