@@ -342,6 +342,7 @@ def testCallbackProgram(t, env):
         print "Got call using prog=0x%x" % prog
         cb_occurred.prog = prog
         cb_occurred.set()
+        return True;
     orig = env.c1._check_program
     try:
         env.c1._check_program = mycheck
