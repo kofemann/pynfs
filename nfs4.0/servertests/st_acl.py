@@ -2,7 +2,9 @@ from nfs4_const import *
 from environment import check, checklist
 from nfs4_type import nfsace4
 
-# assuming server will accept any small positive integer as an owner name:
+# assuming server will accept any small positive integer as an owner
+# name.  In particular, these tests probably won't work over krb5,
+# when string names are expected.
 
 def testACL(t, env):
     """SETATTR/GETATTR of a simple ACL
