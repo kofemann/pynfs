@@ -1,0 +1,4 @@
+# Note nfs4.x was created using:
+
+curl http://www.ietf.org/id/draft-ietf-nfsv4-minorversion2-dot-x-30.txt|grep "^  *///" | sed 's?^  */// ??' | sed 's?^  *///$??' >nfs4.1/xdrdef/nfs4.x
+patch nfs4.1/xdrdef/nfs4.x <nfs4.1/xdrdef/nfs4.x.diff 

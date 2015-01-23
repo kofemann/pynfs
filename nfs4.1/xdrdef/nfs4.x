@@ -1,62 +1,25 @@
 /*
- * Copyright (c) 2010 IETF Trust and the persons identified
- * as the document authors.  All rights reserved.
- *
- * The document authors are identified in RFC 3530 and
- * RFC 5661.
- *
- * Redistribution and use in source and binary forms, with
- * or without modification, are permitted provided that the
- * following conditions are met:
- *
- * - Redistributions of source code must retain the above
- *   copyright notice, this list of conditions and the
- *   following disclaimer.
- *
- * - Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the
- *   following disclaimer in the documentation and/or other
- *   materials provided with the distribution.
- *
- * - Neither the name of Internet Society, IETF or IETF
- *   Trust, nor the names of specific contributors, may be
- *   used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS
- *   AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- *   WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
- *   EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- *   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- *   IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- *   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This file was machine generated for
+ *  draft-ietf-nfsv4-minorversion2-30
+ * Last updated Wed Jan 21 09:59:04 PST 2015
  */
 /*
- * This code was derived from RFC 3530.  Please
- * reproduce this note if possible.
+ *  Copyright (C) The IETF Trust (2007-2014)
+ *  All Rights Reserved.
  *
- * This code was derived from RFC 5661.  Please
- * reproduce this note if possible.
- *
- * This file was machine generated from RFC 5662.
- */
-/*
- *      nfs4_prot.x
+ *  Copyright (C) The Internet Society (1998-2006).
+ *  All Rights Reserved.
  */
 
-%#ifndef _AUTH_SYS_DEFINE_FOR_NFSv41
-%#define _AUTH_SYS_DEFINE_FOR_NFSv41
+/*
+ *      nfsv42.x
+ */
+
+%#ifndef _AUTH_SYS_DEFINE_FOR_NFSv42
+%#define _AUTH_SYS_DEFINE_FOR_NFSv42
 %#include <rpc/auth_sys.h>
 %typedef struct authsys_parms authsys_parms;
-%#endif /* _AUTH_SYS_DEFINE_FOR_NFSv41 */
+%#endif /* _AUTH_SYS_DEFINE_FOR_NFSv42 */
 
 /* See nfs4.x.diff for changes made from ietf version: */
 
@@ -90,6 +53,7 @@ typedef unsigned hyper       uint64_t;
  */
 const NFS4_FHSIZE               = 128;
 const NFS4_VERIFIER_SIZE        = 8;
+const NFS4_OTHER_SIZE           = 12;
 const NFS4_OPAQUE_LIMIT         = 1024;
 const NFS4_SESSIONID_SIZE       = 16;
 
@@ -132,11 +96,11 @@ enum nfsstat4 {
  NFS4ERR_EXIST          = 17,   /* file already exists     */
  NFS4ERR_XDEV           = 18,   /* different filesystems   */
 
- /*
-  * Please do not allocate value 19; it was used in NFSv3
-  * and we do not want a value in NFSv3 to have a different
-  * meaning in NFSv4.x.
-  */
+/*
+ * Please do not allocate value 19; it was used in NFSv3
+ * and we do not want a value in NFSv3 to have a different
+ * meaning in NFSv4.x.
+ */
 
  NFS4ERR_NOTDIR         = 20,   /* should be a directory   */
  NFS4ERR_ISDIR          = 21,   /* should not be directory */
@@ -221,7 +185,7 @@ enum nfsstat4 {
  NFS4ERR_REQ_TOO_BIG    = 10065,/* request too big         */
  NFS4ERR_REP_TOO_BIG    = 10066,/* reply too big           */
  NFS4ERR_REP_TOO_BIG_TO_CACHE =10067,/* rep. not all cached*/
- NFS4ERR_RETRY_UNCACHED_REP =10068,/* retry & rep. uncached*/
+ NFS4ERR_RETRY_UNCACHED_REP =10068,/* retry + rep. uncached*/
  NFS4ERR_UNSAFE_COMPOUND =10069,/* retry/recovery too hard */
  NFS4ERR_TOO_MANY_OPS   = 10070,/*too many ops in [CB_]COMP*/
  NFS4ERR_OP_NOT_IN_SESSION =10071,/* op needs [CB_]SEQ. op */
@@ -240,7 +204,17 @@ enum nfsstat4 {
  NFS4ERR_DIRDELEG_UNAVAIL=10084,/* delegation not avail.   */
  NFS4ERR_REJECT_DELEG   = 10085,/* cb rejected delegation  */
  NFS4ERR_RETURNCONFLICT = 10086,/* layout get before return*/
- NFS4ERR_DELEG_REVOKED  = 10087 /* deleg./layout revoked   */
+ NFS4ERR_DELEG_REVOKED  = 10087,/* deleg./layout revoked   */
+
+ /* NFSv4.2 errors start here. */
+
+ NFS4ERR_PARTNER_NOTSUPP= 10088,/* s2s not supported       */
+ NFS4ERR_PARTNER_NO_AUTH= 10089,/* s2s not authorized      */
+ NFS4ERR_UNION_NOTSUPP  = 10090,/* Arm of union not supp   */
+ NFS4ERR_OFFLOAD_DENIED = 10091,/* dest not allowing copy  */
+ NFS4ERR_WRONG_LFS      = 10092,/* LFS not supported       */
+ NFS4ERR_BADLABEL       = 10093,/* incorrect label         */
+ NFS4ERR_OFFLOAD_NO_REQS= 10094 /* dest not meeting reqs   */
 };
 
 /*
@@ -267,9 +241,12 @@ typedef utf8string      utf8str_cis;
 typedef utf8string      utf8str_cs;
 typedef utf8string      utf8str_mixed;
 typedef utf8str_cs      component4;
-typedef utf8str_cs      linktext4;
+typedef opaque  linktext4<>;
+typedef utf8string      ascii_REQUIRED4;
 typedef component4      pathname4<>;
 typedef opaque  verifier4[NFS4_VERIFIER_SIZE];
+typedef string  secret4<>;
+typedef uint32_t        policy4;
 
 /*
  * Timeval
@@ -527,6 +504,7 @@ struct netaddr4 {
         string na_r_addr<>;     /* universal address */
 };
 
+
 /*
  * data structures new to NFSv4.1
  */
@@ -543,7 +521,7 @@ struct nfs_impl_id4 {
  */
 struct stateid4 {
         uint32_t        seqid;
-        opaque          other[12];
+        opaque          other[NFS4_OTHER_SIZE];
 };
 
 enum layouttype4 {
@@ -603,9 +581,9 @@ struct layoutupdate4 {
 
 %
 /* Constants used for LAYOUTRETURN and CB_LAYOUTRECALL */
-const LAYOUT4_RET_REC_FILE      = 1;
-const LAYOUT4_RET_REC_FSID      = 2;
-const LAYOUT4_RET_REC_ALL       = 3;
+const LAYOUT4_RET_REC_FILE              = 1;
+const LAYOUT4_RET_REC_FSID              = 2;
+const LAYOUT4_RET_REC_ALL               = 3;
 %
 enum layoutreturn_type4 {
         LAYOUTRETURN4_FILE = LAYOUT4_RET_REC_FILE,
@@ -685,6 +663,108 @@ typedef uint32_t        fs_charset_cap4;
 
 
 /*
+ * data structures new to NFSv4.2
+ */
+
+enum netloc_type4 {
+        NL4_NAME        = 0,
+        NL4_URL         = 1,
+        NL4_NETADDR     = 2
+};
+union netloc4 switch (netloc_type4 nl_type) {
+        case NL4_NAME:          utf8str_cis nl_name;
+        case NL4_URL:           utf8str_cis nl_url;
+        case NL4_NETADDR:       netaddr4    nl_addr;
+};
+
+enum change_attr_type4 {
+           NFS4_CHANGE_TYPE_IS_MONOTONIC_INCR         = 0,
+           NFS4_CHANGE_TYPE_IS_VERSION_COUNTER        = 1,
+           NFS4_CHANGE_TYPE_IS_VERSION_COUNTER_NOPNFS = 2,
+           NFS4_CHANGE_TYPE_IS_TIME_METADATA          = 3,
+           NFS4_CHANGE_TYPE_IS_UNDEFINED              = 4
+};
+
+struct labelformat_spec4 {
+        policy4 lfs_lfs;
+        policy4 lfs_pi;
+};
+
+struct sec_label4 {
+        labelformat_spec4       slai_lfs;
+        opaque                  slai_data<>;
+};
+
+
+struct copy_from_auth_priv {
+        secret4             cfap_shared_secret;
+        netloc4             cfap_destination;
+        /* the NFSv4 user name that the user principal maps to */
+        utf8str_mixed       cfap_username;
+};
+
+struct copy_to_auth_priv {
+        /* equal to cfap_shared_secret */
+        secret4              ctap_shared_secret;
+        netloc4              ctap_source<>;
+        /* the NFSv4 user name that the user principal maps to */
+        utf8str_mixed        ctap_username;
+};
+
+struct copy_confirm_auth_priv {
+        /* equal to GSS_GetMIC() of cfap_shared_secret */
+        opaque              ccap_shared_secret_mic<>;
+        /* the NFSv4 user name that the user principal maps to */
+        utf8str_mixed       ccap_username;
+};
+
+
+struct app_data_block4 {
+        offset4         adb_offset;
+        length4         adb_block_size;
+        length4         adb_block_count;
+        length4         adb_reloff_blocknum;
+        count4          adb_block_num;
+        length4         adb_reloff_pattern;
+        opaque          adb_pattern<>;
+};
+
+
+struct data4 {
+        offset4         d_offset;
+        opaque          d_data<>;
+};
+
+struct data_info4 {
+        offset4         di_offset;
+        length4         di_length;
+};
+
+
+enum data_content4 {
+        NFS4_CONTENT_DATA = 0,
+        NFS4_CONTENT_HOLE = 1
+};
+
+
+
+enum stable_how4 {
+        UNSTABLE4       = 0,
+        DATA_SYNC4      = 1,
+        FILE_SYNC4      = 2
+};
+
+
+
+struct write_response4 {
+        stateid4        wr_callback_id<1>;
+        length4         wr_count;
+        stable_how4     wr_committed;
+        verifier4       wr_writeverf;
+};
+
+
+/*
  * NFSv4.1 attributes
  */
 typedef bitmap4         fattr4_supported_attrs;
@@ -719,7 +799,7 @@ typedef uint32_t        fattr4_maxlink;
 typedef uint32_t        fattr4_maxname;
 typedef uint64_t        fattr4_maxread;
 typedef uint64_t        fattr4_maxwrite;
-typedef utf8str_cs      fattr4_mimetype;
+typedef ascii_REQUIRED4 fattr4_mimetype;
 typedef mode4           fattr4_mode;
 typedef mode_masked4    fattr4_mode_set_masked;
 typedef uint64_t        fattr4_mounted_on_fileid;
@@ -766,6 +846,13 @@ typedef uint64_t        fattr4_retention_hold;
 typedef nfsacl41        fattr4_dacl;
 typedef nfsacl41        fattr4_sacl;
 typedef change_policy4  fattr4_change_policy;
+/*
+ * attributes new to NFSv4.2
+ */
+typedef uint64_t        fattr_space_freed;
+typedef change_attr_type4
+                fattr4_change_attr_type;
+typedef sec_label4      fattr_sec_label<>;
 
 %/*
 % * REQUIRED Attributes
@@ -783,7 +870,10 @@ const FATTR4_UNIQUE_HANDLES     = 9;
 const FATTR4_LEASE_TIME         = 10;
 const FATTR4_RDATTR_ERROR       = 11;
 const FATTR4_FILEHANDLE         = 19;
-%/* new to NFSV4.1 */
+
+%/*
+% * new to NFSV4.1
+% */
 const FATTR4_SUPPATTR_EXCLCREAT = 75;
 
 %/*
@@ -832,14 +922,19 @@ const FATTR4_TIME_METADATA      = 52;
 const FATTR4_TIME_MODIFY        = 53;
 const FATTR4_TIME_MODIFY_SET    = 54;
 const FATTR4_MOUNTED_ON_FILEID  = 55;
-%
-%/* new to NFSV4.1 */
-%
+
+%/*
+% * new to NFSV4.1
+% */
 const FATTR4_DIR_NOTIF_DELAY    = 56;
 const FATTR4_DIRENT_NOTIF_DELAY = 57;
 const FATTR4_DACL               = 58;
 const FATTR4_SACL               = 59;
 const FATTR4_CHANGE_POLICY      = 60;
+
+%/*
+% * new to NFSV4.2
+% */
 const FATTR4_FS_STATUS          = 61;
 const FATTR4_FS_LAYOUT_TYPES    = 62;
 const FATTR4_LAYOUT_HINT        = 63;
@@ -855,6 +950,10 @@ const FATTR4_RETENTEVT_SET      = 72;
 const FATTR4_RETENTION_HOLD     = 73;
 const FATTR4_MODE_SET_MASKED    = 74;
 const FATTR4_FS_CHARSET_CAP     = 76;
+/* 77 is currently unused */
+const FATTR4_SPACE_FREED        = 78;
+const FATTR4_CHANGE_ATTR_TYPE   = 79;
+const FATTR4_SEC_LABEL          = 80;
 
 /*
  * File attribute container
@@ -1044,11 +1143,11 @@ const FSLI4IF_VAR_SUB           = 0x00000001;
 
 typedef fs_locations_info4 fattr4_fs_locations_info;
 
-const NFL4_UFLG_MASK            = 0x0000003F;
-const NFL4_UFLG_DENSE           = 0x00000001;
-const NFL4_UFLG_COMMIT_THRU_MDS = 0x00000002;
-const NFL4_UFLG_STRIPE_UNIT_SIZE_MASK
-                                = 0xFFFFFFC0;
+const NFL4_UFLG_MASK                    = 0x0000003F;
+const NFL4_UFLG_DENSE                   = 0x00000001;
+const NFL4_UFLG_COMMIT_THRU_MDS         = 0x00000002;
+const NFL42_UFLG_IO_ADVISE_THRU_MDS     = 0x00000004;
+const NFL4_UFLG_STRIPE_UNIT_SIZE_MASK   = 0xFFFFFFC0;
 
 typedef uint32_t nfl_util4;
 
@@ -1060,13 +1159,18 @@ enum filelayout_hint_care4 {
         NFLH4_CARE_COMMIT_THRU_MDS
                                 = NFL4_UFLG_COMMIT_THRU_MDS,
 
+        NFL42_CARE_IO_ADVISE_THRU_MDS
+                                = NFL42_UFLG_IO_ADVISE_THRU_MDS,
+
         NFLH4_CARE_STRIPE_UNIT_SIZE
                                 = 0x00000040,
 
         NFLH4_CARE_STRIPE_COUNT = 0x00000080
 };
 %
-%/* Encoded in the loh_body field of data type layouthint4: */
+%/*
+% * Encoded in the loh_body field of data type layouthint4:
+%*/
 %
 struct nfsv4_1_file_layouthint4 {
         uint32_t        nflh_care;
@@ -1080,9 +1184,8 @@ struct nfsv4_1_file_layouthint4 {
 typedef netaddr4 multipath_list4<>;
 %
 %/*
-% * Encoded in the da_addr_body field of
-% * data type device_addr4:
-% */
+% * Encoded in the da_addr_body field of data type device_addr4:
+%*/
 struct nfsv4_1_file_layout_ds_addr4 {
         uint32_t        nflda_stripe_indices<>;
         multipath_list4 nflda_multipath_ds_list<>;
@@ -1092,9 +1195,8 @@ struct nfsv4_1_file_layout_ds_addr4 {
 
 %
 %/*
-% * Encoded in the loc_body field of
-% * data type layout_content4:
-% */
+% * Encoded in the loc_body field of data type layout_content4:
+%*/
 struct nfsv4_1_file_layout4 {
          deviceid4      nfl_deviceid;
          nfl_util4      nfl_util;
@@ -1105,18 +1207,89 @@ struct nfsv4_1_file_layout4 {
 
 %
 
-%/*
-% * Encoded in the lou_body field of data type layoutupdate4:
-% *      Nothing. lou_body is a zero length array of bytes.
-% */
-%
 
-%/*
-% * Encoded in the lrf_body field of
-% * data type layoutreturn_file4:
-% *      Nothing. lrf_body is a zero length array of bytes.
-% */
+/*
+ * Operation arrays (the opnum first)
+ */
+
+enum nfs_opnum4 {
+ OP_ACCESS              = 3,
+ OP_CLOSE               = 4,
+ OP_COMMIT              = 5,
+ OP_CREATE              = 6,
+ OP_DELEGPURGE          = 7,
+ OP_DELEGRETURN         = 8,
+ OP_GETATTR             = 9,
+ OP_GETFH               = 10,
+ OP_LINK                = 11,
+ OP_LOCK                = 12,
+ OP_LOCKT               = 13,
+ OP_LOCKU               = 14,
+ OP_LOOKUP              = 15,
+ OP_LOOKUPP             = 16,
+ OP_NVERIFY             = 17,
+ OP_OPEN                = 18,
+ OP_OPENATTR            = 19,
+ OP_OPEN_CONFIRM        = 20, /* Mandatory not-to-implement */
+ OP_OPEN_DOWNGRADE      = 21,
+ OP_PUTFH               = 22,
+ OP_PUTPUBFH            = 23,
+ OP_PUTROOTFH           = 24,
+ OP_READ                = 25,
+ OP_READDIR             = 26,
+ OP_READLINK            = 27,
+ OP_REMOVE              = 28,
+ OP_RENAME              = 29,
+ OP_RENEW               = 30, /* Mandatory not-to-implement */
+ OP_RESTOREFH           = 31,
+ OP_SAVEFH              = 32,
+ OP_SECINFO             = 33,
+ OP_SETATTR             = 34,
+ OP_SETCLIENTID         = 35, /* Mandatory not-to-implement */
+ OP_SETCLIENTID_CONFIRM = 36, /* Mandatory not-to-implement */
+ OP_VERIFY              = 37,
+ OP_WRITE               = 38,
+ OP_RELEASE_LOCKOWNER   = 39, /* Mandatory not-to-implement */
 %
+%/* new operations for NFSv4.1 */
+%
+ OP_BACKCHANNEL_CTL     = 40,
+ OP_BIND_CONN_TO_SESSION = 41,
+ OP_EXCHANGE_ID         = 42,
+ OP_CREATE_SESSION      = 43,
+ OP_DESTROY_SESSION     = 44,
+ OP_FREE_STATEID        = 45,
+ OP_GET_DIR_DELEGATION  = 46,
+ OP_GETDEVICEINFO       = 47,
+ OP_GETDEVICELIST       = 48,
+ OP_LAYOUTCOMMIT        = 49,
+ OP_LAYOUTGET           = 50,
+ OP_LAYOUTRETURN        = 51,
+ OP_SECINFO_NO_NAME     = 52,
+ OP_SEQUENCE            = 53,
+ OP_SET_SSV             = 54,
+ OP_TEST_STATEID        = 55,
+ OP_WANT_DELEGATION     = 56,
+ OP_DESTROY_CLIENTID    = 57,
+ OP_RECLAIM_COMPLETE    = 58,
+%
+%/* new operations for NFSv4.2 */
+%
+ OP_ALLOCATE            = 59,
+ OP_COPY                = 60,
+ OP_COPY_NOTIFY         = 61,
+ OP_DEALLOCATE          = 62,
+ OP_IO_ADVISE           = 63,
+ OP_LAYOUTERROR         = 64,
+ OP_LAYOUTSTATS         = 65,
+ OP_OFFLOAD_CANCEL      = 66,
+ OP_OFFLOAD_STATUS      = 67,
+ OP_READ_PLUS           = 68,
+ OP_SEEK                = 69,
+ OP_WRITE_SAME          = 70,
+ OP_ILLEGAL             = 10044
+};
+
 
 
 const ACCESS4_READ      = 0x00000001;
@@ -1138,9 +1311,9 @@ struct ACCESS4resok {
 
 union ACCESS4res switch (nfsstat4 status) {
  case NFS4_OK:
-         ACCESS4resok   resok4;
+        ACCESS4resok    resok4;
  default:
-         void;
+        void;
 };
 
 struct CLOSE4args {
@@ -1992,12 +2165,6 @@ struct VERIFY4res {
         nfsstat4        status;
 };
 
-enum stable_how4 {
-        UNSTABLE4       = 0,
-        DATA_SYNC4      = 1,
-        FILE_SYNC4      = 2
-};
-
 struct WRITE4args {
         /* CURRENT_FH: file */
         stateid4        stateid;
@@ -2101,6 +2268,7 @@ union BIND_CONN_TO_SESSION4res
 
 const EXCHGID4_FLAG_SUPP_MOVED_REFER    = 0x00000001;
 const EXCHGID4_FLAG_SUPP_MOVED_MIGR     = 0x00000002;
+const EXCHGID4_FLAG_SUPP_FENCE_OPS      = 0x00000004;
 
 const EXCHGID4_FLAG_BIND_PRINC_STATEID  = 0x00000100;
 
@@ -2577,72 +2745,233 @@ struct RECLAIM_COMPLETE4res {
         nfsstat4        rcr_status;
 };
 
-/*
- * Operation arrays
- */
-
-enum nfs_opnum4 {
- OP_ACCESS              = 3,
- OP_CLOSE               = 4,
- OP_COMMIT              = 5,
- OP_CREATE              = 6,
- OP_DELEGPURGE          = 7,
- OP_DELEGRETURN         = 8,
- OP_GETATTR             = 9,
- OP_GETFH               = 10,
- OP_LINK                = 11,
- OP_LOCK                = 12,
- OP_LOCKT               = 13,
- OP_LOCKU               = 14,
- OP_LOOKUP              = 15,
- OP_LOOKUPP             = 16,
- OP_NVERIFY             = 17,
- OP_OPEN                = 18,
- OP_OPENATTR            = 19,
- OP_OPEN_CONFIRM        = 20, /* Mandatory not-to-implement */
- OP_OPEN_DOWNGRADE      = 21,
- OP_PUTFH               = 22,
- OP_PUTPUBFH            = 23,
- OP_PUTROOTFH           = 24,
- OP_READ                = 25,
- OP_READDIR             = 26,
- OP_READLINK            = 27,
- OP_REMOVE              = 28,
- OP_RENAME              = 29,
- OP_RENEW               = 30, /* Mandatory not-to-implement */
- OP_RESTOREFH           = 31,
- OP_SAVEFH              = 32,
- OP_SECINFO             = 33,
- OP_SETATTR             = 34,
- OP_SETCLIENTID         = 35, /* Mandatory not-to-implement */
- OP_SETCLIENTID_CONFIRM = 36, /* Mandatory not-to-implement */
- OP_VERIFY              = 37,
- OP_WRITE               = 38,
- OP_RELEASE_LOCKOWNER   = 39, /* Mandatory not-to-implement */
-%
-%/* new operations for NFSv4.1 */
-%
- OP_BACKCHANNEL_CTL     = 40,
- OP_BIND_CONN_TO_SESSION = 41,
- OP_EXCHANGE_ID         = 42,
- OP_CREATE_SESSION      = 43,
- OP_DESTROY_SESSION     = 44,
- OP_FREE_STATEID        = 45,
- OP_GET_DIR_DELEGATION  = 46,
- OP_GETDEVICEINFO       = 47,
- OP_GETDEVICELIST       = 48,
- OP_LAYOUTCOMMIT        = 49,
- OP_LAYOUTGET           = 50,
- OP_LAYOUTRETURN        = 51,
- OP_SECINFO_NO_NAME     = 52,
- OP_SEQUENCE            = 53,
- OP_SET_SSV             = 54,
- OP_TEST_STATEID        = 55,
- OP_WANT_DELEGATION     = 56,
- OP_DESTROY_CLIENTID    = 57,
- OP_RECLAIM_COMPLETE    = 58,
- OP_ILLEGAL             = 10044
+struct COPY4args {
+        /* SAVED_FH: source file */
+        /* CURRENT_FH: destination file */
+        stateid4        ca_src_stateid;
+        stateid4        ca_dst_stateid;
+        offset4         ca_src_offset;
+        offset4         ca_dst_offset;
+        length4         ca_count;
+        bool            ca_consecutive;
+        bool            ca_synchronous;
+        netloc4         ca_source_server<>;
 };
+
+
+struct COPY4res {
+        nfsstat4        cr_status;
+        write_response4 cr_response;
+        bool            cr_consecutive;
+        bool            cr_synchronous;
+};
+
+
+struct COPY_NOTIFY4args {
+        /* CURRENT_FH: source file */
+        stateid4        cna_src_stateid;
+        netloc4         cna_destination_server;
+};
+
+struct COPY_NOTIFY4resok {
+        nfstime4        cnr_lease_time;
+        netloc4         cnr_source_server<>;
+};
+
+union COPY_NOTIFY4res switch (nfsstat4 cnr_status) {
+case NFS4_OK:
+        COPY_NOTIFY4resok       resok4;
+default:
+        void;
+};
+
+struct OFFLOAD_CANCEL4args {
+        /* CURRENT_FH: file to cancel */
+        stateid4        oca_stateid;
+};
+
+struct OFFLOAD_CANCEL4res {
+        nfsstat4        ocr_status;
+};
+
+
+struct OFFLOAD_STATUS4args {
+        /* CURRENT_FH: destination file */
+        stateid4        osa_stateid;
+};
+
+struct OFFLOAD_STATUS4resok {
+        length4         osr_count;
+        nfsstat4        osr_complete<1>;
+};
+
+union OFFLOAD_STATUS4res switch (nfsstat4 osr_status) {
+case NFS4_OK:
+        OFFLOAD_STATUS4resok            osr_resok4;
+default:
+        void;
+};
+
+struct ALLOCATE4args {
+        /* CURRENT_FH: file */
+        stateid4        aa_stateid;
+        offset4         aa_offset;
+        length4         aa_length;
+};
+struct ALLOCATE4res {
+        nfsstat4        ar_status;
+};
+
+struct DEALLOCATE4args {
+        /* CURRENT_FH: file */
+        stateid4        da_stateid;
+        offset4         da_offset;
+        length4         da_length;
+};
+
+
+struct DEALLOCATE4res {
+        nfsstat4        dr_status;
+};
+enum IO_ADVISE_type4 {
+        IO_ADVISE4_NORMAL                       = 0,
+        IO_ADVISE4_SEQUENTIAL                   = 1,
+        IO_ADVISE4_SEQUENTIAL_BACKWARDS         = 2,
+        IO_ADVISE4_RANDOM                       = 3,
+        IO_ADVISE4_WILLNEED                     = 4,
+        IO_ADVISE4_WILLNEED_OPPORTUNISTIC       = 5,
+        IO_ADVISE4_DONTNEED                     = 6,
+        IO_ADVISE4_NOREUSE                      = 7,
+        IO_ADVISE4_READ                         = 8,
+        IO_ADVISE4_WRITE                        = 9,
+        IO_ADVISE4_INIT_PROXIMITY               = 10
+};
+
+struct IO_ADVISE4args {
+        /* CURRENT_FH: file */
+        stateid4        iaa_stateid;
+        offset4         iaa_offset;
+        length4         iaa_count;
+        bitmap4         iaa_hints;
+};
+
+struct IO_ADVISE4resok {
+        bitmap4 ior_hints;
+};
+
+union IO_ADVISE4res switch (nfsstat4 ior_status) {
+case NFS4_OK:
+        IO_ADVISE4resok resok4;
+default:
+        void;
+};
+
+
+struct device_error4 {
+        deviceid4       de_deviceid;
+        nfsstat4        de_status;
+        nfs_opnum4      de_opnum;
+};
+
+
+struct LAYOUTERROR4args {
+        /* CURRENT_FH: file */
+        offset4                 lea_offset;
+        length4                 lea_length;
+        stateid4                lea_stateid;
+        device_error4           lea_errors<>;
+};
+
+struct LAYOUTERROR4res {
+        nfsstat4        ler_status;
+};
+
+struct io_info4 {
+        uint32_t        ii_count;
+        uint64_t        ii_bytes;
+};
+
+struct LAYOUTSTATS4args {
+        /* CURRENT_FH: file */
+        offset4                 lsa_offset;
+        length4                 lsa_length;
+        stateid4                lsa_stateid;
+        io_info4                lsa_read;
+        io_info4                lsa_write;
+        deviceid4               lsa_deviceid;
+        layoutupdate4           lsa_layoutupdate;
+};
+
+struct LAYOUTSTATS4res {
+        nfsstat4        lsr_status;
+};
+
+struct READ_PLUS4args {
+        /* CURRENT_FH: file */
+        stateid4        rpa_stateid;
+        offset4         rpa_offset;
+        count4          rpa_count;
+};
+union read_plus_content switch (data_content4 rpc_content) {
+case NFS4_CONTENT_DATA:
+        data4           rpc_data;
+case NFS4_CONTENT_HOLE:
+        data_info4      rpc_hole;
+default:
+        void;
+};
+
+/*
+ * Allow a return of an array of contents.
+ */
+struct read_plus_res4 {
+        bool                    rpr_eof;
+        read_plus_content       rpr_contents<>;
+};
+
+union READ_PLUS4res switch (nfsstat4 rp_status) {
+case NFS4_OK:
+        read_plus_res4  rp_resok4;
+default:
+        void;
+};
+
+struct SEEK4args {
+        /* CURRENT_FH: file */
+        stateid4        sa_stateid;
+        offset4         sa_offset;
+        data_content4   sa_what;
+};
+struct seek_res4 {
+        bool            sr_eof;
+        offset4         sr_offset;
+};
+union SEEK4res switch (nfsstat4 sa_status) {
+case NFS4_OK:
+        seek_res4       resok4;
+default:
+        void;
+};
+
+struct WRITE_SAME4args {
+        /* CURRENT_FH: file */
+        stateid4        wsa_stateid;
+        stable_how4     wsa_stable;
+        app_data_block4 wsa_adb;
+};
+
+
+union WRITE_SAME4res switch (nfsstat4 wsr_status) {
+case NFS4_OK:
+        write_response4         resok4;
+default:
+        void;
+};
+
+
+/*
+ * Operation arrays (the rest)
+ */
 
 union nfs_argop4 switch (nfs_opnum4 argop) {
  case OP_ACCESS:        ACCESS4args opaccess;
@@ -2745,6 +3074,20 @@ union nfs_argop4 switch (nfs_opnum4 argop) {
  case OP_RECLAIM_COMPLETE:
                         RECLAIM_COMPLETE4args
                                 opreclaim_complete;
+
+ /* Operations new to NFSv4.2 */
+ case OP_ALLOCATE:      ALLOCATE4args opallocate;
+ case OP_COPY:          COPY4args opcopy;
+ case OP_COPY_NOTIFY:   COPY_NOTIFY4args opoffload_notify;
+ case OP_DEALLOCATE:    DEALLOCATE4args opdeallocate;
+ case OP_IO_ADVISE:     IO_ADVISE4args opio_advise;
+ case OP_LAYOUTERROR: LAYOUTERROR4args  oplayouterror;
+ case OP_LAYOUTSTATS: LAYOUTSTATS4args  oplayoutstats;
+ case OP_OFFLOAD_CANCEL: OFFLOAD_CANCEL4args opoffload_cancel;
+ case OP_OFFLOAD_STATUS: OFFLOAD_STATUS4args opoffload_status;
+ case OP_READ_PLUS:     READ_PLUS4args opread_plus;
+ case OP_SEEK:          SEEK4args opseek;
+ case OP_WRITE_SAME:    WRITE_SAME4args opwrite_same;
 
  /* Operations not new to NFSv4.1 */
  case OP_ILLEGAL:       void;
@@ -2859,6 +3202,20 @@ union nfs_resop4 switch (nfs_opnum4 resop) {
  case OP_RECLAIM_COMPLETE:
                         RECLAIM_COMPLETE4res
                                 opreclaim_complete;
+
+ /* Operations new to NFSv4.2 */
+ case OP_ALLOCATE:      ALLOCATE4res opallocate;
+ case OP_COPY:          COPY4res opcopy;
+ case OP_COPY_NOTIFY:   COPY_NOTIFY4res opcopy_notify;
+ case OP_DEALLOCATE:    DEALLOCATE4res opdeallocate;
+ case OP_IO_ADVISE:     IO_ADVISE4res opio_advise;
+ case OP_LAYOUTERROR: LAYOUTERROR4res oplayouterror;
+ case OP_LAYOUTSTATS: LAYOUTSTATS4res oplayputstats;
+ case OP_OFFLOAD_CANCEL: OFFLOAD_CANCEL4res opoffload_cancel;
+ case OP_OFFLOAD_STATUS: OFFLOAD_STATUS4res opoffload_status;
+ case OP_READ_PLUS:     READ_PLUS4res opread_plus;
+ case OP_SEEK:          SEEK4res opseek;
+ case OP_WRITE_SAME:    WRITE_SAME4res opwrite_same;
 
  /* Operations not new to NFSv4.1 */
  case OP_ILLEGAL:       ILLEGAL4res opillegal;
@@ -3166,31 +3523,49 @@ struct CB_NOTIFY_DEVICEID4res {
         nfsstat4        cndr_status;
 };
 
+union offload_info4 switch (nfsstat4 coa_status) {
+case NFS4_OK:
+        write_response4 coa_resok4;
+default:
+        length4         coa_bytes_copied;
+};
+struct CB_OFFLOAD4args {
+        nfs_fh4         coa_fh;
+        stateid4        coa_stateid;
+        offload_info4   coa_offload_info;
+};
+struct CB_OFFLOAD4res {
+        nfsstat4        cor_status;
+};
 /*
  * Various definitions for CB_COMPOUND
  */
 %
 enum nfs_cb_opnum4 {
-        OP_CB_GETATTR           = 3,
-        OP_CB_RECALL            = 4,
+        OP_CB_GETATTR                   = 3,
+        OP_CB_RECALL                    = 4,
 %/* Callback operations new to NFSv4.1 */
-        OP_CB_LAYOUTRECALL      = 5,
-        OP_CB_NOTIFY            = 6,
-        OP_CB_PUSH_DELEG        = 7,
-        OP_CB_RECALL_ANY        = 8,
-        OP_CB_RECALLABLE_OBJ_AVAIL = 9,
-        OP_CB_RECALL_SLOT       = 10,
-        OP_CB_SEQUENCE          = 11,
-        OP_CB_WANTS_CANCELLED   = 12,
-        OP_CB_NOTIFY_LOCK       = 13,
-        OP_CB_NOTIFY_DEVICEID   = 14,
+        OP_CB_LAYOUTRECALL              = 5,
+        OP_CB_NOTIFY                    = 6,
+        OP_CB_PUSH_DELEG                = 7,
+        OP_CB_RECALL_ANY                = 8,
+        OP_CB_RECALLABLE_OBJ_AVAIL      = 9,
+        OP_CB_RECALL_SLOT               = 10,
+        OP_CB_SEQUENCE                  = 11,
+        OP_CB_WANTS_CANCELLED           = 12,
+        OP_CB_NOTIFY_LOCK               = 13,
+        OP_CB_NOTIFY_DEVICEID           = 14,
+%/* Callback operations new to NFSv4.2 */
+        OP_CB_OFFLOAD                   = 15,
 
-        OP_CB_ILLEGAL           = 10044
+        OP_CB_ILLEGAL                   = 10044
 };
 
 union nfs_cb_argop4 switch (unsigned argop) {
  case OP_CB_GETATTR:
       CB_GETATTR4args           opcbgetattr;
+
+ /* new NFSv4.1 operations */
  case OP_CB_RECALL:
       CB_RECALL4args            opcbrecall;
  case OP_CB_LAYOUTRECALL:
@@ -3213,6 +3588,11 @@ union nfs_cb_argop4 switch (unsigned argop) {
       CB_NOTIFY_LOCK4args       opcbnotify_lock;
  case OP_CB_NOTIFY_DEVICEID:
       CB_NOTIFY_DEVICEID4args   opcbnotify_deviceid;
+
+ /* new NFSv4.2 operations */
+ case OP_CB_OFFLOAD:
+      CB_OFFLOAD4args           opcboffload;
+
  case OP_CB_ILLEGAL:            void;
 };
 
@@ -3254,6 +3634,9 @@ union nfs_cb_resop4 switch (unsigned resop) {
  case OP_CB_NOTIFY_DEVICEID:
                         CB_NOTIFY_DEVICEID4res
                                         opcbnotify_deviceid;
+
+ /* new NFSv4.2 operations */
+ case OP_CB_OFFLOAD:    CB_OFFLOAD4res  opcboffload;
 
  /* Not new operation */
  case OP_CB_ILLEGAL:    CB_ILLEGAL4res  opcbillegal;
