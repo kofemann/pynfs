@@ -89,6 +89,8 @@ def scan_options(p):
                  help="Store test results in xml format [%default]")
     p.add_option("--debug_fail", action="store_true", default=False,
                  help="Force some checks to fail")
+    p.add_option("--minorversion", type="int", default=0,
+                 metavar="MINORVERSION", help="Choose NFSv4 minor version")
 
     g = OptionGroup(p, "Security flavor options",
                     "These options choose or affect the security flavor used.")

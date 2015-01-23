@@ -179,6 +179,8 @@ class Argtype(object):
 def run_filter(test, options):
     """Determine whether a test was directly asked for by the command line."""
     run = False   # default
+    if not (test.versions[0] <= options.minorversion <= test.versions[1]):
+        return run
     for arg in options.args:
         if arg.isflag:
             if test.flags & arg.obj:

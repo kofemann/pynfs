@@ -89,7 +89,7 @@ class WarningException(TestException):
         TestException.__init__(self, *args)
 
 class Test(object):
-    _keywords = ["FLAGS", "DEPEND", "CODE"]
+    _keywords = ["FLAGS", "DEPEND", "CODE", "VERS"]
     _pass_result = Result(TEST_PASS, default=True)
     _run_result = Result(TEST_RUNNING, default=True)
     _wait_result = Result(TEST_WAIT, "Circular dependency", default=True)
@@ -326,13 +326,33 @@ def _import_by_name(name):
         mod = getattr(mod, comp)
     return mod
 
+def parseversions(t):
+    if len(t.vers_list) > 1:
+	    raise RuntimeError("Test %s has invalid version range %s"
+                               % (t.fullname, t.vers_list))
+    if len(t.vers_list) == 0:
+        return (0, sys.maxint)
+    limits = t.vers_list[0].split("-")
+    if len(limits) != 2:
+        raise RuntimeError("Test %s has invalid version range %s"
+                            % (t.fullname, s))
+    if limits[0] == '':
+        left = 0
+    else:
+        left = int(limits[0])
+    if limits[1] == '':
+        right = sys.maxint
+    else:
+        right = int(limits[1])
+    return (left, right)
+
 def createtests(testdir):
     """ Tests are functions that start with "test".  Their docstring must
     contain a line starting with "CODE:".  It may optionally contain a line
-    starting with "DEPEND:" or "FLAGS:".  Each test must have a unique code
-    string.  The space seperated list of flags must not contain any code
-    names.  The depend list is a list of code names for tests that must be
-    run before the given test.
+    starting with "DEPEND:", "FLAGS:", or "VERS".  Each test must have a
+    unique code string.  The space seperated list of flags must not contain
+    any code names.  The depend list is a list of code names for tests that
+    must be run before the given test.
 
     Returns a list of tests, a dictionary of {flags:bitmask}, and a
     dictionary of {code:test}
@@ -374,6 +394,7 @@ def createtests(testdir):
             raise RuntimeError("flag %s is also used as a test code" % f)
     # Now turn dependency names into pointers, and flags into a bitmask
     for t in tests:
+        t.versions = parseversions(t)
         t.flags = sum([flag_dict[x] for x in t.flags_list])
         t.dependencies = []
         for d in t.depend_list:
