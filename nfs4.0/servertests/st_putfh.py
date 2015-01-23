@@ -89,7 +89,7 @@ def testBadHandle(t, env):
 def testStaleHandle(t, env):
     """PUTFH which nolonger exists should return NFS4ERR_STALE
 
-    FLAGS: putfh all
+    FLAGS: putfh
     DEPEND: MKFILE
     CODE: PUTFH3
     """
@@ -102,6 +102,8 @@ def testStaleHandle(t, env):
     ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
     res = c.compound(ops)
     check(res)
-    # Now try to use it
+    # Now try to use it; but note a server may still allow use and
+    # that's not necessarily a protocol violation; disabling this test
+    # by default until we think of something better.
     res = c.compound([c.putfh_op(stale_fh)])
     check(res, NFS4ERR_STALE, "Using a stale fh")
