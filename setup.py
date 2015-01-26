@@ -16,12 +16,6 @@ Add stuff here.
 DIRS = ["ply", "xdr", "gssapi", "rpc", "nfs4.1", "nfs4.0"] # Order is important
 
 def setup(*args, **kwargs):
-    print "This just runs the setup.py file in each of the following dirs:"
-    print DIRS
-    print "If you want more control, say no and do it by hand"
-    str = raw_input("Continue? (y/n) ")
-    if (not str) or str[0] not in ['y', 'Y']:
-        return
     cwd = os.getcwd()
     command = " ".join(sys.argv)
     for dir in DIRS:
