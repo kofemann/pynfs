@@ -571,9 +571,7 @@ def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     res = create_file(sess, owner, path, attrs, access, deny, mode)
     check(res, msg="Creating file %s" % _getname(owner, path))
     fh = res.resarray[-1].object
-    openstateid = stateid4(0, res.resarray[-2].stateid.other)
     return fh, res.resarray[-2].stateid
-    return fh, openstateid
 
 def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
                    access=OPEN4_SHARE_ACCESS_BOTH,
