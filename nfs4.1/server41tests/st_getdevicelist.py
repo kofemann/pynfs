@@ -20,12 +20,12 @@ def testGetDevList(t, env):
         fail("Server did not set EXCHGID4_FLAG_USE_PNFS_MDS")
     sess = c1.create_session()
     # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
+    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)
     check(res)
-    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
+    if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
         fail("fs_layout_type not available")
-    for lo_type in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
+    for lo_type in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
         # Send GETDEVICELIST
         ops = use_obj(env.opts.path) + [op.getdevicelist(lo_type, 0xffffffff, 0, "")]
         res = sess.compound(ops)
@@ -47,12 +47,12 @@ def testGetDevInfo(t, env):
         fail("Server did not set EXCHGID4_FLAG_USE_PNFS_MDS")
     sess = c1.create_session()
     # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
+    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)
     check(res)
-    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
+    if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
         fail("fs_layout_type not available")
-    for lo_type in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
+    for lo_type in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
         # Send GETDEVICELIST
         lo_type = LAYOUT4_BLOCK_VOLUME
         ops = use_obj(env.opts.path) + [op.getdevicelist(lo_type, 0xffffffff, 0, "")]
@@ -83,12 +83,12 @@ def testGetDevInfo(t, env):
 ##         fail("Server can not be used as pnfs metadata server")
 ##     sess = c1.create_session()
 ##     # Test that fs handles block layouts
-##     ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
+##     ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
 ##     res = sess.compound(ops)
 ##     check(res)
-##     if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
+##     if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
 ##         fail("fs_layout_type not available")
-##     if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
+##     if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
 ##         fail("layout_type does not contain BLOCK")
 ##     # Open the file
 ##     owner = "owner for %s" % env.testname(t)
@@ -115,12 +115,12 @@ def testGetLayout(t, env):
         fail("Server can not be used as pnfs metadata server")
     sess = c1.create_session()
     # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
+    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)
     check(res)
-    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
+    if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
         fail("fs_layout_type not available")
-    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
+    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
         fail("layout_type does not contain BLOCK")
     # Create the file
     res = create_file(sess, env.testname(t))
@@ -156,12 +156,12 @@ def testEMCGetLayout(t, env):
         fail("Server can not be used as pnfs metadata server")
     sess = c1.create_session()
     # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE)]
+    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)
     check(res)
-    if FATTR4_FS_LAYOUT_TYPE not in res.resarray[-1].obj_attributes:
+    if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
         fail("fs_layout_type not available")
-    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPE]:
+    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
         fail("layout_type does not contain BLOCK")
     # Create the file
     file = ["server2fs1", "dump.eth"]
@@ -293,14 +293,14 @@ def testLayoutCommit(t, env):
         fail("Server can not be used as pnfs metadata server")
     sess = c1.create_session()
     # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPE |
+    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES |
                                                1<<FATTR4_LAYOUT_BLKSIZE)]
     res = sess.compound(ops)
     check(res)
     attrdict = res.resarray[-1].obj_attributes
-    if FATTR4_FS_LAYOUT_TYPE not in attrdict:
+    if FATTR4_FS_LAYOUT_TYPES not in attrdict:
         fail("fs_layout_type not available")
-    if LAYOUT4_BLOCK_VOLUME not in attrdict[FATTR4_FS_LAYOUT_TYPE]:
+    if LAYOUT4_BLOCK_VOLUME not in attrdict[FATTR4_FS_LAYOUT_TYPES]:
         fail("layout_type does not contain BLOCK")
     blocksize = attrdict[FATTR4_LAYOUT_BLKSIZE]
     # Create the file
