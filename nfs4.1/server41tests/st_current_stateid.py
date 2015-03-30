@@ -125,8 +125,7 @@ def testOpenLayoutGet(t, env):
     FLAGS: currentstateid pnfs
     CODE: CSID7
     """
-    sess = env.c1.new_client_session(env.testname(t),
-                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
 
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
     res = sess.compound( open_op + 
@@ -142,8 +141,7 @@ def testOpenSetattr(t, env):
     CODE: CSID8
     """
     size = 8
-    sess = env.c1.new_client_session(env.testname(t),
-                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
 
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
     res = sess.compound( open_op +

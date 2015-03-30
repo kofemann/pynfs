@@ -94,11 +94,7 @@ def testLayout(t, env):
     FLAGS: layout all
     CODE: LAYOUT1
     """
-    # Make sure E_ID returns MDS capabilities
-    c1 = env.c1.new_client(env.testname(t), flags=EXCHGID4_FLAG_USE_PNFS_MDS)
-    if not c1.flags & EXCHGID4_FLAG_USE_PNFS_MDS:
-        fail("Server can not be used as pnfs metadata server")
-    sess = c1.create_session()
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Test that fs handles block layouts
     ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)
@@ -126,11 +122,7 @@ def testGetDevList(t, env):
     FLAGS: layout all
     CODE: LAYOUT2
     """
-    # Make sure E_ID returns MDS capabilities
-    c1 = env.c1.new_client(env.testname(t), flags=EXCHGID4_FLAG_USE_PNFS_MDS)
-    if not c1.flags & EXCHGID4_FLAG_USE_PNFS_MDS:
-        fail("Server can not be used as pnfs metadata server")
-    sess = c1.create_session()
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Test that fs handles block layouts
     ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
     res = sess.compound(ops)

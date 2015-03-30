@@ -15,8 +15,7 @@ def testStateid1(t, env):
     FLAGS: block
     CODE: BLOCK1
     """
-    sess = env.c1.new_client_session(env.testname(t),
-                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Create the file
     res = create_file(sess, env.testname(t))
     check(res)
@@ -57,8 +56,7 @@ def testStateid2(t, env):
     FLAGS: block
     CODE: BLOCK2
     """
-    c1 = env.c1.new_client_session(env.testname(t),
-                                    flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Create the file
     res = create_file(sess, env.testname(t))
     check(res)
@@ -117,8 +115,7 @@ def testEmptyCommit(t, env):
     FLAGS: block
     CODE: BLOCK3
     """
-    c1 = env.c1.new_client_session(env.testname(t),
-                                    flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Create the file
     res = create_file(sess, env.testname(t))
     check(res)
@@ -179,8 +176,7 @@ def testSplitCommit(t, env):
     FLAGS: block
     CODE: BLOCK4
     """
-    sess = env.c1.new_client_session(env.testname(t),
-                                        flags=EXCHGID4_FLAG_USE_PNFS_MDS)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
     # Create the file
     res = create_file(sess, env.testname(t))
     check(res)

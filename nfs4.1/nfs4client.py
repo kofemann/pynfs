@@ -297,6 +297,15 @@ class NFS4Client(rpc.Client, rpc.Server):
         s.compound([op4.reclaim_complete(FALSE)])
         return s
 
+    def new_pnfs_client_session(self, name, flags=EXCHGID4_FLAG_USE_PNFS_MDS, sec=None):
+        # Make sure E_ID returns MDS capabilities
+        c = self.new_client(name, flags=flags)
+        if not c.flags & EXCHGID4_FLAG_USE_PNFS_MDS:
+            fail("Server can not be used as pnfs metadata server")
+        s = c.create_session(sec=sec)
+        s.compound([op4.reclaim_complete(FALSE)])
+        return s
+
     def create_tag(self):
         current_stack = inspect.stack()
         stackid = 0
