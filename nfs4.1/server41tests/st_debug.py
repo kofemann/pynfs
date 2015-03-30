@@ -95,14 +95,7 @@ def testLayout(t, env):
     CODE: LAYOUT1
     """
     sess = env.c1.new_pnfs_client_session(env.testname(t))
-    # Test that fs handles block layouts
-    ops = use_obj(env.opts.path) + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES)]
-    res = sess.compound(ops)
-    check(res)
-    if FATTR4_FS_LAYOUT_TYPES not in res.resarray[-1].obj_attributes:
-        fail("fs_layout_type not available")
-    if LAYOUT4_BLOCK_VOLUME not in res.resarray[-1].obj_attributes[FATTR4_FS_LAYOUT_TYPES]:
-        fail("layout_type does not contain BLOCK")
+    blocksize = get_blocksize(sess, use_obj(env.opts.path))
     # Open the file
     owner = "owner for %s" % env.testname(t)
     # openres = open_file(sess, owner, env.opts.path + ["simple_extent"])
@@ -112,7 +105,7 @@ def testLayout(t, env):
     fh = openres.resarray[-1].object
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_READ,
-                        0, 0xffffffff, 0, 0xffff)]
+                        0, 0xffffffff, 4*blocksize, 0xffff)]
     res = sess.compound(ops)
     check(res)
     

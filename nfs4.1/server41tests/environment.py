@@ -585,6 +585,25 @@ def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     close_file(sess, fh, stateid=stateid)
     return fh;
 
+def get_blocksize(sess, path, layout_type=LAYOUT4_BLOCK_VOLUME):
+    """ Test that fs handles layouts type, and get the blocksize
+
+    Returns the blocksize
+    """
+    if path is None:
+        fail("Needs path!!!")
+
+    ops = path + [op.getattr(1<<FATTR4_FS_LAYOUT_TYPES |
+                             1<<FATTR4_LAYOUT_BLKSIZE)]
+    res = sess.compound(ops)
+    check(res)
+    attrdict = res.resarray[-1].obj_attributes
+    if FATTR4_FS_LAYOUT_TYPES not in attrdict:
+        fail("fs_layout_type not available")
+    if LAYOUT4_BLOCK_VOLUME not in attrdict[FATTR4_FS_LAYOUT_TYPES]:
+        fail("layout_type does not contain BLOCK")
+    return attrdict[FATTR4_LAYOUT_BLKSIZE]
+
 def _getname(owner, path):
     if path is None:
         return owner
