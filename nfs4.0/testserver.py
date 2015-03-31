@@ -170,10 +170,6 @@ def scan_options(p):
                     "Certain servers handle certain things in unexpected ways."
                     " These options allow you to alter test behavior so that "
                     "they will run.")
-    g.add_option("--paddednull", action="store_true", default=False,
-                 help="Allow NULL returns to have extra data appended [False]")
-    g.add_option("--newverf", action="store_true", default=False,
-                 help="Force use of new verifier for SETCLIENTID [False]")
     g.add_option("--secure", action="store_true", default=False,
                  help="Try to use 'secure' port number <1024 for client [False]")
     p.add_option_group(g)

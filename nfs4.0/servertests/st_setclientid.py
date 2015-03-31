@@ -42,7 +42,6 @@ def testClientUpdateCallback(t, env):
     CODE: CID1b
     """
     c = env.c1
-    # Need to fix id and verf in case using --newverf option
     id = 'pynfs%i_%s' % (os.getpid(), t.code)
     verf = struct.pack('>d', time.time())
     c.init_connection(id, verf)

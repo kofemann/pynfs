@@ -307,14 +307,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         """Make NULL procedure call"""
         res = self.call(NFSPROC4_NULL, '')
         self.nfs4unpacker.reset(res)
-        if not getattr(self.opts, "paddednull", False):
-            # Disallows extra bytes at end of nulls
-            try:
-                self.nfs4unpacker.done()
-            except XDRError:
-                raise XDRError("Unexpected bytes in NULL response:\n%s\n"
-                               "\nConsider using --paddednull option" % 
-                               repr(self.nfs4unpacker.get_buffer()))
+        self.nfs4unpacker.done()
 
     def compound(self, argarray, tag='', minorversion=0):
         """Make COMPOUND procedure call"""
@@ -396,9 +389,6 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         # cb_ident==None means turn off callbacks
         # cb_ident==0 means assign next available cb_ident
         # otherwise use given cb_ident
-        if getattr(self.opts, "newverf", False):
-            # Several servers had problems reusing the same clientid/verifier
-            self.verifier = struct.pack('>d', time.time())
         if id is None: id = self.id
         if verifier is None: verifier = self.verifier
         if cb_ident is None:
