@@ -1,5 +1,6 @@
 from nfs4_const import *
 from environment import check, checklist, makeBadID, makeBadIDganesha, makeStaleId
+import rpc
 
 def _compare(t, res, expect, eof=True):
     def shorten(str):
@@ -222,3 +223,21 @@ def testOldStateid(t, env):
     fh, stateid = c.confirm(t.code, res)
     res = c.read_file(fh, stateid=oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "READ with old stateid")
+
+# Off by default just because it's a bit hackish and assumes auth_sys:
+def testStolenStateid(t, env):
+    """READ with incorrect permissions and somebody else's stateid
+
+    FLAGS: read
+    DEPEND: MKFILE
+    CODE: RD12
+    """
+    c = env.c1
+    c.init_connection()
+    res = c.create_file(t.code, attrs={FATTR4_MODE: 0600})
+    fh, stateid = c.confirm(t.code, res)
+    security=c.security
+    c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
+    res = c.read_file(fh, stateid=stateid)
+    c.security=security
+    checklist(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "READ with stolen stateid")
