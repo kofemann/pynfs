@@ -20,3 +20,31 @@ def testAllocateSupported(t, env):
 
     res = sess.compound([op.putfh(fh), op.allocate(stateid, 0, 1)])
     check(res)
+
+def testAllocateStateidZero(t, env):
+    """Do a simple ALLOCATE with all-zero stateid
+
+    FLAGS: all sparse
+    CODE: ALLOC2
+    VERS: 2-
+    """
+    sess = env.c1.new_client_session(env.testname(t))
+    res = create_file(sess, env.testname(t), access=OPEN4_SHARE_ACCESS_WRITE)
+    fh = res.resarray[-1].object
+
+    res = sess.compound([op.putfh(fh), op.allocate(env.stateid0, 0, 1)])
+    check(res)
+
+def testAllocateStateidOne(t, env):
+    """Do a simple ALLOCATE with all-one stateid
+
+    FLAGS: all sparse
+    CODE: ALLOC3
+    VERS: 2-
+    """
+    sess = env.c1.new_client_session(env.testname(t))
+    res = create_file(sess, env.testname(t), access=OPEN4_SHARE_ACCESS_WRITE)
+    fh = res.resarray[-1].object
+
+    res = sess.compound([op.putfh(fh), op.allocate(env.stateid1, 0, 1)])
+    check(res)

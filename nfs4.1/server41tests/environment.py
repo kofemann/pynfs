@@ -138,7 +138,9 @@ class Environment(testmod.Environment):
         self._last_verf = self.timestamp + 1
         self.filedata = "This is the file test data."
         self.linkdata = "/etc/X11"
-        
+        self.stateid0 = stateid4(0, '')
+        self.stateid1 = stateid4(0xffffffffL, '\xff'*12)
+
         log.info("Created client to %s, %i" % (opts.server, opts.port))
 
     def init(self):
