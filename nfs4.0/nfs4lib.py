@@ -40,6 +40,8 @@ import struct
 import socket
 import sys
 import re
+import inspect
+from os.path import basename
 
 class NFSException(rpc.RPCError):
     pass
@@ -313,8 +315,13 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         """Make COMPOUND procedure call"""
         if type(argarray) is not list:
             raise "Need list for argarray"
+
+        if len(tag) == 0:
+            compound_tag = self.create_tag()
+        else:
+            compound_tag = tag
         # Make the actual call
-        compoundargs = COMPOUND4args(argarray=argarray, tag=tag,
+        compoundargs = COMPOUND4args(argarray=argarray, tag=compound_tag,
                                      minorversion=minorversion)
         if SHOW_TRAFFIC:
             print
@@ -366,6 +373,15 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                     raise InvalidCompoundRes("last op not equal to res.status")
 
         return res
+
+    def create_tag(self):
+        current_module = inspect.getmodule(inspect.currentframe().f_back)
+        current_stack = inspect.stack()
+        stackid = 0
+        while current_module == inspect.getmodule(current_stack[stackid][0]):
+              stackid = stackid + 1
+        test_name = '%s:%s' % (basename(current_stack[stackid][1]), current_stack[stackid][3])
+        return test_name
 
     def init_connection(self, id=None, verifier=None, cb_ident=None):
         """Do setclientid/setclientidconfirm combination"""

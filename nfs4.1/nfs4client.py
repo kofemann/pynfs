@@ -307,9 +307,10 @@ class NFS4Client(rpc.Client, rpc.Server):
         return s
 
     def create_tag(self):
+        current_module = inspect.getmodule(inspect.currentframe().f_back)
         current_stack = inspect.stack()
         stackid = 0
-        while basename(current_stack[stackid][1]) == 'environment.py' or basename(current_stack[stackid][1]) == 'nfs4client.py':
+        while current_module == inspect.getmodule(current_stack[stackid][0]):
               stackid = stackid + 1
         test_name = '%s:%s' % (basename(current_stack[stackid][1]), current_stack[stackid][3])
         return test_name
