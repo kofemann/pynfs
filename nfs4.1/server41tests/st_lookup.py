@@ -64,7 +64,7 @@ def testLongName(t, env):
 
 ##############################################################
 if 0:
-    from environment import check, checklist, get_invalid_utf8strings
+    from environment import check, get_invalid_utf8strings
 
     def testDir(t, env):
         """LOOKUP testtree dir
@@ -317,16 +317,16 @@ if 0:
         check(res)
         # Run tests
         res1 = c.compound(c.use_obj(dir + ['.']))
-        checklist(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+        check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
                   "LOOKUP a nonexistant '.'")
         res2 = c.compound(c.use_obj(dir + ['..']))
-        checklist(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+        check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
                   "LOOKUP a nonexistant '..'")
         res1 = c.compound(c.use_obj(dir + ['.', 'foo']))
-        checklist(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+        check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
                   "LOOKUP a nonexistant '.'")
         res2 = c.compound(c.use_obj(dir + ['..', t.code]))
-        checklist(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+        check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
                   "LOOKUP a nonexistant '..'")
 
     def testUnaccessibleDir(t, env):

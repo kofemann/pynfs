@@ -2,7 +2,7 @@ from st_create_session import create_session
 from st_open import open_claim4
 from xdrdef.nfs4_const import *
 
-from environment import check, checklist, fail, create_file, open_file, close_file
+from environment import check, fail, create_file, open_file, close_file
 from xdrdef.nfs4_type import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
@@ -59,7 +59,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     check(res)
     # Now get OPEN reply
     res = sess2.listen(slot)
-    checklist(res, [NFS4_OK, NFS4ERR_DELAY])
+    check(res, [NFS4_OK, NFS4ERR_DELAY])
     return recall
 
 def testReadDeleg(t, env):
@@ -181,7 +181,7 @@ def testDelegRevocation(t, env):
         res = sess2.compound(env.home + [open_op])
         if res.status == NFS4_OK:
             break;
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY])
+        check(res, [NFS4_OK, NFS4ERR_DELAY])
 	# just to keep sess1 renewed.  This is a bit fragile, as we
         # depend on the above compound waiting no longer than the
         # server's lease period:

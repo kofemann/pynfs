@@ -1,7 +1,7 @@
 from st_create_session import create_session
 from xdrdef.nfs4_const import *
 
-from environment import check, checklist, fail, create_file, open_file, close_file
+from environment import check, fail, create_file, open_file, close_file
 from environment import open_create_file_op, use_obj
 from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
 from xdrdef.nfs4_type import creatverfattr, fattr4, stateid4, locker4, lock_owner4
@@ -99,7 +99,7 @@ def testOpenLookupClose(t, env):
     open_op = open_create_file_op(sess1, fname, open_create=OPEN4_CREATE)
     lookup_op = env.home + [op.lookup(fname)]
     res = sess1.compound(open_op + lookup_op + [op.close(0, current_stateid)])
-    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+    check(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
 
 def testCloseNoStateid(t, env):
     """test current state id processing by having CLOSE
@@ -116,7 +116,7 @@ def testCloseNoStateid(t, env):
     stateid = res.resarray[-2].stateid
 
     res = sess1.compound([op.putfh(fh), op.close(0, current_stateid)])
-    checklist(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+    check(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
 
 def testOpenLayoutGet(t, env):
     """test current state id processing by having OPEN and LAYOUTGET

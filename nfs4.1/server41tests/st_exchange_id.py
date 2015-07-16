@@ -2,7 +2,7 @@ from xdrdef.nfs4_const import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
 import time
-from environment import check, checklist, fail
+from environment import check, fail
 from xdrdef.nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids
@@ -394,7 +394,7 @@ def testUpdate100(t, env):
     res = _raw_exchange_id(env.c1, env.testname(t), verf=env.new_verifier(),
                            cred=env.cred2,
                            flags=EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
-    checklist(res, [NFS4ERR_NOT_SAME, NFS4ERR_PERM])
+    check(res, [NFS4ERR_NOT_SAME, NFS4ERR_PERM])
     
 def testUpdate101(t, env):
     """

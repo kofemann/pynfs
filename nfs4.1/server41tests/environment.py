@@ -164,7 +164,7 @@ class Environment(testmod.Environment):
         for comp in self.opts.home:
             path.append(comp)
             res = sess.compound(use_obj(path))
-            checklist(res, [NFS4_OK, NFS4ERR_NOENT],
+            check(res, [NFS4_OK, NFS4ERR_NOENT],
                       "LOOKUP /%s," % '/'.join(path))
             if res.status == NFS4ERR_NOENT:
                 res = create_obj(sess, path, NF4DIR)
@@ -172,7 +172,7 @@ class Environment(testmod.Environment):
         # ensure /tree exists and is empty
         tree = self.opts.path + ['tree']
         res = sess.compound(use_obj(tree))
-        checklist(res, [NFS4_OK, NFS4ERR_NOENT])
+        check(res, [NFS4_OK, NFS4ERR_NOENT])
         if res.status == NFS4ERR_NOENT:
             res = create_obj(sess, tree, NF4DIR)
             check(res, msg="Trying to create /%s," % '/'.join(tree))
@@ -264,15 +264,24 @@ def fail(msg):
     raise testmod.FailureException(msg)
 
 def check(res, stat=NFS4_OK, msg=None, warnlist=[]):
-    #if res.status == stat:
-    #    return
+
     if type(stat) is str:
         raise "You forgot to put 'msg=' in front of check's string arg"
-    log.debug("checking %r == %r" % (res, stat))
-    if res.status == stat:
+
+    statlist = stat
+    if type(statlist) == int:
+        statlist = [stat]
+
+    log.debug("checking %r == %r" % (res, statlist))
+    if res.status in statlist:
         if not (debug_fail and msg):
             return
-    desired = nfsstat4[stat]
+
+    statnames = [nfsstat4[stat] for stat in statlist]
+    desired = ' or '.join(statnames)
+    if not desired:
+        desired = 'one of <none>'
+
     received = nfsstat4[res.status]
     if msg:
         failedop_name = msg
@@ -287,23 +296,6 @@ def check(res, stat=NFS4_OK, msg=None, warnlist=[]):
     else:
         raise testmod.FailureException(msg)
 
-def checklist(res, statlist, msg=None):
-    if res.status in statlist:
-        return
-    statnames = [nfsstat4[stat] for stat in statlist]
-    desired = ' or '.join(statnames)
-    if not desired:
-        desired = 'one of <none>'
-    received = nfsstat4[res.status]
-    if msg:
-        failedop_name = msg
-    elif res.resarray:
-        failedop_name = nfs_opnum4[res.resarray[-1].resop]
-    else:
-        failedop_name = 'Compound'
-    msg = "%s should return %s, instead got %s" % \
-          (failedop_name, desired, received)
-    raise testmod.FailureException(msg)
 
 def checkdict(expected, got, translate={}, failmsg=''):
     if failmsg: failmsg += ': '

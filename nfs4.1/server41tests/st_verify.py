@@ -1,7 +1,7 @@
 from xdrdef.nfs4_const import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from environment import check, checklist, get_invalid_clientid, makeStaleId, \
+from environment import check, get_invalid_clientid, makeStaleId, \
     do_getattrdict, use_obj
 
 def _try_mand(t, env, path):
@@ -47,7 +47,7 @@ def _try_unsupported(env, path):
         ops = baseops + [c.verify_op({attr.bitnum: attr.sample})]
         res = c.compound(ops)
         if attr.writeonly:
-            checklist(res, [NFS4ERR_ATTRNOTSUPP, NFS4ERR_INVAL],
+            check(res, [NFS4ERR_ATTRNOTSUPP, NFS4ERR_INVAL],
                       "VERIFY with unsupported attr %s" % attr.name)
         else:
             check(res, NFS4ERR_ATTRNOTSUPP,
