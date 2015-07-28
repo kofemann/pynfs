@@ -6,6 +6,7 @@ from xdrdef.nfs4_type import *
 from xdrdef.nfs4_const import *
 from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
 import nfs_ops
+op = nfs_ops.NFS4ops()
 import time, struct
 import threading
 import hmac
@@ -272,6 +273,31 @@ class NFS4Client(rpc.Client, rpc.Server):
         log_cb.info("In CB_RECALL")
         self.prehook(arg, env)
         res = self.posthook(arg, env, res=NFS4_OK)
+        return encode_status(res)
+
+    def op_cb_layoutrecall(self, arg, env):
+        log_cb.info("In CB_LAYOUTRECALL")
+        self.prehook(arg, env)
+        res = self.posthook(arg, env, res=NFS4_OK)
+        if res is not NFS4_OK:
+            return encode_status(res)
+
+        op_lorecall = arg.opcblayoutrecall
+        lo_type = op_lorecall.clora_type
+        lo_iomode = op_lorecall.clora_iomode
+        lo_recall = op_lorecall.clora_recall
+        lo_recalltype = lo_recall.lor_recalltype
+        if lo_recalltype is LAYOUTRECALL4_FILE:
+            rclayout = lo_recall.lor_layout
+            ops = [op.putfh(rclayout.lor_fh),
+                   op.layoutreturn(False, lo_type, lo_iomode,
+                      layoutreturn4(LAYOUTRETURN4_FILE,
+                                    layoutreturn_file4(rclayout.lor_offset,
+                                                       rclayout.lor_length, \
+                                                       rclayout.lor_stateid, "")))]
+            env.session.compound(ops)
+        elif lo_recalltype not in [LAYOUTRECALL4_FSID, LAYOUTRECALL4_ALL]:
+            res = NFS4ERR_NOTSUPP
         return encode_status(res)
 
     def new_client(self, name, verf=None, cred=None, protect=None, flags=0,
