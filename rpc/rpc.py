@@ -824,7 +824,7 @@ class ConnectionHandler(object):
         defer.wait()
         return pipe
 
-    def bindsocket(self, s, port=0):
+    def bindsocket(self, s, port=1):
         """Scan up through ports, looking for one we can bind to"""
         # This is necessary when we need to use a 'secure' port
         using = port
