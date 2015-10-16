@@ -50,8 +50,9 @@ def testClientUpdateCallback(t, env):
     res = c.close_file(t.code, fh, stateid)
     check(res, msg="Close after updating callback info")
     
-def testInUse(t, env):
-    """SETCLIENTID with same nfs_client_id.id should return NFS4ERR_CLID_INUSE
+def testNotInUse(t, env):
+    """SETCLIENTID with same nfs_client_id.id should return NFS4ERR_OK
+       if there is no active state
 
     This requires NCL1 and NCL2 to have different principals (UIDs).
     
@@ -63,6 +64,25 @@ def testInUse(t, env):
     c2 = env.c2
     clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
     c1.init_connection(clid, verifier=c1.verifier)
+    ops = [c2.setclientid(clid, verifier=c1.verifier)]
+    res = c2.compound(ops)
+    check(res, NFS4_OK, "SETCLIENTID with same nfs_client_id.id")
+    
+def testInUse(t, env):
+    """SETCLIENTID with same nfs_client_id.id should return NFS4ERR_CLID_INUSE
+       if there is active state
+
+    This requires NCL1 and NCL2 to have different principals (UIDs).
+    
+    FLAGS: setclientid setclientidconfirm all
+    DEPEND: _checkprinciples INIT
+    CODE: CID2a
+    """
+    c1 = env.c1
+    c2 = env.c2
+    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    c1.init_connection(clid, verifier=c1.verifier)
+    c1.create_confirm(t.code)
     ops = [c2.setclientid(clid, verifier=c1.verifier)]
     res = c2.compound(ops)
     check(res, NFS4ERR_CLID_INUSE, "SETCLIENTID with same nfs_client_id.id")
