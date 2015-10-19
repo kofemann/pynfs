@@ -1,3 +1,13 @@
+- test permission-checking:
+
+	- example, probably pre-4.3 failure:
+		- get delegation on file not readable by uid 1.
+		- as uid 1:
+			- [putfh, read] with putfh for filehandle
+			  readable by uid 1, but read using deleg
+			  stateid.
+			- fail if the read succeeds.
+
 - in absence of explicit --minorversion, allow negotiating versions as
   necessary to run all tests.
 
