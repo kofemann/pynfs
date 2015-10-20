@@ -9,6 +9,7 @@ from xdrdef.nfs4_type import open_to_lock_owner4
 import nfs_ops
 op = nfs_ops.NFS4ops()
 import threading
+import nfs4lib
 
 def expect(res, seqid):
     """Verify that open result has expected stateid.seqid"""
@@ -70,6 +71,31 @@ def testReadWrite(t, env):
     res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, data)])
     check(res)
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
+    check(res)
+    if not res.resarray[-1].eof:
+        fail("EOF not set on read")
+    desired = "\0"*5 + data
+    if res.resarray[-1].data != desired:
+        fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
+
+def testAnonReadWrite(t, env):
+    """Do a simple READ and WRITE using anonymous stateid
+
+    FLAGS: open all
+    CODE: OPEN31
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))
+    owner = open_owner4(0, "My Open Owner")
+    res = create_file(sess1, env.testname(t))
+    check(res)
+    expect(res, seqid=1)
+    fh = res.resarray[-1].object
+    data = "write test data"
+    stateid = res.resarray[-2].stateid
+    res = close_file(sess1, fh, stateid=stateid)
+    res = sess1.compound([op.putfh(fh), op.write(nfs4lib.state00, 5, FILE_SYNC4, data)])
+    check(res)
+    res = sess1.compound([op.putfh(fh), op.read(nfs4lib.state00, 0, 1000)])
     check(res)
     if not res.resarray[-1].eof:
         fail("EOF not set on read")
