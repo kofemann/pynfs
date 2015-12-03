@@ -824,23 +824,19 @@ class ConnectionHandler(object):
         defer.wait()
         return pipe
 
-    def bindsocket(self, s, port=1):
+    def bindsocket(self, s, start_port=1):
         """Scan up through ports, looking for one we can bind to"""
         # This is necessary when we need to use a 'secure' port
-        using = port
-        while 1:
+        valid_ports = range(start_port, 1024)
+        random.shuffle(valid_ports)
+        for port in valid_ports:
             try:
-                s.bind(('', using))
+                s.bind(('', port))
                 return
             except socket.error, why:
-                if why[0] == errno.EADDRINUSE:
-                    using += 1
-                    if port < 1024 <= using:
-                        # If we ask for a secure port, make sure we don't
-                        # silently bind to a non-secure one
-                        raise
-                else:
+                if why[0] != errno.EADDRINUSE:
                     raise
+        raise Exception('failed to find available secure port')
 
 
     def expose(self, address, af, safe=True):
