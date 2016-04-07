@@ -133,7 +133,7 @@ def testXdev(t, env):
 def testXdevHome(t, env):
     """LOOKUPP with dir on different fs
 
-    FLAGS: special
+    FLAGS: special ganesha
     DEPEND: 
     CODE: LOOKP6
     """

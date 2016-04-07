@@ -17,7 +17,7 @@ def testDestroy(t, env):
 	- Send a DESTROY_SESSION over the new tcp connection.
 	- This time it should succeed.
 
-    FLAGS: destroy_session
+    FLAGS: destroy_session ganesha
     CODE: DSESS9001
     """
     c = env.c1.new_client(env.testname(t))
@@ -39,7 +39,7 @@ def testDestroy2(t, env):
 	  tests for example)
 	- check that we get the callback
 
-    FLAGS: destroy_session
+    FLAGS: destroy_session ganesha
     CODE: DSESS9002
     """
     recall = threading.Event()
@@ -86,7 +86,7 @@ def testDestroy3(t, env):
 	- check that a new callback is sent over the new session.  Some
 	  servers will do this very quickly, some might take longer.
 
-    FLAGS: destroy_session
+    FLAGS: destroy_session ganesha
     CODE: DSESS9003
     """
     recall = threading.Event()
@@ -139,7 +139,7 @@ def testDestoryNotFinalOps(t, env):
         MUST be the final operation in the COMPOUND request.
         rfc5661 18.37.3
 
-    FLAGS: destroy_session
+    FLAGS: destroy_session ganesha
     CODE: DSESS9004
     """
     c = env.c1.new_client(env.testname(t))
@@ -156,7 +156,7 @@ def testDestoryNotSoleOps(t, env):
         and DESTROY_SESSION is not the sole operation,
         then server MUST return NFS4ERR_NOT_ONLY_OP. rfc5661 18.37.3
 
-    FLAGS: destroy_session
+    FLAGS: destroy_session ganesha
     CODE: DSESS9005
     """
     c = env.c1.new_client(env.testname(t))

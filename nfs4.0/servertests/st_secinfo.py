@@ -80,7 +80,7 @@ def testZeroLenName(t, env):
 def testInvalidUtf8(t, env):
     """SECINFO with bad UTF-8 name strings should return NFS4ERR_INVAL
 
-    FLAGS: secinfo utf8
+    FLAGS: secinfo utf8 ganesha
     DEPEND: SEC1
     CODE: SEC6
     """

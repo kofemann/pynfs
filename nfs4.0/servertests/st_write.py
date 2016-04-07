@@ -388,7 +388,7 @@ def testSizes(t, env):
 def testLargeReadWrite(t, env):
     """Compound with large READ and large WRITE
 
-    FLAGS: write
+    FLAGS: write ganesha
     DEPEND: MKFILE
     CODE: WRT16
     """
@@ -419,7 +419,7 @@ def testLargeReadWrite(t, env):
 def testMultipleReadWrites(t,env):
     """Compound with multiple writes, then compound with multiple reads
 
-    FLAGS: write
+    FLAGS: write ganesha
     DEPEND: MKFILE
     CODE: WRT17
     """

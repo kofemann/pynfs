@@ -67,7 +67,7 @@ def testWithOpen(t, env):
 def testLargeCount(t, env):
     """READ a large dataset
 
-    FLAGS:
+    FLAGS: ganesha
     DEPEND: MKFILE
     CODE: RD4
     """

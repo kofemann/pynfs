@@ -316,7 +316,7 @@ def testZeroLengthNewname(t, env):
 def testBadutf8Oldname(t, env):
     """RENAME with non-UTF8 oldname should return NFS4ERR_INVAL
 
-    FLAGS: rename utf8
+    FLAGS: rename utf8 ganesha
     CODE: RNM8
     """
     name = env.testname(t)
@@ -332,7 +332,7 @@ def testBadutf8Oldname(t, env):
 def testBadutf8Newname(t, env):
     """RENAME with non-UTF8 newname should return NFS4ERR_INVAL
 
-    FLAGS: rename utf8
+    FLAGS: rename utf8 ganesha
     CODE: RNM9
     """
     name = env.testname(t)

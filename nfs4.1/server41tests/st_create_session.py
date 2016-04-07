@@ -333,7 +333,7 @@ def testManyClients(t, env):
 def testCallbackProgram(t, env):
     """Check server can handle random transient program number
 
-    FLAGS:
+    FLAGS: ganesha
     CODE: CSESS20
     """
     cb_occurred = threading.Event()
@@ -360,7 +360,7 @@ def testCallbackProgram(t, env):
 def testCallbackVersion(t, env):
     """Check server sends callback program with a version listed in nfs4client.py
 
-    FLAGS:
+    FLAGS: ganesha
     CODE: CSESS21
     """
     cb_occurred = threading.Event()

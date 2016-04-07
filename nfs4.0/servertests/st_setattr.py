@@ -151,7 +151,7 @@ def testFifo(t, env):
 def testSocket(t, env):
     """SETATTR(FATTR4_MODE) on socket
 
-    FLAGS: setattr socketall
+    FLAGS: setattr socketall ganesha
     DEPEND: MODE MKSOCK
     CODE: SATT1s
     """
@@ -412,7 +412,7 @@ def testNonUTF8(t, env):
     OWNER and GROUP are subject to too many restrictions to use.
     Similarly for ACL.
 
-    FLAGS: setattr utf8
+    FLAGS: setattr utf8 ganesha
     DEPEND: MKFILE
     CODE: SATT9
     """

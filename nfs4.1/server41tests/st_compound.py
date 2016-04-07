@@ -40,7 +40,7 @@ def testGoodTag(t, env):
 def testBadTags(t, env):
     """COMPOUND with invalid utf8 tags
 
-    FLAGS: compound utf8
+    FLAGS: compound utf8 ganesha
     CODE: COMP3
     """
     c = env.c1

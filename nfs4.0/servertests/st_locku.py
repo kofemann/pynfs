@@ -179,7 +179,7 @@ def testBadLockSeqid3(t, env):
     """LOCKU with a bad lockseqid should return NFS4ERR_BAD_SEQID
 
 #    FLAGS: locku seqid all
-    FLAGS:
+    FLAGS: ganesha
     DEPEND: MKFILE
     CODE: LKU6c
     """

@@ -89,7 +89,7 @@ def testBadHandle(t, env):
 def testStaleHandle(t, env):
     """PUTFH which nolonger exists should return NFS4ERR_STALE
 
-    FLAGS: putfh
+    FLAGS: putfh ganesha
     DEPEND: MKFILE
     CODE: PUTFH3
     """

@@ -799,7 +799,7 @@ def testLockowner2(t, env):
     Each lockowner must have its own seqid.  Thus 2 file
     
 #    FLAGS: lock all
-    FLAGS: 
+    FLAGS: ganesha
     DEPEND: MKFILE MKDIR
     CODE: LOCK13a
     """
