@@ -544,7 +544,7 @@ def testUnsupportedSocket(t, env):
     _try_unsupported(t, env, path)
 
 def testSizeDir(t, env):
-    """SETATTR(_SIZE) of a directory should return NFS4ERR_ISDIR
+    """SETATTR(_SIZE) of a directory should return NFS4ERR_ISDIR or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr dir all
     DEPEND: MKDIR
@@ -556,10 +556,10 @@ def testSizeDir(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_ISDIR, "SETATTR(_SIZE) of a directory")
+    check(res, [NFS4ERR_ISDIR, NFS4ERR_BAD_STATEID], "SETATTR(_SIZE) of a directory")
     
 def testSizeLink(t, env):
-    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
+    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr symlink all
     DEPEND: MKLINK
@@ -571,11 +571,11 @@ def testSizeLink(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK],
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK, NFS4ERR_BAD_STATEID],
             "SETATTR(FATTR4_SIZE) of a symlink")
     
 def testSizeBlock(t, env):
-    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
+    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr block all
     DEPEND: MKBLK
@@ -587,10 +587,10 @@ def testSizeBlock(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "SETATTR(FATTR4_SIZE) of a block device")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_BAD_STATEID], "SETATTR(FATTR4_SIZE) of a block device")
     
 def testSizeChar(t, env):
-    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
+    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr char all
     DEPEND: MKCHAR
@@ -602,10 +602,10 @@ def testSizeChar(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "SETATTR(FATTR4_SIZE) of a character device")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_BAD_STATEID], "SETATTR(FATTR4_SIZE) of a character device")
     
 def testSizeFifo(t, env):
-    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
+    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr fifo all
     DEPEND: MKFIFO
@@ -617,10 +617,10 @@ def testSizeFifo(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "SETATTR(FATTR4_SIZE) of a fifo")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_BAD_STATEID], "SETATTR(FATTR4_SIZE) of a fifo")
 
 def testSizeSocket(t, env):
-    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL
+    """SETATTR(FATTR4_SIZE) of a non-file object should return NFS4ERR_INVAL or NFS4ERR_BAD_STATEID
 
     FLAGS: setattr socket all
     DEPEND: MKSOCK
@@ -632,7 +632,7 @@ def testSizeSocket(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    check(res, NFS4ERR_INVAL, "SETATTR(FATTR4_SIZE) of a socket")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_BAD_STATEID], "SETATTR(FATTR4_SIZE) of a socket")
 
 def testInodeLocking(t, env):
     """SETATTR: This causes printk message due to inode locking bug
