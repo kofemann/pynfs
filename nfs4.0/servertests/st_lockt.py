@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_clientid
+from environment import check, get_invalid_clientid
 
 def testUnlockedFile(t, env):
     """LOCKT on a regular unlocked file
@@ -48,7 +48,7 @@ def testLink(t, env):
     c = env.c1
     c.init_connection()
     res = c.lock_test(env.opts.uselink)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "LOCKT on non-file object")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "LOCKT on non-file object")
    
 def testBlock(t, env):
     """LOCKT on non-file objects)
@@ -127,7 +127,7 @@ def test32bitRange(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     res = c.lock_test(fh, 0, 0xffffffffffff)
-    checklist(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCKT range over 32 bits")
+    check(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCKT range over 32 bits")
     if res.status == NFS4ERR_BAD_RANGE:
         t.fail_support("Server does not support 64 bit lock ranges")
               
@@ -147,7 +147,7 @@ def testOverlap(t, env):
     res = c.lock_test(fh, 100, 50, tester=lockowner)
     check(res, msg="LOCKT against own exactly matching lock")
     res = c.lock_test(fh, 75, 50, tester=lockowner)
-    checklist(res, [NFS4_OK, NFS4ERR_LOCK_RANGE],
+    check(res, [NFS4_OK, NFS4ERR_LOCK_RANGE],
               "LOCKT against own overlapping lock")
     if res.status == NFS4ERR_LOCK_RANGE:
         t.fail_support("Server does not support lock consolidation")

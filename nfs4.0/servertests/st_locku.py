@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import stateid4
-from environment import check, checklist, makeStaleId
+from environment import check, makeStaleId
 
 def testFile(t, env):
     """LOCKU a regular file
@@ -34,7 +34,7 @@ def testUnlocked(t, env):
     res1 = c.lock_file(t.code, fh, stateid, 100, 100)
     check(res1, msg="Locking file %s" % t.code)
     res2 = c.unlock_file(1, fh, res1.lockid, 0, 50)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU on an unlocked area")
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU on an unlocked area")
     if res2.status == NFS4ERR_LOCK_RANGE:
         t.fail_support("LOCKU on an unlocked area should return OK")
 
@@ -51,7 +51,7 @@ def testSplit(t, env):
     res1 = c.lock_file(t.code, fh, stateid, 100, 100)
     check(res1, msg="Locking file %s" % t.code)
     res2 = c.unlock_file(1, fh, res1.lockid, 125, 50)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU inside locked area")
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU inside locked area")
     if res2.status == NFS4ERR_LOCK_RANGE:
         t.fail_support("LOCKU inside a locked area should return OK")
 
@@ -68,7 +68,7 @@ def testOverlap(t, env):
     res1 = c.lock_file(t.code, fh, stateid, 100, 100)
     check(res1, msg="Locking file %s" % t.code)
     res2 = c.unlock_file(1, fh, res1.lockid, 50, 100)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE],
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE],
               "LOCKU overlapping a locked area")
     if res2.status == NFS4ERR_LOCK_RANGE:
         t.fail("LOCKU overlapping a locked area should return OK, "
@@ -87,7 +87,7 @@ def test32bitRange(t, env):
     res1 = c.lock_file(t.code, fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, res1.lockid, 0, 0xffffffffffff)
-    checklist(res2, [NFS4_OK, NFS4ERR_BAD_RANGE, NFS4ERR_LOCK_RANGE],
+    check(res2, [NFS4_OK, NFS4ERR_BAD_RANGE, NFS4ERR_LOCK_RANGE],
               "LOCKU range over 32 bits")
     if res2.status == NFS4ERR_BAD_RANGE:
         t.fail("Allowed 64 bit LOCK range, but only 32 bit LOCKU range")
@@ -265,5 +265,5 @@ def testTimedoutUnlock(t, env):
     c2.init_connection()
     c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
     res2 = c.unlock_file(1, fh, res1.lockid)
-    checklist(res2, [NFS4ERR_EXPIRED, NFS4_OK],
+    check(res2, [NFS4ERR_EXPIRED, NFS4_OK],
               "Try to unlock file after timed out")

@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 
 def _basictest(t, c, path, error=NFS4_OK):
     """Link to path, and make sure FATTR4_NUMLINKS increases by one"""
@@ -143,7 +143,7 @@ def testCfhLink(t, env):
     CODE: LINK4a
     """
     res = env.c1.link(env.opts.usefile, env.opts.uselink + [t.code])
-    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
+    check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
                 "LINK with <cfh> not a directory")
 
 def testCfhBlock(t, env):
@@ -238,10 +238,10 @@ def testDots(t, env):
     res = c.create_obj(dir)
     check(res)
     res1 = c.link(env.opts.usefile, dir + ['.'])
-    checklist(res1, [NFS4_OK, NFS4ERR_BADNAME],
+    check(res1, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to make a hardlink named '.'")
     res2 = c.link(env.opts.usefile, dir + ['..'])
-    checklist(res2, [NFS4_OK, NFS4ERR_BADNAME],
+    check(res2, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to make a hardlink named '..'")
     if res1.status == NFS4_OK or res2.status == NFS4_OK:
         t.pass_warn("Allowed creation of hardlink named '.' or '..'")

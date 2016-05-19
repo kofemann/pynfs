@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 import os
 import struct, time
 
@@ -378,5 +378,5 @@ def testNoConfirm(t, env):
     ops = c.use_obj(c.homedir)
     ops += [c.open(t.code, t.code, OPEN4_CREATE)]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_STALE_CLIENTID, NFS4ERR_EXPIRED],
+    check(res, [NFS4ERR_STALE_CLIENTID, NFS4ERR_EXPIRED],
           "OPEN using clientid that was never confirmed")

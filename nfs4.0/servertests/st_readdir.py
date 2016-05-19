@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4lib import get_attr_name
-from environment import check, checklist
+from environment import check
 
 def _compare(t, entries, expect, attrlist=[]):
     names = [e.name for e in entries]
@@ -107,7 +107,7 @@ def testFhLink(t, env):
     ops = c.use_obj(env.opts.uselink)
     ops += [c.readdir()]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "READDIR with non-dir <cfh>")
+    check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "READDIR with non-dir <cfh>")
 
 def testFhBlock(t, env):
     """READDIR with non-dir (cfh) should give NFS4ERR_NOTDIR
@@ -232,7 +232,7 @@ def testUnaccessibleDir(t, env):
     ops = c.use_obj(path) + [c.readdir()]
     res = c.compound(ops)
     if env.opts.uid == 0:
-	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    
@@ -253,7 +253,7 @@ def testUnaccessibleDirAttrs(t, env):
           [c.readdir(attr_request=[FATTR4_RDATTR_ERROR, FATTR4_TYPE])]
     res = c.compound(ops)
     if env.opts.uid == 0:
-	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "READDIR of directory with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "READDIR of directory with mode=000")
    

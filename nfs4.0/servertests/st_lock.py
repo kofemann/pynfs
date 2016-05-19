@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import stateid4
-from environment import check, checklist, get_invalid_clientid, makeStaleId, makeBadIDganesha
+from environment import check, get_invalid_clientid, makeStaleId, makeBadIDganesha
 import time
 
 def testFile(t, env):
@@ -33,7 +33,7 @@ def testClose(t, env):
     res = c.lock_test(fh)
     check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
     res = c.close_file(t.code, fh, stateid)
-    checklist(res, [NFS4_OK, NFS4ERR_LOCKS_HELD],
+    check(res, [NFS4_OK, NFS4ERR_LOCKS_HELD],
               "Trying to close locked file")
     if res.status == NFS4ERR_LOCKS_HELD:
         t.fail_support("Can not close locked files")
@@ -74,7 +74,7 @@ def test32bitRange(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     res = c.lock_file(t.code, fh, stateid, 0, 0xffffffffffff)
-    checklist(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCK range over 32 bits")
+    check(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCK range over 32 bits")
     if res.status == NFS4ERR_BAD_RANGE:
         t.fail_support("Server does not support 64 bit lock ranges")
 
@@ -91,7 +91,7 @@ def testOverlap(t, env):
     res1 = c.lock_file(t.code, fh, stateid, 25, 75)
     check(res1)
     res2 = c.relock_file(1, fh, res1.lockid, 50, 75)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "Overlapping locks")
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "Overlapping locks")
     if res2.status == NFS4ERR_LOCK_RANGE:
         t.fail_support("Server does not support lock consolidation")
     # Test the merged lock
@@ -116,7 +116,7 @@ def testDowngrade(t, env):
     check(res1)
     # Lock again with read lock
     res2 = c.relock_file(1, fh, res1.lockid, 25, 75, READ_LT)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_NOTSUPP], "Lock downgrade")
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_NOTSUPP], "Lock downgrade")
     if res2.status == NFS4ERR_LOCK_NOTSUPP:
         t.fail_support("Server does not support atomic lock downgrades")
     # Test the lock has changed
@@ -140,7 +140,7 @@ def testUpgrade(t, env):
     check(res1)
     # Lock again with write lock
     res2 = c.relock_file(1, fh, res1.lockid, 25, 75, WRITE_LT)
-    checklist(res2, [NFS4_OK, NFS4ERR_LOCK_NOTSUPP], "Lock upgrade")
+    check(res2, [NFS4_OK, NFS4ERR_LOCK_NOTSUPP], "Lock upgrade")
     if res2.status == NFS4ERR_LOCK_NOTSUPP:
         t.fail_support("Server does not support atomic lock upgrades")
     # Test the lock has changed
@@ -161,7 +161,7 @@ def testMode(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ)
     res = c.lock_file(t.code, fh, stateid)
-    checklist(res, [NFS4_OK, NFS4ERR_OPENMODE],
+    check(res, [NFS4_OK, NFS4ERR_OPENMODE],
               "Write-locking a read-mode file")
     if res.status == NFS4_OK:
         t.pass_warn("Allowed write-locking a read-mode file, "
@@ -409,7 +409,7 @@ def testTimedoutGrabLock(t, env):
     for i in range(3):
         env.sleep(sleeptime)
         res = c2.compound([c2.renew_op(c2.clientid)])
-        checklist(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
+        check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
     # Client 2: Lock file, should work since Client 1's lock has expired
     res2 = c2.lock_file(t.code, fh2, stateid2, type=READ_LT)
     check(res2, msg="Locking file after another client's lock expires")
@@ -660,7 +660,7 @@ def testBlockTimeout(t, env):
     for i in range(3):
         env.sleep(sleeptime, "Waiting for queued blocking lock to timeout")
         res = c.compound([c.renew_op(c.clientid)])
-        checklist(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
+        check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
     # Standard owner releases lock
     res1 = c.unlock_file(1, fh1, res1.lockid)
     check(res1)

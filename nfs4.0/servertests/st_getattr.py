@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 from nfs4lib import get_attr_name
 
 def _try_mandatory(t, env, path):
@@ -481,7 +481,7 @@ def testFSLocations(t, env):
     ops = c.use_obj(env.opts.usefile)
     ops += [c.getattr([FATTR4_FS_LOCATIONS])]
     res = c.compound(ops)
-    checklist(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(fs_locations)")
+    check(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(fs_locations)")
     if res.status == NFS4ERR_ATTRNOTSUPP:
         t.fail_support("fs_locations not a supported attribute")
     # print res.resarray[-1].obj_attributes
@@ -512,7 +512,7 @@ def testOwnerName(t, env):
     ops = c.use_obj(env.opts.usefile)
     ops += [c.getattr([FATTR4_OWNER])]
     res = c.compound(ops)
-    checklist(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(owner)")
+    check(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(owner)")
     if res.status == NFS4ERR_ATTRNOTSUPP:
         t.fail_support("owner not a supported attribute")
     # print res.resarray[-1].obj_attributes

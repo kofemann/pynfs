@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import createtype4, specdata4
-from environment import check, checklist
+from environment import check
 
 def getDefaultAttr(c):
     attr = {}
@@ -91,7 +91,7 @@ def testDirOffLink(t, env):
     """
     c = env.c1
     res = c.create_obj(env.opts.uselink + [t.code])
-    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK])
+    check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK])
      
 def testDirOffBlock(t, env):
     """CREATE dir off a block device
@@ -172,7 +172,7 @@ def testZeroLengthForLNK(t, env):
     objtype = createtype4(NF4LNK, **{'linkdata':''})
     ops += [c.create_op(objtype, t.code, getDefaultAttr(c))]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
 
 def testRegularFile(t, env):
     """CREATE should fail with NFS4ERR_BADTYPE for regular files
@@ -228,10 +228,10 @@ def testDots(t, env):
     """
     c = env.c1
     res = c.create_obj(c.homedir + ['.'])
-    checklist(res, [NFS4_OK, NFS4ERR_BADNAME],
+    check(res, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to CREATE a dir named '.'")
     res2 = c.create_obj(c.homedir + ['..'])
-    checklist(res2, [NFS4_OK, NFS4ERR_BADNAME],
+    check(res2, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to CREATE a dir named '..'")
     if res.status == NFS4_OK or res2.status == NFS4_OK:
         t.pass_warn("Allowed creation of dir named '.' or '..'")
@@ -258,7 +258,7 @@ def testSlash(t, env):
     res = c.create_obj(c.homedir + [t.code + '/foo'])
     if res.status == NFS4_OK:
         t.pass_warn("Allowed creation of dir named '%s/foo'" % t.code)
-    checklist(res, [NFS4ERR_BADNAME, NFS4ERR_BADCHAR],
+    check(res, [NFS4ERR_BADNAME, NFS4ERR_BADCHAR],
                   "Creation of dir named '%s/foo'" % t.code)
 
 def testLongName(t, env):

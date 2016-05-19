@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 from nfs4_type import nfsace4
 
 # assuming server will accept any small positive integer as an owner

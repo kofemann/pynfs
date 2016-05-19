@@ -155,7 +155,7 @@ class Environment(testmod.Environment):
         for comp in self.opts.path:
             path.append(comp)
             res = c.compound(c.use_obj(path))
-            checklist(res, [NFS4_OK, NFS4ERR_NOENT],
+            check(res, [NFS4_OK, NFS4ERR_NOENT],
                   "Could not LOOKUP /%s," % '/'.join(path))
             if res.status == NFS4ERR_NOENT:
                 res = c.create_obj(path)
@@ -163,7 +163,7 @@ class Environment(testmod.Environment):
         # remove /tree/*
         tree = self.opts.path[:-1] + ['tree']
         res = c.compound(c.use_obj(tree))
-        checklist(res, [NFS4_OK, NFS4ERR_NOENT])
+        check(res, [NFS4_OK, NFS4ERR_NOENT])
         if res.status == NFS4ERR_NOENT:
             res = c.create_obj(tree)
             check(res, msg="Trying to create /%s," % '/'.join(tree))
@@ -233,31 +233,18 @@ class Environment(testmod.Environment):
 debug_fail = False
 
 def check(res, stat=NFS4_OK, msg=None, warnlist=[]):
-    #if res.status == stat:
-    #    return
-    if res.status == stat:
-        if not (debug_fail and msg):
-            return
+
     if type(stat) is str:
         raise "You forgot to put 'msg=' in front of check's string arg"
-    desired = nfsstat4[stat]
-    received = nfsstat4[res.status]
-    if msg:
-        failedop_name = msg
-    elif res.resarray:
-        failedop_name = nfs_opnum4[res.resarray[-1].resop]
-    else:
-        failedop_name = 'Compound'
-    msg = "%s should return %s, instead got %s" % \
-          (failedop_name, desired, received)
-    if res.status in warnlist:
-        raise testmod.WarningException(msg)
-    else:
-        raise testmod.FailureException(msg)
 
-def checklist(res, statlist, msg=None):
+    statlist = stat
+    if type(statlist) == int:
+        statlist = [stat]
+
     if res.status in statlist:
-        return
+        if not (debug_fail and msg):
+            return
+
     statnames = [nfsstat4[stat] for stat in statlist]
     desired = ' or '.join(statnames)
     if not desired:
@@ -271,7 +258,10 @@ def checklist(res, statlist, msg=None):
         failedop_name = 'Compound'
     msg = "%s should return %s, instead got %s" % \
           (failedop_name, desired, received)
-    raise testmod.FailureException(msg)
+    if res.status in warnlist:
+        raise testmod.WarningException(msg)
+    else:
+        raise testmod.FailureException(msg)
 
 def checkdict(expected, got, translate={}, failmsg=''):
     if failmsg: failmsg += ': '

@@ -1,7 +1,7 @@
 from nfs4_const import *
 from nfs4_type import nfs_argop4
 from nfs4_pack import NFS4Packer
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 from rpc import RPCError
 
 def testZeroOps(t, env):
@@ -100,7 +100,7 @@ def testLongCompound(t, env):
         while 1:
             count += step
             res = c.compound(baseops * count)
-            checklist(res, [NFS4_OK, NFS4ERR_RESOURCE],
+            check(res, [NFS4_OK, NFS4ERR_RESOURCE],
                       "COMPOUND with len=%i argarry" % (3*count))
             if res.status == NFS4ERR_RESOURCE:
                 return

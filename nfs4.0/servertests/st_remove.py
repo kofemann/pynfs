@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 
 def testDir(t, env):
     """REMOVE on existing, removable object
@@ -121,7 +121,7 @@ def testCfhLink(t, env):
     c = env.c1
     ops = c.use_obj(env.opts.uselink) + [c.remove_op(t.code)]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "REMOVE with non-dir cfh")
+    check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "REMOVE with non-dir cfh")
 
 def testCfhBlock(t, env):
     """REMOVE with non-dir (cfh) should give NFS4ERR_NOTDIR

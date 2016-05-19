@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_clientid, makeStaleId
+from environment import check, get_invalid_clientid, makeStaleId
 
 def _try_mand(env, path):
     c = env.c1
@@ -43,7 +43,7 @@ def _try_unsupported(env, path):
         ops = baseops + [c.nverify_op({attr.bitnum: attr.sample})]
         res = c.compound(ops)
         if attr.writeonly:
-            checklist(res, [NFS4ERR_ATTRNOTSUPP, NFS4ERR_INVAL],
+            check(res, [NFS4ERR_ATTRNOTSUPP, NFS4ERR_INVAL],
                       "VERIFY with unsupported attr %s" % attr.name)
         else:
             check(res, NFS4ERR_ATTRNOTSUPP,

@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, checkdict, get_invalid_utf8strings
+from environment import check, checkdict, get_invalid_utf8strings
 from nfs4lib import get_bitnumattr_dict
 
 # Any test that uses create_confirm should depend on this test
@@ -79,7 +79,7 @@ def testCreatExclusiveFile(t, env):
     c.init_connection()
     # Create the file
     res = c.create_file(t.code, mode=EXCLUSIVE4, verifier='12345678', deny=OPEN4_SHARE_DENY_NONE)
-    checklist(res, [NFS4_OK, NFS4ERR_NOTSUPP],
+    check(res, [NFS4_OK, NFS4ERR_NOTSUPP],
               "Trying to do exclusive create of file %s" % t.code)
     if res.status == NFS4ERR_NOTSUPP:
         c.fail_support("Exclusive OPEN not supported")
@@ -310,7 +310,7 @@ def testClaimPrev(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS, deleg_type=OPEN_DELEGATE_NONE)
-    checklist(res, [NFS4ERR_RECLAIM_BAD, NFS4ERR_NO_GRACE],
+    check(res, [NFS4ERR_RECLAIM_BAD, NFS4ERR_NO_GRACE],
             "Trying to OPEN with CLAIM_PREVIOUS")
 
 def testModeChange(t, env):
@@ -331,7 +331,7 @@ def testModeChange(t, env):
     res = c.open_file(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
                       deny=OPEN4_SHARE_DENY_NONE)
     if env.opts.uid == 0:
-	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=000" % t.code)
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=000" % t.code)
     else:
 	    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=000" % t.code)
 

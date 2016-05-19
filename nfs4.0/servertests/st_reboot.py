@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 import os
 
 # NOTE - reboot tests are NOT part of the standard test suite
@@ -76,7 +76,7 @@ def testManyClaims(t, env):
             c.init_connection(badid)
             res = c.open_file(t.code, badfh, claim_type=CLAIM_PREVIOUS,
                               deleg_type=OPEN_DELEGATE_NONE)
-            checklist(res, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
+            check(res, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
                       "Reclaim with bad clientid %s" % badid)
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
@@ -144,7 +144,7 @@ def testEdge1(t, env):
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
                             deleg_type=OPEN_DELEGATE_NONE)
-        checklist(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
+        check(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
               "Reclaim lock that has been interfered with")
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
@@ -190,7 +190,7 @@ def testEdge2(t, env):
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
                             deleg_type=OPEN_DELEGATE_NONE)
-        checklist(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
+        check(res1, [NFS4ERR_NO_GRACE, NFS4ERR_RECLAIM_BAD],
               "Reclaim lock that has been interfered with")
     finally:
         env.sleep(sleeptime, "Waiting for grace period to end")
@@ -222,7 +222,7 @@ def testRootSquash(t, env):
     c.init_connection()
     while 1:
         res = c.create_file(t.code, c.homedir + [t.code, 'file'])
-        checklist(res, [NFS4_OK, NFS4ERR_GRACE], "Creating file")
+        check(res, [NFS4_OK, NFS4ERR_GRACE], "Creating file")
         if res.status == NFS4ERR_GRACE:
             env.sleep(1, "Waiting for grace period to *just* finish")
         else:

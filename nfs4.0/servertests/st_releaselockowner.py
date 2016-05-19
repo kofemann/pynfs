@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import lock_owner4
-from environment import check, checklist
+from environment import check
 
 def testFile(t, env):
     """RELEASE_LOCKOWNER - basic test

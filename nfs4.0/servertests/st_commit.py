@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 
 _text = "Random data to write"
 
@@ -15,7 +15,7 @@ def _commit(t, c, offset=0, count=0, statlist=[NFS4_OK]):
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
     res = c.commit_file(fh, offset, count)
-    checklist(res, statlist, msg="COMMIT with offset=%x, count=%x" % (offset, count))
+    check(res, statlist, msg="COMMIT with offset=%x, count=%x" % (offset, count))
 
 def testCommitOffset0(t, env):
     """COMMIT
@@ -80,7 +80,7 @@ def testLink(t, env):
     """
     c = env.c1
     res = c.commit_file(env.opts.uselink)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "COMMIT with non-file object")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "COMMIT with non-file object")
 
 def testBlock(t, env):
     """COMMIT

@@ -1,11 +1,11 @@
 from nfs4_const import *
-from environment import check, checklist
+from environment import check
 from nfs4_type import *
 
 def _replay(env, c, ops, error=NFS4_OK):
     # Can send in an error list, but replays must return same error as orig
     if type(error) is list:
-        check_funct = checklist
+        check_funct = check
     else:
         check_funct = check
     res = c.compound(ops)

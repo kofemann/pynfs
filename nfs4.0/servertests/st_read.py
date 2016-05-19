@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, makeBadID, makeBadIDganesha, makeStaleId
+from environment import check, makeBadID, makeBadIDganesha, makeStaleId
 import rpc
 
 def _compare(t, res, expect, eof=True):
@@ -123,7 +123,7 @@ def testLink(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.uselink)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "Read of a non-file object")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "Read of a non-file object")
 
 def testBlock(t, env):
     """READ with non-file objects
@@ -240,4 +240,4 @@ def testStolenStateid(t, env):
     c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
     res = c.read_file(fh, stateid=stateid)
     c.security=security
-    checklist(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "READ with stolen stateid")
+    check(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "READ with stolen stateid")

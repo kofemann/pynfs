@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 
 def testDir(t, env):
     """LOOKUPP with directory (cfh)
@@ -54,7 +54,7 @@ def testLink(t, env):
     c = env.c1
     ops = c.use_obj(env.opts.uselink) + [c.lookupp_op()]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
+    check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
                 "LOOKUPP with non-dir <cfh>")
     
 def testBlock(t, env):

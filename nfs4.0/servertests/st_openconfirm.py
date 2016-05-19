@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import stateid4
-from environment import check, checklist, makeStaleId
+from environment import check, makeStaleId
 
 def _confirm(t, c, file, stateid):
     ops = c.use_obj(file)

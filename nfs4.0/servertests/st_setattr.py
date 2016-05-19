@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 from nfs4lib import bitmap2list, dict2fattr
 from nfs4_type import nfstime4, settime4
 
@@ -39,7 +39,7 @@ def _try_readonly(t, env, path):
             check(res, NFS4ERR_INVAL,
                   "SETATTR the supported read-only attribute %s" % attr.name)
         else:
-            checklist(res, [NFS4ERR_INVAL, NFS4ERR_ATTRNOTSUPP],
+            check(res, [NFS4ERR_INVAL, NFS4ERR_ATTRNOTSUPP],
                   "SETATTR the unsupported read-only attribute %s" % attr.name)
 
 def _try_unsupported(t, env, path):
@@ -571,7 +571,7 @@ def testSizeLink(t, env):
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
     res = c.compound(ops)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK],
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK],
             "SETATTR(FATTR4_SIZE) of a symlink")
     
 def testSizeBlock(t, env):

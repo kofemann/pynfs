@@ -1,5 +1,5 @@
 from nfs4_const import *
-from environment import check, checklist, get_invalid_utf8strings
+from environment import check, get_invalid_utf8strings
 import rpc
 
 def testDir(t, env):
@@ -218,7 +218,7 @@ def testNonAccessable(t, env):
     check(res)
     res = c.compound(c.use_obj(dir + ['foo']))
     if env.opts.uid == 0:
-	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP object in a dir with mode=000")
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP object in a dir with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=000")
 
@@ -254,16 +254,16 @@ def testDots(t, env):
     check(res)
     # Run tests
     res1 = c.compound(c.use_obj(dir + ['.']))
-    checklist(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+    check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '.'")
     res2 = c.compound(c.use_obj(dir + ['..']))
-    checklist(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+    check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '..'")
     res1 = c.compound(c.use_obj(dir + ['.', 'foo']))
-    checklist(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+    check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '.'")
     res2 = c.compound(c.use_obj(dir + ['..', t.code]))
-    checklist(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
+    check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '..'")
 
 def testUnaccessibleDir(t, env):
@@ -281,7 +281,7 @@ def testUnaccessibleDir(t, env):
     check(res, msg="Setting mode=0 on directory %s" % t.code)
     res = c.compound(c.use_obj(path + ['hidden']))
     if env.opts.uid == 0:
-	    checklist(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP off of dir with mode=000")
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP off of dir with mode=000")
     else:
 	    check(res, NFS4ERR_ACCESS, "LOOKUP off of dir with mode=000")
 

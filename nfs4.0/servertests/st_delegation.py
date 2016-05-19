@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import nfs_client_id4, clientaddr4, cb_client4
-from environment import check, checklist
+from environment import check
 import os
 import threading
 import time
@@ -54,7 +54,7 @@ def _cause_recall(t, env):
                           deny=OPEN4_SHARE_DENY_NONE)
         _lock.release()
         if res.status == NFS4_OK: break
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
+        check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
     return c.confirm('newowner', res)
 
@@ -291,7 +291,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
                               access=OPEN4_SHARE_ACCESS_WRITE)
             env.sleep(lease / 2, "Waiting to send RENEW")
             res = c.compound([c.renew_op(c.clientid)])
-            checklist(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN], "RENEW")
+            check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN], "RENEW")
             if res.status != NFS4_OK:
                 noticed = True
                 break
@@ -362,7 +362,7 @@ def testDelegShare(t, env, funct=_recall, response=NFS4_OK):
                           access=OPEN4_SHARE_ACCESS_WRITE)
         _lock.release()
         if res.status in  [NFS4_OK, NFS4ERR_SHARE_DENIED]: break
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_SHARE_DENIED],
+        check(res, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_SHARE_DENIED],
                   "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
         sleeptime += 5
@@ -410,7 +410,7 @@ def testChangeDeleg(t, env, funct=_recall):
     confirm = res.resarray[0].switch.switch.setclientid_confirm
     confirmop = c.setclientid_confirm_op(c.clientid, confirm)
     res = c.compound([confirmop])
-    checklist(res, [NFS4_OK, NFS4ERR_RESOURCE])
+    check(res, [NFS4_OK, NFS4ERR_RESOURCE])
     if res.status == NFS4ERR_RESOURCE:
         # ibm workaround
         res = c.compound([confirmop])
@@ -522,7 +522,7 @@ def testClaimCur(t, env):
     res = c.open_file('newowner', c.homedir + [t.code],
                       access=OPEN4_SHARE_ACCESS_WRITE,
                       deny=OPEN4_SHARE_DENY_NONE)
-    checklist(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
+    check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
     env.sleep(2, "Waiting for recall")
 
     # Now send some opens
@@ -541,7 +541,7 @@ def _retry_conflicting_op(env, c, op, opname):
         res = c.compound(op)
         _lock.release()
         if res.status == NFS4_OK: break
-        checklist(res, [NFS4_OK, NFS4ERR_DELAY],
+        check(res, [NFS4_OK, NFS4ERR_DELAY],
                             "%s which causes recall" % opname)
         env.sleep(1, 'Got NFS4ERR_DELAY on %s' % opname)
                             

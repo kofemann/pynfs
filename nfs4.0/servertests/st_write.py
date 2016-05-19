@@ -1,6 +1,6 @@
 from nfs4_const import *
 from nfs4_type import *
-from environment import check, checklist, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
+from environment import check, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 import struct
 
 _text = 'write data' # len=10
@@ -175,7 +175,7 @@ def testLink(t, env):
     res = c.create_obj(path, NF4LNK)
     check(res)
     res = c.write_file(path, _text)
-    checklist(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "WRITE to a symlink")
+    check(res, [NFS4ERR_INVAL, NFS4ERR_SYMLINK], "WRITE to a symlink")
 
 def testBlock(t, env):
     """WRITE to a non-file should return NFS4ERR_INVAL
