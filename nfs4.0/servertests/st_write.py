@@ -457,3 +457,27 @@ def testMultipleReadWrites(t,env):
         if resdata != expect:
             t.fail("READ %d returned %s, expected %s" %
                     (i+1, repr(resdata), repr(expect)))
+
+def testChangeGranularityWrite(t, env):
+    """Rapidly repeated WRITE(UNSTABLE4) should change changeattr
+
+    FLAGS: write all
+    DEPEND: MODE MKFILE
+    CODE: WRT18
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code)
+    ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
+        + [c.write_op(stateid, 0,  UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.write_op(stateid, 10, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.write_op(stateid, 20, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.write_op(stateid, 30, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])]
+    res = c.compound(ops)
+    check(res)
+    chattr1 = res.resarray[1].obj_attributes
+    chattr2 = res.resarray[3].obj_attributes
+    chattr3 = res.resarray[5].obj_attributes
+    chattr4 = res.resarray[7].obj_attributes
+    if chattr1 == chattr2 or chattr2 == chattr3 or chattr3 == chattr4:
+        t.fail("consecutive SETATTR(mode)'s don't all change change attribute")

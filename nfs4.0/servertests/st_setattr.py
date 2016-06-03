@@ -701,11 +701,3 @@ def testChangeGranularity(t, env):
     chattr4 = res.resarray[7].obj_attributes
     if chattr1 == chattr2 or chattr2 == chattr3 or chattr3 == chattr4:
         t.fail("consecutive SETATTR(mode)'s don't all change change attribute")
-
-# TODO:
-#   - This test would be better done with async writes; synchronous
-#     setattrs may not execute quickly enough to trigger a problem.
-#     But Linux server (in violation of spec) doesn't allow multiple
-#     IO's per compound!  For now we test Linux server with async export
-#     option if we want to reproduce this problem.
-#   - We should try the same tests on directories.
