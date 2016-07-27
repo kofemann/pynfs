@@ -2,6 +2,7 @@ from nfs4_const import *
 from nfs4_type import *
 from environment import check, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 import struct
+import rpc
 
 _text = 'write data' # len=10
 
@@ -481,3 +482,20 @@ def testChangeGranularityWrite(t, env):
     chattr4 = res.resarray[7].obj_attributes
     if chattr1 == chattr2 or chattr2 == chattr3 or chattr3 == chattr4:
         t.fail("consecutive SETATTR(mode)'s don't all change change attribute")
+
+def testStolenStateid(t, env):
+    """WRITE with incorrect permissions and somebody else's stateid
+
+    FLAGS: write all
+    DEPEND: MKFILE
+    CODE: WRT19
+    """
+    c = env.c1
+    c.init_connection()
+    res = c.create_file(t.code, attrs={FATTR4_MODE: 0600})
+    fh, stateid = c.confirm(t.code, res)
+    security=c.security
+    c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
+    res = c.write_file(fh, _text, stateid=stateid)
+    c.security=security
+    check(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "WRITE with stolen stateid")
