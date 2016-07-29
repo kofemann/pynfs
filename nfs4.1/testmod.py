@@ -457,6 +457,7 @@ def printresults(tests, opts, file=None):
               (sum(count[SKIP:]), len(tests))
     print >> file, "Of those: %i Skipped, %i Failed, %i Warned, %i Passed" % \
           (count[SKIP], count[FAIL], count[WARN], count[PASS])
+    return count[FAIL]
 
 def xml_printresults(tests, file_name, suite='all'):
     with open(file_name, 'w') as fd:

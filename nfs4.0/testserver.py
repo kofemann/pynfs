@@ -229,6 +229,7 @@ def printflags(list):
             print s
     
 def main():
+    nfail = -1
     p = OptionParser("%prog SERVER:/PATH [options] flags|testcodes\n"
                      "       %prog --help\n"
                      "       %prog SHOWOPTION",
@@ -362,18 +363,22 @@ def main():
         if opt.outfile is not None:
             pickle.dump(tests, fd, 0)
         if not clean_finish:
-            testmod.printresults(tests, opt)
+            nfail = testmod.printresults(tests, opt)
     try:
         fail = False
         env.finish()
     except Exception, e:
         fail = True
-    testmod.printresults(tests, opt)
+    nfail = testmod.printresults(tests, opt)
     if fail:
         print "\nWARNING: could not clean testdir due to:\n%s\n" % str(e)
 
     if opt.xmlout is not None:
         testmod.xml_printresults(tests, opt.xmlout)
+    if nfail < 0:
+        sys.exit(3)
+    if nfail > 0:
+        sys.exit(2)
 
 if __name__ == "__main__":
     main()
