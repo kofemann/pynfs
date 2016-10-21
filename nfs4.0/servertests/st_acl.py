@@ -18,7 +18,7 @@ def testACLsupport(t, env):
     c.init_connection()
 
     supported = c.supportedAttrs(env.opts.usefile)
-    if supported & list2bitmap([FATTR4_ACL]):
+    if not (supported & list2bitmap([FATTR4_ACL])):
         t.fail_support("FATTR4_ACL not supported")
 
 def testACL(t, env):
