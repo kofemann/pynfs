@@ -897,7 +897,7 @@ typedef change_policy4  fattr4_change_policy;
 typedef uint64_t        fattr4_space_freed;
 typedef change_attr_type4
                 fattr4_change_attr_type;
-typedef sec_label4      fattr4_sec_label<>;
+typedef sec_label4      fattr4_sec_label;
 typedef uint32_t        fattr4_clone_blksize;
 
 %/*
