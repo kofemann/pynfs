@@ -46,6 +46,8 @@ def testLockLockU(t, env):
 	op.locku(WRITE_LT, 0, current_stateid, 0, NFS4_UINT64_MAX) ]
     res = sess1.compound([op.putfh(fh)] + lock_ops)
     check(res, NFS4_OK)
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testOpenWriteClose(t, env):
     """test current state id processing by having OPEN, WRITE and CLOSE
@@ -132,6 +134,10 @@ def testOpenLayoutGet(t, env):
            [op.layoutget(False, LAYOUT4_NFSV4_1_FILES, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, current_stateid, 0xffff)])
     check(res, NFS4_OK)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    res = close_file(sess, fh, stateid=stateid)
+    check(res)
 
 def testOpenSetattr(t, env):
     """test current state id processing by having OPEN and SETATTR
@@ -145,8 +151,12 @@ def testOpenSetattr(t, env):
 
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
     res = sess.compound( open_op +
-           [ op.setattr(current_stateid, {FATTR4_SIZE: size})])
+           [op.getfh(), op.setattr(current_stateid, {FATTR4_SIZE: size})])
     check(res, NFS4_OK)
+    fh = res.resarray[-3].object
+    stateid = res.resarray[-4].stateid
+    res = close_file(sess, fh, stateid=stateid)
+    check(res)
 
 def testOpenFreestateidClose(t, env):
     """test current state id processing by having OPEN, FREE_STATEID and CLOSE

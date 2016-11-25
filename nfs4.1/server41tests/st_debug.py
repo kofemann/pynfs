@@ -1,6 +1,6 @@
 from st_create_session import create_session
 from xdrdef.nfs4_const import *
-from environment import check, fail, create_file
+from environment import check, fail, create_file, close_file
 from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
 import nfs_ops
 op = nfs_ops.NFS4ops()
@@ -19,6 +19,8 @@ def testSupported2(t, env):
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
     check(res) # STUB Should check delegation was granted
+    fh1 = res.resarray[-1].object
+    stateid1 = res.resarray[-2].stateid
     # c2 - OPEN - WRITE
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess2 = c2.create_session()
@@ -30,6 +32,12 @@ def testSupported2(t, env):
     res = sess2.compound(env.home + [open_op])
     # STUB - since we are not handling callback, deleg_return never gets done
     print res
+    check(res)
+    fh2 = res.resarray[-1].object
+    stateid2 = res.resarray[-2].stateid
+    res = close_file(sess1, fh1, stateid=stateid1)
+    check(res)
+    res = close_file(sess2, fh2, stateid=stateid2)
     check(res)
     
 def testReadWrite(t, env):
@@ -58,7 +66,8 @@ def testReadWrite(t, env):
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
     print res
     check(res)
-
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testDeadlock(t, env):
     """Trigger deadlock bug
@@ -87,6 +96,8 @@ def testDeadlock(t, env):
         res = sess1.listen(xid)
         check(res)
         print res
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testLayout(t, env):
     """Verify layout handling
@@ -103,10 +114,13 @@ def testLayout(t, env):
     check(openres)
     # Get a layout
     fh = openres.resarray[-1].object
+    stateid = res.resarray[-2].stateid
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_READ,
                         0, 0xffffffff, 4*blocksize, 0xffff)]
     res = sess.compound(ops)
+    check(res)
+    res = close_file(sess1, fh, stateid=stateid)
     check(res)
     
 def testGetDevList(t, env):
