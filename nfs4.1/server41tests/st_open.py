@@ -29,11 +29,16 @@ def testSupported(t, env):
     # See 8.1.3.1 of draft-10:
     # the server MUST provide an "seqid" value starting at one...
     expect(res, seqid=1)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
 
     # STUB - need to check  open_res.delegation.delegation_type
     # see draft-10 line 19445
     # QUESTION - what does "If the server supports the new _WANT_ flags" mean?
     #    will the server return INVAL? NOTSUPP? or just silently ignore?
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testServerStateSeqid(t, env):
     """Do multiple OPENs of a file, check that server bumps stateid.seqid
@@ -51,7 +56,13 @@ def testServerStateSeqid(t, env):
     res = open_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_READ)
     check(res)
     expect(res, seqid=2)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+
     # STUB - need to check no delegation return
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testReadWrite(t, env):
     """Do a simple READ and WRITE
@@ -78,6 +89,9 @@ def testReadWrite(t, env):
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
+
 def testAnonReadWrite(t, env):
     """Do a simple READ and WRITE using anonymous stateid
 
@@ -93,6 +107,7 @@ def testAnonReadWrite(t, env):
     data = "write test data"
     stateid = res.resarray[-2].stateid
     res = close_file(sess1, fh, stateid=stateid)
+    check(res)
     res = sess1.compound([op.putfh(fh), op.write(nfs4lib.state00, 5, FILE_SYNC4, data)])
     check(res)
     res = sess1.compound([op.putfh(fh), op.read(nfs4lib.state00, 0, 1000)])
@@ -115,10 +130,15 @@ def testEXCLUSIVE4AtNameAttribute(t, env):
 
     res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1)
     check(res)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
 
     res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1,
                         verifier = "Justtest")
     check(res, NFS4ERR_EXIST)
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testOPENClaimFH(t, env):
     """OPEN file with claim_type is CLAIM_FH
@@ -127,7 +147,7 @@ def testOPENClaimFH(t, env):
     CODE: OPEN7
     """
     sess1 = env.c1.new_client_session(env.testname(t))
-    res = create_file(sess1, env.testname(t))
+    res = create_file(sess1, env.testname(t), want_deleg=False)
     check(res)
 
     fh = res.resarray[-1].object
@@ -138,7 +158,9 @@ def testOPENClaimFH(t, env):
     claim = open_claim4(CLAIM_FH)
     how = openflag4(OPEN4_NOCREATE)
     oowner = open_owner4(0, "My Open Owner 2")
-    open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
+    access = OPEN4_SHARE_ACCESS_BOTH|OPEN4_SHARE_ACCESS_WANT_NO_DELEG
+
+    open_op = op.open(0, access, OPEN4_SHARE_DENY_NONE,
                       oowner, how, claim)
     res = sess1.compound([op.putfh(fh), open_op])
     check(res)
@@ -155,6 +177,9 @@ def testOPENClaimFH(t, env):
     desired = "\0"*5 + data
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
 
 def testCloseWithZeroSeqid(t, env):
     """OPEN followed by CLOSE with stateid.seq = 0
