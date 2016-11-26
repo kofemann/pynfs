@@ -40,6 +40,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         self.server_address = (host, port)
         self.c1 = self.connect(self.server_address)
         self.sessions = {} # XXX Really, this should be per server
+        self.clients = {} # XXX Really, this should be per server
         self.ctrl_proc = ctrl_proc
         self.summary = summary
 
@@ -313,7 +314,9 @@ class NFS4Client(rpc.Client, rpc.Server):
                             cred)
         nfs4lib.check(res, expect)
         if expect == NFS4_OK:
-            return ClientRecord(res.resarray[0], self, cred, protect)
+            client_rec = ClientRecord(res.resarray[0], self, cred, protect)
+            self.clients[client_rec.clientid] = client_rec
+            return client_rec
         else:
             return None
 
