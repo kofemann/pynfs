@@ -206,3 +206,118 @@ def testFlexLayoutStress(t, env):
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
+
+def testFlexGetDevInfo(t, env):
+    """Get the device info
+
+    FLAGS: flex
+    CODE: FFGDI1
+    """
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+    # Create the file
+    res = create_file(sess, env.testname(t))
+    check(res)
+    # Get layout 1
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+    lo_stateid = open_stateid
+
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_RW,
+                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid = res.resarray[-1].logr_stateid
+    if lo_stateid.seqid != 1:
+        fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+
+    layout = res.resarray[-1].logr_layout[-1]
+    p = FlexUnpacker(layout.loc_body)
+    opaque = p.unpack_ff_layout4()
+    p.done()
+
+    # Assume one mirror/storage device
+    ds = opaque.ffl_mirrors[-1].ffm_data_servers[-1]
+
+    deviceid = ds.ffds_deviceid
+
+    ops = [op.putfh(fh),
+           op.getdeviceinfo(deviceid, LAYOUT4_FLEX_FILES, 0xffffffff, 0)]
+    res = sess.compound(ops)
+    check(res)
+
+    ops = [op.putfh(fh),
+           op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                           layoutreturn4(LAYOUTRETURN4_FILE,
+                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+    res = sess.compound(ops)
+    check(res)
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutTestAccess(t, env):
+    """Get both a LAYOUTIOMODE4_RW and LAYOUTIOMODE4_READ segment
+    making sure that they have the same gid, but a different uid.
+
+    FLAGS: flex
+    CODE: FFLA1
+    """
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+    # Create the file
+    res = create_file(sess, env.testname(t))
+    check(res)
+    # Get layout 1
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_RW,
+                        0, 0xffffffffffffffff, 8192, open_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid = res.resarray[-1].logr_stateid
+    if lo_stateid.seqid != 1:
+        fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+
+    layout = res.resarray[-1].logr_layout[-1]
+    p = FlexUnpacker(layout.loc_body)
+    opaque = p.unpack_ff_layout4()
+    p.done()
+
+    # Assume one mirror/storage device
+    ds = opaque.ffl_mirrors[-1].ffm_data_servers[-1]
+
+    uid_rw = ds.ffds_user
+    gid_rw = ds.ffds_group
+
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_READ,
+                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid = res.resarray[-1].logr_stateid
+    if lo_stateid.seqid != 2:
+        fail("Expected stateid.seqid==%i, got %i" % (2, lo_stateid.seqid))
+
+    layout = res.resarray[-1].logr_layout[-1]
+    p = FlexUnpacker(layout.loc_body)
+    opaque = p.unpack_ff_layout4()
+    p.done()
+
+    # Assume one mirror/storage device
+    ds = opaque.ffl_mirrors[-1].ffm_data_servers[-1]
+
+    uid_rd = ds.ffds_user
+    gid_rd = ds.ffds_group
+
+    if uid_rw == uid_rd:
+        fail("Expected uid_rd != %i, got %i" % (uid_rd, uid_rw))
+
+    if gid_rw != gid_rd:
+        fail("Expected gid_rd == %i, got %i" % (gid_rd, gid_rw))
+
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
