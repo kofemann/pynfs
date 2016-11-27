@@ -106,6 +106,70 @@ def testFlexLayoutReturnFile(t, env):
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
+def testFlexLayoutOldSeqid(t, env):
+    """Check that we do not get NFS4ERR_OLD_STATEID if we send
+    two LAYOUTGETS in a row without bumping the seqid
+
+    FLAGS: flex
+    CODE: FFLOOS
+    """
+    seqid_next = 1
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+    # Create the file
+    res = create_file(sess, env.testname(t))
+    check(res)
+
+    # Get layout 1
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_RW,
+                        0, 0xffffffffffffffff, 8192, open_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid = res.resarray[-1].logr_stateid
+
+    if lo_stateid.seqid != seqid_next:
+        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid.seqid))
+    seqid_next += 1
+
+    # Get the first with the lo_stateid
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_RW,
+                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid2 = res.resarray[-1].logr_stateid
+
+    if lo_stateid2.seqid != seqid_next:
+        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid2.seqid))
+    seqid_next += 1
+
+    # Get the second with the original lo_stateid
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES,
+                        LAYOUTIOMODE4_RW,
+                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    lo_stateid3 = res.resarray[-1].logr_stateid
+
+    if lo_stateid3.seqid != seqid_next:
+        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid3.seqid))
+    seqid_next += 1
+
+    ops = [op.putfh(fh),
+           op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                           layoutreturn4(LAYOUTRETURN4_FILE,
+                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+    res = sess.compound(ops)
+    check(res)
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
 def testFlexLayoutStress(t, env):
     """Alternate LAYOUTIOMODE4_RW/LAYOUTIOMODE4_READ layout segments in the file
 
@@ -117,7 +181,7 @@ def testFlexLayoutStress(t, env):
     # Create the file
     res = create_file(sess, env.testname(t))
     check(res)
-    # Get layout 1
+
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
     lo_stateid = open_stateid
@@ -126,7 +190,7 @@ def testFlexLayoutStress(t, env):
         ops = [op.putfh(fh),
                op.layoutget(False, LAYOUT4_FLEX_FILES,
                             LAYOUTIOMODE4_READ if i%2  else LAYOUTIOMODE4_RW,
-                            i * 8192, 8192, 8192, lo_stateid, 0xffff)]
+                            0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
         res = sess.compound(ops)
         check(res)
         lo_stateid = res.resarray[-1].logr_stateid
