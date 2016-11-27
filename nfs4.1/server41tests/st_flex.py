@@ -3,10 +3,12 @@ from xdrdef.nfs4_type import *
 from xdrdef.nfs4_pack import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from environment import check, fail, create_file, close_file
+from environment import check, fail, create_file, close_file, open_create_file_op
 from xdrdef.nfs4_pack import NFS4Packer as FlexPacker, \
 	NFS4Unpacker as FlexUnpacker
 from nfs4lib import FancyNFS4Packer, get_nfstime
+
+current_stateid = stateid4(1, '\0' * 12)
 
 def testStateid1(t, env):
     """Check for proper sequence handling in layout stateids.
@@ -321,3 +323,83 @@ def testFlexLayoutTestAccess(t, env):
 
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
+
+def testFlexLayoutStatsSmall(t, env):
+    """Open 20 "small" files and simulate LAYOUTSTATS for them
+    1) OPEN, LAYOUTGET
+    2) GETDEVINFO
+    3) LAYOUTRETURN, CLOSE
+
+    FLAGS: flex
+    CODE: FFLS1
+    """
+    lats = [93089, 107683, 112340, 113195, 130412, 138390, 140427, 158824, 193078, 201879, 391634, 404757, 2201181, 2232614, 2280089, 2296343, 2341763, 2392984, 3064546, 3070314]
+    durs = [3387666, 3439506, 3737081, 4448315, 4380523, 4419273, 4419746, 5903420, 5932432, 5932938, 7573082, 11085497, 11125274, 11126513, 13720303, 15990926, 16020425, 16020948, 20181628, 20213871]
+
+    if len(lats) != len(durs):
+        fail("Lats and durs not same")
+
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    for i in range(len(lats)):
+        open_op = open_create_file_op(sess, env.testname(t) + str(i), open_create=OPEN4_CREATE)
+        res = sess.compound( open_op +
+               [op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_RW,
+                            0, 0xffffffffffffffff, 4196, current_stateid, 0xffff)])
+        check(res, NFS4_OK)
+        lo_stateid = res.resarray[-1].logr_stateid
+        fh = res.resarray[-2].object
+        open_stateid = res.resarray[-3].stateid
+
+        if lo_stateid.seqid != 1:
+            fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+
+        layout = res.resarray[-1].logr_layout[-1]
+        p = FlexUnpacker(layout.loc_body)
+        opaque = p.unpack_ff_layout4()
+        p.done()
+
+        # Assume one mirror/storage device
+        ds = opaque.ffl_mirrors[-1].ffm_data_servers[-1]
+
+        stats_hint = opaque.ffl_stats_collect_hint
+
+        deviceid = ds.ffds_deviceid
+
+        ops = [op.putfh(fh),
+               op.getdeviceinfo(deviceid, LAYOUT4_FLEX_FILES, 0xffffffff, 0)]
+        res = sess.compound(ops)
+        check(res)
+
+        gda = res.resarray[-1].gdir_device_addr
+
+        p = FlexUnpacker(gda.da_addr_body)
+        da = p.unpack_ff_device_addr4()
+        p.done()
+
+        rd_io = io_info4(0, 0)
+        wr_io = io_info4(1, 16384)
+
+        rd_lat = ff_io_latency4(0, 0, 0, 0, 0, nfstime4(0, 0), nfstime4(0, 0))
+        wr_lat = ff_io_latency4(1, 16384, 1, 16384, 0, nfstime4(0, lats[i]), nfstime4(0, lats[i]))
+
+        offset = 0
+        file_length = 16384
+
+        dur = durs[i]
+        fflu = ff_layoutupdate4(da.ffda_netaddrs[-1], ds.ffds_fh_vers[-1],
+                                rd_lat, wr_lat, nfstime4(0, dur), True)
+
+        ffio = ff_iostats4(offset, file_length, lo_stateid, rd_io, wr_io, deviceid, fflu)
+        fflr = ff_layoutreturn4([], [ffio])
+
+        p = FlexPacker()
+        p.pack_ff_layoutreturn4(fflr)
+
+        ops = [op.putfh(fh),
+               op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                               layoutreturn4(LAYOUTRETURN4_FILE,
+                                             layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, p.get_buffer()))),
+               op.close(0, open_stateid)]
+        res = sess.compound(ops)
+        check(res)
