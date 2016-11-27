@@ -23,4 +23,5 @@ __all__ = ["st_exchange_id.py", # draft 21
 ##           "st_loop",
            "st_current_stateid.py",
 	   "st_sparse.py",
+           "st_flex.py",
            ]
