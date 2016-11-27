@@ -10,6 +10,10 @@ from nfs4lib import FancyNFS4Packer, get_nfstime
 
 current_stateid = stateid4(1, '\0' * 12)
 
+def check_seqid(stateid, seqid):
+    if stateid.seqid != seqid:
+        fail("Expected stateid.seqid==%i, got %i" % (seqid, stateid.seqid))
+
 def testStateid1(t, env):
     """Check for proper sequence handling in layout stateids.
 
@@ -29,11 +33,12 @@ def testStateid1(t, env):
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
-    if lo_stateid.seqid != 1:
-        # From draft23 12.5.2 "The first successful LAYOUTGET processed by
-        # the server using a non-layout stateid as an argument MUST have the
-        # "seqid" field of the layout stateid in the response set to one."
-        fail("Expected stateid.seqid==1, got %i" % lo_stateid.seqid)
+
+    # From draft23 12.5.2 "The first successful LAYOUTGET processed by
+    # the server using a non-layout stateid as an argument MUST have the
+    # "seqid" field of the layout stateid in the response set to one."
+    check_seqid(lo_stateid, 1)
+
     for i in range(6):
         # Get subsequent layouts
         ops = [op.putfh(fh),
@@ -42,11 +47,10 @@ def testStateid1(t, env):
         res = sess.compound(ops)
         check(res)
         lo_stateid = res.resarray[-1].logr_stateid
-        if lo_stateid.seqid != i + 2:
-            # From draft23 12.5.3 "After the layout stateid is established,
-            # the server increments by one the value of the "seqid" in each
-            # subsequent LAYOUTGET and LAYOUTRETURN response,
-            fail("Expected stateid.seqid==%i, got %i" % (i+2, lo_stateid.seqid))
+        # From draft23 12.5.3 "After the layout stateid is established,
+        # the server increments by one the value of the "seqid" in each
+        # subsequent LAYOUTGET and LAYOUTRETURN response,
+	check_seqid(lo_stateid, i + 2)
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
@@ -133,8 +137,7 @@ def testFlexLayoutOldSeqid(t, env):
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
 
-    if lo_stateid.seqid != seqid_next:
-        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid.seqid))
+    check_seqid(lo_stateid, seqid_next)
     seqid_next += 1
 
     # Get the first with the lo_stateid
@@ -146,8 +149,7 @@ def testFlexLayoutOldSeqid(t, env):
     check(res)
     lo_stateid2 = res.resarray[-1].logr_stateid
 
-    if lo_stateid2.seqid != seqid_next:
-        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid2.seqid))
+    check_seqid(lo_stateid2, seqid_next)
     seqid_next += 1
 
     # Get the second with the original lo_stateid
@@ -159,8 +161,7 @@ def testFlexLayoutOldSeqid(t, env):
     check(res)
     lo_stateid3 = res.resarray[-1].logr_stateid
 
-    if lo_stateid3.seqid != seqid_next:
-        fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid3.seqid))
+    check_seqid(lo_stateid3, seqid_next)
     seqid_next += 1
 
     ops = [op.putfh(fh),
@@ -196,8 +197,7 @@ def testFlexLayoutStress(t, env):
         res = sess.compound(ops)
         check(res)
         lo_stateid = res.resarray[-1].logr_stateid
-        if lo_stateid.seqid != seqid_next:
-            fail("Expected stateid.seqid==%i, got %i" % (seqid_next, lo_stateid.seqid))
+        check_seqid(lo_stateid, seqid_next)
         seqid_next += 1
 
     ops = [op.putfh(fh),
@@ -231,8 +231,7 @@ def testFlexGetDevInfo(t, env):
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
-    if lo_stateid.seqid != 1:
-        fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+    check_seqid(lo_stateid, 1)
 
     layout = res.resarray[-1].logr_layout[-1]
     p = FlexUnpacker(layout.loc_body)
@@ -280,8 +279,7 @@ def testFlexLayoutTestAccess(t, env):
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
-    if lo_stateid.seqid != 1:
-        fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+    check_seqid(lo_stateid, 1)
 
     layout = res.resarray[-1].logr_layout[-1]
     p = FlexUnpacker(layout.loc_body)
@@ -301,8 +299,7 @@ def testFlexLayoutTestAccess(t, env):
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
-    if lo_stateid.seqid != 2:
-        fail("Expected stateid.seqid==%i, got %i" % (2, lo_stateid.seqid))
+    check_seqid(lo_stateid, 2)
 
     layout = res.resarray[-1].logr_layout[-1]
     p = FlexUnpacker(layout.loc_body)
@@ -351,8 +348,7 @@ def testFlexLayoutStatsSmall(t, env):
         fh = res.resarray[-2].object
         open_stateid = res.resarray[-3].stateid
 
-        if lo_stateid.seqid != 1:
-            fail("Expected stateid.seqid==%i, got %i" % (1, lo_stateid.seqid))
+        check_seqid(lo_stateid, 1)
 
         layout = res.resarray[-1].logr_layout[-1]
         p = FlexUnpacker(layout.loc_body)
