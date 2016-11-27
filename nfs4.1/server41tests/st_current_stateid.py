@@ -99,9 +99,22 @@ def testOpenLookupClose(t, env):
 
     fname = env.testname(t)
     open_op = open_create_file_op(sess1, fname, open_create=OPEN4_CREATE)
+
     lookup_op = env.home + [op.lookup(fname)]
     res = sess1.compound(open_op + lookup_op + [op.close(0, current_stateid)])
     check(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+
+    # An unknown number of lookups will be present
+    for r in res.resarray:
+        if r.resop == OP_OPEN:
+            stateid = r.stateid
+        elif r.resop == OP_GETFH:
+            fh = r.object
+            break
+
+    # Test passed, now cleanup!
+    res = sess1.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
 
 def testCloseNoStateid(t, env):
     """test current state id processing by having CLOSE
@@ -119,6 +132,10 @@ def testCloseNoStateid(t, env):
 
     res = sess1.compound([op.putfh(fh), op.close(0, current_stateid)])
     check(res, [NFS4ERR_STALE_STATEID, NFS4ERR_BAD_STATEID])
+
+    # Test passed, now cleanup!
+    res = sess1.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
 
 def testOpenLayoutGet(t, env):
     """test current state id processing by having OPEN and LAYOUTGET
@@ -170,6 +187,13 @@ def testOpenFreestateidClose(t, env):
     open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
     res = sess1.compound(open_op + [op.free_stateid(current_stateid), op.close(0, current_stateid)])
     check(res, NFS4ERR_LOCKS_HELD)
+    fh = res.resarray[-2].object
+    stateid = res.resarray[-3].stateid
+
+    # Test passed, now cleanup!
+    res = sess1.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
+
 
 def testOpenSaveFHLookupRestoreFHClose(t, env):
     """test current state id processing by having OPEN, SAVEFH, LOOKUP, RESTOREFH and CLOSE

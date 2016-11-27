@@ -47,6 +47,10 @@ def testReclaimAfterRECC(t, env):
 
     check(res, NFS4ERR_NO_GRACE, warnlist = [NFS4ERR_EXIST | NFS4ERR_RECLAIM_BAD])
 
+    # Cleanup
+    res = sess.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
+
 def testOpenBeforeRECC(t, env):
     """After a client establishes a new client ID, if non-reclaim
        locking operations are done before the RECLAIM_COMPLETE,

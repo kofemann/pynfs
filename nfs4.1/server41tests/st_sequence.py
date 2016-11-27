@@ -129,6 +129,9 @@ def testReplayCache002(t, env):
     """
     sess1 = env.c1.new_client_session(env.testname(t))
     res = create_file(sess1, "%s_1" % env.testname(t))
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+
     check(res)
     ops = env.home + [op.savefh(),\
           op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
@@ -139,6 +142,11 @@ def testReplayCache002(t, env):
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
+
+    # Cleanup
+    res = sess1.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
+
 
 def testReplayCache003(t, env):
     """Send two unsuccessful idempotent compounds with same seqid

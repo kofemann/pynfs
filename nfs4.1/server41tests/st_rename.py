@@ -496,6 +496,10 @@ def testSelfRenameFile(t, env):
         t.fail("RENAME of file %s into itself should do nothing, "
                "but cinfo was changed" % name)
 
+    # Cleanup
+    res = sess.compound([op.putfh(fh), op.close(0, stateid)])
+    check(res)
+
 def testLinkRename(t, env):
     """RENAME of file into its hard link should do nothing
 
