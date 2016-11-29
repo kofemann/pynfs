@@ -229,6 +229,9 @@ class Environment(testmod.Environment):
     def clean_sessions(self):
         return
 
+    def clean_clients(self):
+        return
+
 #########################################
 debug_fail = False
 
