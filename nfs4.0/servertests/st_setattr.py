@@ -701,3 +701,34 @@ def testChangeGranularity(t, env):
     chattr4 = res.resarray[7].obj_attributes
     if chattr1 == chattr2 or chattr2 == chattr3 or chattr3 == chattr4:
         t.fail("consecutive SETATTR(mode)'s don't all change change attribute")
+
+def testEmptyPrincipal(t, env):
+    """Setting owner with zero length principal must fail
+
+    FLAGS: setattr all
+    DEPEND: MKFILE
+    CODE: SATT16
+    """
+    c = env.c1
+    path = c.homedir + [t.code]
+    res = c.create_obj(path, NF4SOCK)
+    check(res)
+    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER: ''})]
+    res = c.compound(ops)
+    check(res, NFS4ERR_INVAL, "Setting empty owner")
+
+
+def testEmptyGroupPrincipal(t, env):
+    """Setting owner group with zero length principal must fail
+
+    FLAGS: setattr all
+    DEPEND: MKFILE
+    CODE: SATT17
+    """
+    c = env.c1
+    path = c.homedir + [t.code]
+    res = c.create_obj(path, NF4SOCK)
+    check(res)
+    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER_GROUP: ''})]
+    res = c.compound(ops)
+    check(res, NFS4ERR_INVAL, "Setting empty owner_group")
