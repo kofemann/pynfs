@@ -27,6 +27,23 @@ def _set_size(t, c, file, stateid=None, msg=" using stateid=0"):
     check(res, msg="Changing size from %i to 0" % newsize)
     check_res(t, c, res, file, dict)
 
+#
+# Mix size and non-size attributes in a single SETATTR.  Some Linux file
+# systems aren't happy with this mix, and a server passing this on 1:1
+# will trigger warnings or incorrect results.
+#
+def _set_mixed(t, c, file, stateid=None, msg=" using stateid=0"):
+    startsize = c.do_getattr(FATTR4_SIZE, file)
+    newsize = startsize + 10
+    owner = "65534" # nobody
+
+    dict = {FATTR4_SIZE: newsize, FATTR4_OWNER: owner}
+    ops = c.use_obj(file) + [c.setattr(dict, stateid)]
+    res = c.compound(ops)
+    check(res, msg="Changing size from %i to %i and owner to %s%s" %
+          (startsize, newsize, owner, msg), warnlist=[NFS4ERR_BAD_STATEID])
+    check_res(t, c, res, file, dict)
+
 def _try_readonly(t, env, path):
     c = env.c1
     baseops = c.use_obj(path)
@@ -732,3 +749,16 @@ def testEmptyGroupPrincipal(t, env):
     ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER_GROUP: ''})]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "Setting empty owner_group")
+
+
+def testMixed(t, env):
+    """SETATTR(FATTR4_SIZE + FATTR4_OWNER) on file with stateid = 0
+
+    FLAGS: setattr file all
+    DEPEND: MKFILE
+    CODE: SATT18
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    _set_mixed(t, c, fh)
