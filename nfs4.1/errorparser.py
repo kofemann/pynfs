@@ -8,7 +8,7 @@ import random
 import logging
 import traceback
 import sys
-from nfs4_const import nfsstat4
+from xdrdef.nfs4_const import nfsstat4
 from errorfunctions import Errors
 
 log = logging.getLogger("nfs.proxy.errorhandler")

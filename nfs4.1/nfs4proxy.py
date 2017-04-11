@@ -4,10 +4,10 @@ import use_local # HACK so don't have to rebuild constantly
 import nfs4lib
 from nfs4lib import inc_u32, NFS4Error, NFS4Replay
 import rpc
-from nfs4_const import *
-from nfs4_type import *
-from sctrl_pack import SCTRLPacker, SCTRLUnpacker
-import sctrl_type, sctrl_const
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
+from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker
+import xdrdef.sctrl_type, xdrdef.sctrl_const
 import traceback, threading
 from locking import Lock, Counter
 import time
