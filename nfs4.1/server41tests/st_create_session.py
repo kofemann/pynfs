@@ -518,16 +518,21 @@ def testDRCMemLeak(t, env):
     CODE: CSESS29
     """
     c = env.c1.new_client(env.testname(t))
+    # Create a valid session to use for bad CREATE_SESSIONS
+    # so we can send them with a SEQUENCE and get automatic
+    # renewal.
+    sess1 = c.create_session()
     fchan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
     # CREATE_SESSION with too small ca_maxrequestsize and ca_maxops
     bchan_attrs = channel_attrs4(0,10,8192,8192,128,1,[])
 
     N = 10000 # number of clients to create, all will denied with TOOSMALL
     for i in range(N):
-        res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
-                                              fchan_attrs, bchan_attrs,
-                                              123, [])], None)
-        check(res, NFS4ERR_TOOSMALL)
+        cs_op = op.create_session(c.clientid, c.seqid, 0,
+                                  fchan_attrs, bchan_attrs,
+                                  123, [])
+        res2 = sess1.compound([cs_op])
+        check(res2, NFS4ERR_TOOSMALL)
 
     bchan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
     res = c.c.compound([op.create_session(c.clientid, c.seqid, 0,
