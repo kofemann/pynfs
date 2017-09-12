@@ -1,3 +1,5 @@
+- need BIND_CONN_TO_SESSION, other trunking tests.
+- need more tests using malformed XDR.  See e.g. kernel commit fc788f64f1f3
 - test permission-checking:
 
 	- example, probably pre-4.3 failure:
