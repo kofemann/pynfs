@@ -1,4 +1,10 @@
 - need BIND_CONN_TO_SESSION, other trunking tests.
+	- jlayton suggests: open and get a delegation or try to get a
+	  blocking lock, close socket, break deleg/drop conflicting
+	  lock, open new socket, BIND_CONN_TO_SESSION, see if you get
+	  the callback.
+	- same sort of test but bind several connections, close all
+	  sockets but one and see if the callback gets through
 - need more tests using malformed XDR.  See e.g. kernel commit fc788f64f1f3
 - test permission-checking:
 
