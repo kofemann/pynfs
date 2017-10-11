@@ -115,7 +115,7 @@ def testReplayCache001(t, env):
     sess1 = c1.create_session()
     res1 = sess1.compound([op.putrootfh()], cache_this=True)
     check(res1)
-    res2 = sess1.compound([op.putrootfh()], seq_delta=0)
+    res2 = sess1.compound([op.putrootfh()], cache_this=True, seq_delta=0)
     check(res2)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
@@ -137,7 +137,7 @@ def testReplayCache002(t, env):
           op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
     res1 = sess1.compound(ops, cache_this=True)
     check(res1)
-    res2 = sess1.compound(ops, seq_delta=0)
+    res2 = sess1.compound(ops, cache_this=True, seq_delta=0)
     check(res2)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
@@ -158,7 +158,7 @@ def testReplayCache003(t, env):
     sess1 = c1.create_session()
     res1 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True)
     check(res1, NFS4ERR_INVAL)
-    res2 = sess1.compound([op.putrootfh(), op.lookup("")], seq_delta=0)
+    res2 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
@@ -176,7 +176,7 @@ def testReplayCache004(t, env):
     ops += [op.savefh(), op.rename("", "foo")]
     res1 = sess1.compound(ops, cache_this=True)
     check(res1, NFS4ERR_INVAL)
-    res2 = sess1.compound(ops, seq_delta=0)
+    res2 = sess1.compound(ops, cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
@@ -192,7 +192,7 @@ def testReplayCache005(t, env):
     sess1 = c1.create_session()
     res1 = sess1.compound([op.illegal()], cache_this=True)
     check(res1, NFS4ERR_OP_ILLEGAL)
-    res2 = sess1.compound([op.illegal()], seq_delta=0)
+    res2 = sess1.compound([op.illegal()], cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_OP_ILLEGAL)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
@@ -208,7 +208,7 @@ def testReplayCache006(t, env):
     sess = c.create_session()
     res1 = sess.compound([])
     check(res1)
-    res2 = sess.compound([], seq_delta=0)
+    res2 = sess.compound([], cache_this=True, seq_delta=0)
     check(res2)
     res1.tag = res2.tag = ""
     if not nfs4lib.test_equal(res1, res2):
