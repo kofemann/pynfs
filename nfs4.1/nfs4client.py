@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO,
 log_cb = logging.getLogger("nfs.client.cb")
 
 op4 = nfs_ops.NFS4ops()
+SHOW_TRAFFIC = 0
 
 class NFS4Client(rpc.Client, rpc.Server):
     def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None):
