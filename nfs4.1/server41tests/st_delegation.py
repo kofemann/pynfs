@@ -186,6 +186,8 @@ def testDelegRevocation(t, env):
         # depend on the above compound waiting no longer than the
         # server's lease period:
         res = sess1.compound([])
+    res = sess1.compound([op.putfh(fh), op.read(delegstateid, 0, 1000)])
+    check(res, NFS4ERR_DELEG_REVOKED, "Read with a revoked delegation")
     slot, seq_op = sess1._prepare_compound({})
     res = sess1.c.compound([seq_op])
     flags = res.resarray[0].sr_status_flags;
