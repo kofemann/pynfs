@@ -120,17 +120,22 @@ def testNoData(t, env):
     if compareTimes(time_prior,time_after) != 0:
         t.fail("WRITE with no data affected time_modify")
 
+#WRT5 permanently retired
+
 def testLargeData(t, env):
-    """WRITE with a large amount of data
+    """WRITE with the maximum size, READ it back and compare
 
     FLAGS: write read all
     DEPEND: MKFILE
-    CODE: WRT5
+    CODE: WRT5a
     """
     c = env.c1
     c.init_connection()
+    maxread, maxwrite = _get_iosize(t, c, c.homedir)
+    maxio = min(maxread, maxwrite)
     fh, stateid = c.create_confirm(t.code)
-    data = "abcdefghijklmnopq" * 0x10000
+    pattern="abcdefghijklmnop"
+    data = pattern * (maxio / len(pattern)) + "q" * (maxio % len(pattern))
     # Write the data
     pos = 0
     while pos < len(data):
@@ -149,6 +154,27 @@ def testLargeData(t, env):
         eof = res.eof
     if data != newdata:
         t.fail("READ did not correspond to WRITE with large dataset")
+
+def testTooLargeData(t, env):
+    """WRITE with more than the maximum size
+
+    FLAGS: write read all
+    DEPEND: MKFILE
+    CODE: WRT5b
+    """
+    c = env.c1
+    c.init_connection()
+    maxread, maxwrite = _get_iosize(t, c, c.homedir)
+    fh, stateid = c.create_confirm(t.code)
+    data = "a" * (maxwrite + 1000000)
+    try:
+        # We don't care much what the server does, this is just a check
+        # to make sure it doesn't crash.
+        res = c.write_file(fh, data, 0, stateid)
+    except IOError:
+        # Linux knfsd closes the socket when the write is too large.
+        # That's OK.
+        pass
 
 def testDir(t, env):
     """WRITE to a dir should return NFS4ERR_ISDIR
