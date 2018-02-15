@@ -122,7 +122,7 @@ def testNoData(t, env):
 
 #WRT5 permanently retired
 
-def testLargeData(t, env):
+def testMaximumData(t, env):
     """WRITE with the maximum size, READ it back and compare
 
     FLAGS: write read all
@@ -156,7 +156,7 @@ def testLargeData(t, env):
         t.fail("READ did not correspond to WRITE with large dataset")
 
 def testTooLargeData(t, env):
-    """WRITE with more than the maximum size
+    """WRITE with 10^6 more than the maximum size
 
     FLAGS: write read all
     DEPEND: MKFILE
