@@ -706,3 +706,34 @@ def testServerChmod(t, env):
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
     env.serverhelper("chmod 0777 " + _listToPath(c.homedir + [t.code]))
     _verify_cb_occurred(t, c, count)
+
+def testServerSelfConflict(t, env):
+    """DELEGATION test
+
+    Get a read delegation, then do a write open from the same client.
+    It should not conflict with the read delegation.
+
+    FLAGS: delegations
+    DELEG21
+    """
+    c = env.c1
+    count = c.cb_server.opcounts[OP_CB_RECALL]
+    c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
+    _get_deleg(t, c, c.homedir + [t.code], funct, response)
+
+    sleeptime = 1
+    while 1:
+        # need lock around this to prevent _recall from
+        # calling c.unpacker.reset while open is still unpacking
+        _lock.acquire()
+        res = c.open_file('newowner', c.homedir + [t.code],
+                          access=OPEN4_SHARE_ACCESS_WRITE,
+                          deny=OPEN4_SHARE_DENY_NONE)
+        _lock.release()
+        if res.status == NFS4_OK: break
+        check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
+        env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
+    return c.confirm('newowner', res)
+    newcount = c.cb_server.opcounts[OP_CB_RECALL]
+    if newcount > count:
+        t.fail("Unnecessary delegation recall" % c.cbid)
