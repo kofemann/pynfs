@@ -228,7 +228,7 @@ def testReplayCache007(t, env):
     res1 = sess1.compound(ops, cache_this=False)
     check(res1, NFS4_OK)
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
-    check(res2, NFS4ERR_RETRY_UNCACHED_REP)
+    check(res2, [NFS4_OK, NFS4ERR_RETRY_UNCACHED_REP])
 
 def testOpNotInSession(t, env):
     """Operations other than SEQUENCE, BIND_CONN_TO_SESSION, EXCHANGE_ID,
