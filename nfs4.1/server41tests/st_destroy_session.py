@@ -51,6 +51,7 @@ def testDestroy2(t, env):
         return res
     c = env.c1.new_client(env.testname(t))
     sess1 = c.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
     res = c.c.compound([op.destroy_session(sess1.sessionid)])
     sess2 = c.create_session()
     res = create_file(sess2, env.testname(t),
@@ -63,6 +64,7 @@ def testDestroy2(t, env):
         fail("Could not get delegation")
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess3 = c2.create_session()
+    sess3.compound([op.reclaim_complete(FALSE)])
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
@@ -100,6 +102,7 @@ def testDestroy3(t, env):
         return res
     c = env.c1.new_client(env.testname(t))
     sess1 = c.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
@@ -112,6 +115,7 @@ def testDestroy3(t, env):
     recall.happened = False
     c2 = env.c1.new_client("%s_2" % env.testname(t))
     sess2 = c2.create_session()
+    sess2.compound([op.reclaim_complete(FALSE)])
     claim = open_claim4(CLAIM_NULL, env.testname(t))
     owner = open_owner4(0, "My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
