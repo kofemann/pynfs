@@ -714,7 +714,7 @@ def testServerSelfConflict(t, env):
     It should not conflict with the read delegation.
 
     FLAGS: delegations
-    DELEG21
+    CODE: DELEG21
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
