@@ -19,8 +19,6 @@
 - in absence of explicit --minorversion, allow negotiating versions as
   necessary to run all tests.
 
-- redundant nfs4.0/lib/ply ?
-
 - Create a new INFO result, lower-priority than WARN or FAIL, but that
   might tell you interesting things about the server.  (E.g., whether it
   supports some optional feature.  In which case further tests may

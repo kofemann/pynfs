@@ -10,18 +10,20 @@ from distutils.core import setup, Extension
 from distutils.dep_util import newer_group
 import os
 import glob
+try:
+    import xdrgen
+except ImportError:
+    import use_local
+    import xdrgen
 
 topdir = os.getcwd()
 if  __name__ == "__main__":
     if os.path.isfile(os.path.join(topdir, 'lib', 'testmod.py')):
         sys.path.insert(1, os.path.join(topdir, 'lib'))
 
-import rpcgen
-
 def needs_updating(xdrfile):
-    gen_path = os.path.join(topdir, 'lib', 'rpcgen.py')
     name_base = xdrfile[:xdrfile.rfind(".")]
-    sources = [gen_path, xdrfile]
+    sources = [xdrfile]
     targets = [ name_base + "_const.py",
                 name_base + "_type.py",
                 name_base + "_pack.py" ]
@@ -34,7 +36,7 @@ def use_xdr(dir, xdrfile):
     """Move to dir, and generate files based on xdr file"""
     os.chdir(dir)
     if needs_updating(xdrfile):
-        rpcgen.run(xdrfile)
+        xdrgen.run(xdrfile)
         for file in glob.glob(os.path.join(dir, 'parse*')):
             print "deleting", file
             os.remove(file)
@@ -57,29 +59,6 @@ def generate_files():
 # FRED - figure how to get this to run only with build/install type command
 generate_files()
 
-# Describes how to compile gssapi.so - change this as needed
-# FRED - is there a general way to look this info up?
-# FRED - for use out of package root, is there a way to place compiled library with source?
-
-if os.path.exists('/usr/include/heimdal'):
-    # This works with Heimdal kerberos (Suse)
-    gssapi = Extension('rpc.rpcsec._gssapi',
-                       extra_compile_args = ['-Wall'],
-                       define_macros = [('HEIMDAL',1)],
-                       include_dirs = ['/usr/kerberos/include',
-                                       '/usr/include/heimdal'],
-                       libraries = ['gssapi'],
-                       library_dirs = ['/usr/kerberos/lib'],
-                       sources = ['lib/rpc/rpcsec/gssapi_wrap.c'])
-else:
-    # This works with MIT kerberos (Fedora)
-    gssapi = Extension('rpc.rpcsec._gssapi',
-                       extra_compile_args = ['-Wall'],
-                       include_dirs = ['/usr/kerberos/include'],
-                       libraries = ['gssapi_krb5'],
-                       library_dirs = ['/usr/kerberos/lib'],
-                       sources = ['lib/rpc/rpcsec/gssapi_wrap.c'])
-
 from testserver import VERSION
 setup(name = "newpynfs",
       version = VERSION,
@@ -91,10 +70,9 @@ setup(name = "newpynfs",
       maintainer = "Fred Isaman",
       maintainer_email = "iisaman@citi.umich.edu",
 
-      ext_modules = [gssapi],
       package_dir = {'': 'lib'},
-      packages = ['servertests', 'ply', 'rpc', 'rpc.rpcsec'],
-      py_modules = ['testmod', 'rpcgen'],
+      packages = ['servertests', 'rpc', 'rpc.rpcsec'],
+      py_modules = ['testmod'],
       scripts = ['testserver.py', 'showresults.py']
       )
 

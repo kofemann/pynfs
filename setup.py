@@ -13,7 +13,7 @@ pynfs
 Add stuff here.
 """
 
-DIRS = ["ply", "xdr", "gssapi", "rpc", "nfs4.1", "nfs4.0"] # Order is important
+DIRS = ["xdr", "rpc", "nfs4.1", "nfs4.0"] # Order is important
 
 def setup(*args, **kwargs):
     cwd = os.getcwd()
@@ -26,10 +26,11 @@ def setup(*args, **kwargs):
 
 setup(name = "pynfs",
       version = "0.0.0", # import this?
-      packages = ["nfs4", "rpc", "xdr", "ply", "gssapi"], 
+      packages = ["nfs4", "rpc", "xdr"],
       description = "NFS tools, tests, and support libraries",
       long_description = DESCRIPTION,
-      
+      #install_requires = ["gssapi", "ply"],
+
       # These will be the same
       author = "Fred Isaman",
       author_email = "iisaman@citi.umich.edu",

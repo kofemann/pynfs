@@ -1,8 +1,0 @@
-A python wrapping of the C gssapi library using SWIG.
-Fairly mature, mpstly tested with MIT code on Fedora distributions.
-Not well tested with Heimdal
-
-Passing of error codes and handling of Name class still needs work.
-
-Compile in place using:
-python2.5 setup.py build_ext --inplace
