@@ -4,9 +4,7 @@ from os.path import join, split
 cwd = os.getcwd()
 if True or cwd not in sys.path:
     head, tail = split(cwd)
-    dirs = [ join(head, "gssapi"),
-             join(head, "xdr"),
-             join(head, "ply"),
+    dirs = [ join(head, "xdr"),
              join(head), # rpc
              cwd,
              ]
