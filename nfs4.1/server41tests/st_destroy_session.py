@@ -39,7 +39,7 @@ def testDestroy2(t, env):
 	  tests for example)
 	- check that we get the callback
 
-    FLAGS: destroy_session ganesha
+    FLAGS: destroy_session
     CODE: DSESS9002
     """
     recall = threading.Event()
@@ -86,7 +86,7 @@ def testDestroy3(t, env):
 	- check that a new callback is sent over the new session.  Some
 	  servers will do this very quickly, some might take longer.
 
-    FLAGS: destroy_session ganesha
+    FLAGS: destroy_session
     CODE: DSESS9003
     """
     recall = threading.Event()
