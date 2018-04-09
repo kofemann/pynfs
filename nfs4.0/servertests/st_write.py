@@ -171,9 +171,9 @@ def testTooLargeData(t, env):
         # We don't care much what the server does, this is just a check
         # to make sure it doesn't crash.
         res = c.write_file(fh, data, 0, stateid)
-    except IOError:
+    except:
         # Linux knfsd closes the socket when the write is too large.
-        # That's OK.
+        # Ganesha returns GARBAGE_ARGS.  Either is fine.
         pass
 
 def testDir(t, env):
