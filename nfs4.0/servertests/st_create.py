@@ -1,6 +1,8 @@
-from nfs4_const import *
-from nfs4_type import createtype4, specdata4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import createtype4, specdata4
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def getDefaultAttr(c):
     attr = {}
@@ -13,7 +15,7 @@ def _test_create(t, env, type, name, **keywords):
     c = env.c1
     ops = c.go_home()
     objtype = createtype4(type, **keywords)
-    ops += [c.create_op(objtype, t.code, getDefaultAttr(c))]
+    ops += [op.create(objtype, t.code, getDefaultAttr(c))]
     res = c.compound(ops)
     if res.status == NFS4ERR_BADTYPE:
         t.fail_support("CREATE of a %s returns _BADTYPE" % name)
@@ -147,7 +149,7 @@ def testNoFh(t, env):
     """
     c = env.c1
     objtype = createtype4(NF4DIR)
-    ops = [c.create_op(objtype, t.code, getDefaultAttr(c))]
+    ops = [op.create(objtype, t.code, getDefaultAttr(c))]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "CREATE with no <cfh>")
 
@@ -170,7 +172,7 @@ def testZeroLengthForLNK(t, env):
     c = env.c1
     ops = c.go_home()
     objtype = createtype4(NF4LNK, **{'linkdata':''})
-    ops += [c.create_op(objtype, t.code, getDefaultAttr(c))]
+    ops += [op.create(objtype, t.code, getDefaultAttr(c))]
     res = c.compound(ops)
     check(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
 

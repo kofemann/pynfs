@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, checkdict, get_invalid_utf8strings
 from nfs4lib import get_bitnumattr_dict
 

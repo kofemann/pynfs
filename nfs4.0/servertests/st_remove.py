@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, get_invalid_utf8strings
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testDir(t, env):
     """REMOVE on existing, removable object
@@ -11,7 +13,7 @@ def testDir(t, env):
     c = env.c1
     res = c.create_obj(t.code)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing dir %s" % t.code)
 
@@ -25,7 +27,7 @@ def testLink(t, env):
     c = env.c1
     res = c.create_obj(t.code, NF4LNK)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing symlink %s" % t.code)
 
@@ -39,7 +41,7 @@ def testBlock(t, env):
     c = env.c1
     res = c.create_obj(t.code, NF4BLK)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing block device %s" % t.code)
 
@@ -53,7 +55,7 @@ def testChar(t, env):
     c = env.c1
     res = c.create_obj(t.code, NF4CHR)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing character device %s" % t.code)
 
@@ -67,7 +69,7 @@ def testFifo(t, env):
     c = env.c1
     res = c.create_obj(t.code, NF4FIFO)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing fifo %s" % t.code)
 
@@ -81,7 +83,7 @@ def testSocket(t, env):
     c = env.c1
     res = c.create_obj(t.code, NF4SOCK)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing socket %s" % t.code)
 
@@ -95,7 +97,7 @@ def testFile(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, msg="Removing file %s" % t.code)
     
@@ -107,7 +109,7 @@ def testCfhFile(t, env):
     CODE: RM2r
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usefile) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.usefile) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "REMOVE with non-dir cfh")
 
@@ -119,7 +121,7 @@ def testCfhLink(t, env):
     CODE: RM2a
     """
     c = env.c1
-    ops = c.use_obj(env.opts.uselink) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.uselink) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK], "REMOVE with non-dir cfh")
 
@@ -131,7 +133,7 @@ def testCfhBlock(t, env):
     CODE: RM2b
     """
     c = env.c1
-    ops = c.use_obj(env.opts.useblock) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.useblock) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "REMOVE with non-dir cfh")
 
@@ -143,7 +145,7 @@ def testCfhChar(t, env):
     CODE: RM2c
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usechar) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.usechar) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "REMOVE with non-dir cfh")
 
@@ -155,7 +157,7 @@ def testCfhFifo(t, env):
     CODE: RM2f
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usefifo) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.usefifo) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "REMOVE with non-dir cfh")
 
@@ -167,7 +169,7 @@ def testCfhSocket(t, env):
     CODE: RM2s
     """
     c = env.c1
-    ops = c.use_obj(env.opts.usesocket) + [c.remove_op(t.code)]
+    ops = c.use_obj(env.opts.usesocket) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "REMOVE with non-dir cfh")
 
@@ -178,7 +180,7 @@ def testNoFh(t, env):
     CODE: RM3
     """
     c = env.c1
-    res = c.compound([c.remove_op(t.code)])
+    res = c.compound([op.remove(t.code)])
     check(res, NFS4ERR_NOFILEHANDLE, "REMOVE with no <cfh>")
 
 def testZeroLengthTarget(t, env):
@@ -188,7 +190,7 @@ def testZeroLengthTarget(t, env):
     CODE: RM4
     """
     c = env.c1
-    ops = c.use_obj(c.homedir) + [c.remove_op('')]
+    ops = c.use_obj(c.homedir) + [op.remove('')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "REMOVE with zero length target")
 
@@ -204,7 +206,7 @@ def testNonUTF8(t, env):
     res = c.create_obj(basedir)
     check(res)
     for name in get_invalid_utf8strings():
-        ops = c.use_obj(basedir) + [c.remove_op(name)]
+        ops = c.use_obj(basedir) + [op.remove(name)]
         res = c.compound(ops)
         check(res, NFS4ERR_INVAL, "Trying to remove file with invalid utf8 "
                                   "name %s/%s" % (t.code, repr(name)[1:-1]))
@@ -216,7 +218,7 @@ def testNonExistent(t, env):
     CODE: RM6
     """
     c = env.c1
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOENT, "REMOVE non-existing object %s" % t.code)
 
@@ -231,10 +233,10 @@ def testDots(t, env):
     basedir = c.homedir + [t.code]
     res = c.create_obj(basedir)
     check(res)
-    ops =  c.use_obj(basedir) + [c.remove_op('.')]
+    ops =  c.use_obj(basedir) + [op.remove('.')]
     res = c.compound(ops)
     check(res, NFS4ERR_BADNAME, "REMOVE nonexistant '.'", [NFS4ERR_NOENT])
-    ops =  c.use_obj(basedir) + [c.remove_op('..')]
+    ops =  c.use_obj(basedir) + [op.remove('..')]
     res = c.compound(ops)
     check(res, NFS4ERR_BADNAME, "REMOVE nonexistant '..'", [NFS4ERR_NOENT])
     
@@ -253,7 +255,7 @@ def testNotEmpty(t, env):
     res = c.create_obj(basedir + [t.code])
     check(res)
     # Now try to remove it
-    ops =  c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops =  c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTEMPTY, "REMOVE called on nonempty directory")
 
@@ -278,8 +280,8 @@ def testNotEmpty(t, env):
         # Ok, lets try REMOVE on all accepted names
         lookup_dir_ops = self.ncl.lookup_path(self.tmp_dir)
         for filename in accepted_names:
-            ops = [self.ncl.putrootfh_op()] + lookup_dir_ops
-            ops.append(self.ncl.remove_op(filename))
+            ops = [op.putrootfh()] + lookup_dir_ops
+            ops.append(op.remove(filename))
             res = self.ncl.do_ops(ops)
             self.assert_OK(res)
 
@@ -303,8 +305,8 @@ def testNotEmpty(t, env):
         # Ok, lets try REMOVE on all rejected names
         lookup_dir_ops = self.ncl.lookup_path(self.tmp_dir)
         for filename in rejected_names:
-            ops = [self.ncl.putrootfh_op()] + lookup_dir_ops
-            ops.append(self.ncl.remove_op(filename))
+            ops = [op.putrootfh()] + lookup_dir_ops
+            ops.append(op.remove(filename))
             res = self.ncl.do_ops(ops)
             self.assert_status(res, [NFS4ERR_NOENT,NFS4ERR_INVAL])
 

@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testFile(t, env):
     """GETFH on testtree file
@@ -72,7 +74,7 @@ def testNoFh(t, env):
     CODE: GF9
     """
     c = env.c1
-    ops = [c.getfh_op()]
+    ops = [op.getfh()]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "GETFH with no <cfh>")
               

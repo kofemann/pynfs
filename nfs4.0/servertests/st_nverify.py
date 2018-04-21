@@ -1,18 +1,20 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, get_invalid_clientid, makeStaleId
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _try_mand(env, path):
     c = env.c1
     mand_bits = [attr.bitnum for attr in env.attr_info \
                  if attr.mandatory and attr.name != 'rdattr_error']
     dict = c.do_getattrdict(path, mand_bits)
-    ops = c.use_obj(path) + [c.nverify_op(dict)] + c.use_obj(path)
+    ops = c.use_obj(path) + [op.nverify(dict)] + c.use_obj(path)
     res = c.compound(ops)
     check(res, NFS4ERR_SAME, "NVerifying mandatory attributes against getattr")
 
 def _try_type(env, path, type):
     c = env.c1
-    ops = c.use_obj(path) + [c.nverify_op({FATTR4_TYPE:type})] + c.use_obj(path)
+    ops = c.use_obj(path) + [op.nverify({FATTR4_TYPE:type})] + c.use_obj(path)
     res = c.compound(ops)
     check(res, NFS4ERR_SAME, "NVerifying type of /%s" % '/'.join(path))
 
@@ -20,7 +22,7 @@ def _try_changed_size(env, path):
     c = env.c1
     dict = c.do_getattrdict(path, [FATTR4_SIZE])
     dict[FATTR4_SIZE] += 1
-    ops = c.use_obj(path) + [c.nverify_op(dict)] + c.use_obj(path)
+    ops = c.use_obj(path) + [op.nverify(dict)] + c.use_obj(path)
     res = c.compound(ops)
     check(res, msg="NVerifying incorrect size")
 
@@ -30,7 +32,7 @@ def _try_write_only(env, path):
     wo = [attr for attr in env.attr_info \
           if attr.writeonly or attr.name=='rdattr_error']
     for attr in wo:
-        ops = baseops + [c.nverify_op({attr.bitnum: attr.sample})]
+        ops = baseops + [op.nverify({attr.bitnum: attr.sample})]
         res = c.compound(ops)
         check(res, NFS4ERR_INVAL, "NVERIFY with attr %s" % attr.name)
 
@@ -40,7 +42,7 @@ def _try_unsupported(env, path):
     supp_mask = c.supportedAttrs(path)
     unsupp = [attr for attr in env.attr_info if not (attr.mask & supp_mask)]
     for attr in unsupp:
-        ops = baseops + [c.nverify_op({attr.bitnum: attr.sample})]
+        ops = baseops + [op.nverify({attr.bitnum: attr.sample})]
         res = c.compound(ops)
         if attr.writeonly:
             check(res, [NFS4ERR_ATTRNOTSUPP, NFS4ERR_INVAL],
@@ -247,7 +249,7 @@ def testNoFh(t, env):
     CODE: NVF4
     """
     c = env.c1
-    res = c.compound([c.nverify_op({FATTR4_SIZE:17})])
+    res = c.compound([op.nverify({FATTR4_SIZE:17})])
     check(res, NFS4ERR_NOFILEHANDLE, "NVERIFY with no <cfh>")
                      
 def testWriteOnlyFile(t, env):

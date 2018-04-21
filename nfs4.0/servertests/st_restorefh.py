@@ -1,11 +1,13 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _try_sequence(t, c, path):
     """Try saving path, looking elsewhere, then restoring path"""
-    ops = c.use_obj(path) + [c.getfh_op(), c.savefh_op()]
-    ops += [c.putrootfh_op()]
-    ops += [c.restorefh_op(), c.getfh_op()]
+    ops = c.use_obj(path) + [op.getfh(), op.savefh()]
+    ops += [op.putrootfh()]
+    ops += [op.restorefh(), op.getfh()]
     res = c.compound(ops)
     check(res)
 
@@ -84,7 +86,7 @@ def testNoFh1(t, env):
     CODE: RSFH1
     """
     c = env.c1
-    res = c.compound([c.restorefh_op()])
+    res = c.compound([op.restorefh()])
     check(res, NFS4ERR_RESTOREFH, "RESTOREFH with no <cfh>")
 
 def testNoFh2(t, env):
@@ -94,5 +96,5 @@ def testNoFh2(t, env):
     CODE: RSFH2
     """
     c = env.c1
-    res = c.compound([c.putrootfh_op(), c.restorefh_op()])
+    res = c.compound([op.putrootfh(), op.restorefh()])
     check(res, NFS4ERR_RESTOREFH, "RESTOREFH with no <cfh>")

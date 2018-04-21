@@ -10,8 +10,8 @@
 # Taken from mapping description at
 # http://www.citi.umich.edu/projects/nfsv4/rfc/draft-ietf-nfsv4-acl-mapping-02.txt
 
-from nfs4_const import *
-from nfs4_type import *
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
 
 # Taken from mapping
 MODE_R = ACE4_READ_DATA | ACE4_READ_NAMED_ATTRS

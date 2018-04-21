@@ -1,13 +1,15 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _try_put(t, c, path):
     # Get fh via LOOKUP
-    res = c.compound(c.use_obj(path) + [c.getfh_op()])
+    res = c.compound(c.use_obj(path) + [op.getfh()])
     check(res)
     oldfh = res.resarray[-1].switch.switch.object
     # Now try PUTFH and GETFH, see if it agrees
-    res = c.compound([c.putfh_op(oldfh), c.getfh_op()])
+    res = c.compound([op.putfh(oldfh), op.getfh()])
     check(res)
     newfh = res.resarray[-1].switch.switch.object
     if oldfh != newfh:
@@ -83,7 +85,7 @@ def testBadHandle(t, env):
     CODE: PUTFH2
     """
     c = env.c1
-    res = c.compound([c.putfh_op('abc')])
+    res = c.compound([op.putfh('abc')])
     check(res, NFS4ERR_BADHANDLE, "PUTFH with bad filehandle='abc'")
 
 def testStaleHandle(t, env):
@@ -99,11 +101,11 @@ def testStaleHandle(t, env):
     stale_fh, stateid = c.create_confirm(t.code)
     res = c.close_file(t.code, stale_fh, stateid)
     check(res)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     res = c.compound(ops)
     check(res)
     # Now try to use it; but note a server may still allow use and
     # that's not necessarily a protocol violation; disabling this test
     # by default until we think of something better.
-    res = c.compound([c.putfh_op(stale_fh)])
+    res = c.compound([op.putfh(stale_fh)])
     check(res, NFS4ERR_STALE, "Using a stale fh")

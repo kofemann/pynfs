@@ -11,12 +11,14 @@
 import time
 import testmod
 from nfs4lib import NFS4Client, get_attrbitnum_dict
-from nfs4_const import *
-from nfs4_type import fsid4, nfsace4, fs_locations4, fs_location4, \
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import fsid4, nfsace4, fs_locations4, fs_location4, \
      specdata4, nfstime4, settime4, stateid4
 import rpc
 import sys
 import os
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 class AttrInfo(object):
     def __init__(self, name, access, sample):
@@ -185,8 +187,8 @@ class Environment(testmod.Environment):
         c.init_connection()
         fh, stateid = c.create_confirm('maketree', tree + ['file'],
                                        deny=OPEN4_SHARE_DENY_NONE)
-        ops = [c.putfh_op(fh),
-               c.write_op(stateid, 0, FILE_SYNC4, self.filedata)]
+        ops = [op.putfh(fh),
+               op.write(stateid, 0, FILE_SYNC4, self.filedata)]
         res = c.compound(ops)
         check(res, msg="Writing data to /%s/file" % '/'.join(tree))
         res = c.close_file('maketree', fh, stateid )

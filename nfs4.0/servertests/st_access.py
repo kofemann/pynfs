@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 _maxval = ACCESS4_DELETE | ACCESS4_EXECUTE | ACCESS4_EXTEND | \
           ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_READ
@@ -9,7 +11,7 @@ _invalid_access_ops = [64, 65, 66, 127, 128, 129]
 def _try_all_combos(t, c, path, forbid=0):
     baseops = c.use_obj(path)
     for i in _valid_access_ops:
-        res = c.compound(baseops + [c.access_op(i)])
+        res = c.compound(baseops + [op.access(i)])
         check(res)
         supported = res.resarray[-1].switch.switch.supported
         access = res.resarray[-1].switch.switch.access
@@ -31,14 +33,14 @@ def _try_all_combos(t, c, path, forbid=0):
 
 def _try_read(c, path):
     ops = c.use_obj(path)
-    ops += [c.access_op(ACCESS4_READ)]
+    ops += [op.access(ACCESS4_READ)]
     res = c.compound(ops)
     check(res)
 
 def _try_invalid(t, c, path):
     baseops = c.use_obj(path)
     for i in _invalid_access_ops:
-        res = c.compound(baseops + [c.access_op(i)])
+        res = c.compound(baseops + [op.access(i)])
         if res.status == NFS4_OK:
             supported = res.resarray[-1].switch.switch.supported
             access = res.resarray[-1].switch.switch.access
@@ -188,7 +190,7 @@ def testNoFh(t, env):
     CODE: ACC3
     """
     c = env.c1
-    res = c.compound([c.access_op(ACCESS4_READ)])
+    res = c.compound([op.access(ACCESS4_READ)])
     check(res, NFS4ERR_NOFILEHANDLE, "ACCESS with no <cfh>")
 
 def testInvalidsFile(t, env):

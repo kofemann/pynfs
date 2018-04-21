@@ -1,6 +1,8 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from nfs4lib import list2bitmap
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testReference(t, env):
     """FSLOCATION test of referral node
@@ -12,9 +14,9 @@ def testReference(t, env):
     """
     c = env.c1
     path = env.opts.usespecial
-    ops = [c.putrootfh_op(), c.getfh_op()]
+    ops = [op.putrootfh(), op.getfh()]
     for comp in path:
-        ops += [c.lookup_op(comp), c.getfh_op()]
+        ops += [op.lookup(comp), op.getfh()]
     res = c.compound(ops)
     check(res, NFS4ERR_MOVED, "GETFH of path indicated by --usespecial")
     locs = c.do_getattr(FATTR4_FS_LOCATIONS, path)
@@ -71,7 +73,7 @@ def testAttr1b(t, env):
     path = env.opts.usespecial[:-1]
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_FSID]
     ops = c.use_obj(path)
-    ops += [c.readdir_op(0, '', 4096, 4096, list2bitmap(attrlist))]
+    ops += [op.readdir(0, '', 4096, 4096, list2bitmap(attrlist))]
     res = c.compound(ops)
     check(res, NFS4ERR_MOVED, "READDIR w/o FSLOC or RDATTR_ERROR")
 

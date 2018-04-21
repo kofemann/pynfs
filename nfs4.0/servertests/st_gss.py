@@ -1,9 +1,11 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
 from socket import timeout
 import rpc
 import rpc.rpcsec.gss_const as gss
 from rpc.rpcsec.gss_type import rpc_gss_cred_t
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 class BadGssHeader(object):
     """Screw up gss cred.
@@ -66,14 +68,14 @@ def testBadGssSeqnum(t, env):
     CODE: GSS1
     """
     c = env.c1
-    res = c.compound([c.putrootfh_op()])
+    res = c.compound([op.putrootfh()])
     check(res)
     success = False
     orig = c.security.gss_seq_num
     try:
         c.security.gss_seq_num -= 1
         try:
-            res = c.compound([c.putrootfh_op()])
+            res = c.compound([op.putrootfh()])
         except timeout:
             success = True
         if not success:
@@ -105,7 +107,7 @@ def testInconsistentGssSeqnum(t, env):
     try:
         c.security.secure_data = bad_secure_data
         try:
-            res = c.compound([c.putrootfh_op()])
+            res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
         except rpc.RPCAcceptError, e:
             if e.stat == rpc.GARBAGE_ARGS:
@@ -134,7 +136,7 @@ def testBadVerfChecksum(t, env):
     try:
         c.security.make_verf = bad_make_verf
         try:
-            res = c.compound([c.putrootfh_op()])
+            res = c.compound([op.putrootfh()])
             e = "peration erroneously suceeding"
         except rpc.RPCDeniedError, e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CREDPROBLEM:
@@ -170,7 +172,7 @@ def testBadDataChecksum(t, env):
     try:
         c.security.secure_data = bad_secure_data
         try:
-            res = c.compound([c.putrootfh_op()])
+            res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
         except rpc.RPCAcceptError, e:
             if e.stat == rpc.GARBAGE_ARGS:
@@ -210,7 +212,7 @@ def testBadVersion(t, env):
         bad_versions = [0, 2, 3, 1024]
         for version in bad_versions:
             try:
-                res = c.compound([c.putrootfh_op()])
+                res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
@@ -237,7 +239,7 @@ def testHighSeqNum(t, env):
     try:
         c.security.gss_seq_num = gss.MAXSEQ + 1
         try:
-            res = c.compound([c.putrootfh_op()])
+            res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
         except rpc.RPCDeniedError, e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CTXPROBLEM:
@@ -275,7 +277,7 @@ def testBadProcedure(t, env):
         bad_procss = [4, 5, 1024]
         for proc in bad_procss:
             try:
-                res = c.compound([c.putrootfh_op()])
+                res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
@@ -317,7 +319,7 @@ def testBadService(t, env):
         bad_services = [0, 4, 5, 1024]
         for service in bad_services:
             try:
-                res = c.compound([c.putrootfh_op()])
+                res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
             except rpc.RPCDeniedError, e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:

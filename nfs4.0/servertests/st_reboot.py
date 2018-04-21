@@ -1,6 +1,8 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
 import os
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 # NOTE - reboot tests are NOT part of the standard test suite
 
@@ -139,7 +141,7 @@ def testEdge1(t, env):
     sleeptime = _waitForReboot(c2, env)
     try:
         # Client 1: Reclaim lock (should not work, since #2 has interfered)
-        res1 = c1.compound([c1.renew_op(c1.clientid)])
+        res1 = c1.compound([op.renew(c1.clientid)])
         check(res1, NFS4ERR_STALE_CLIENTID, "RENEW after reboot")
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
@@ -185,7 +187,7 @@ def testEdge2(t, env):
     sleeptime = _waitForReboot(c2, env)
     try:
         # Client 1: Reclaim lock (should not work, since #2 has interfered)
-        res1 = c1.compound([c1.renew_op(c1.clientid)])
+        res1 = c1.compound([op.renew(c1.clientid)])
         check(res1, NFS4ERR_STALE_CLIENTID, "RENEW after reboot")
         c1.init_connection()
         res1 = c1.open_file(t.code, fh1, claim_type=CLAIM_PREVIOUS,
@@ -251,7 +253,7 @@ def testValidDeleg(t, env):
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,
                           deleg_type=OPEN_DELEGATE_NONE)
         check(res, NFS4ERR_STALE_CLIENTID, "Reclaim using old clientid")
-#        res = c.compound([c.renew_op(c.clientid)])
+#        res = c.compound([op.renew(c.clientid)])
 #        check(res, NFS4ERR_STALE_CLIENTID, "RENEW after reboot")
         c.init_connection(id, cb_ident=0)
         res = c.open_file(t.code, fh, claim_type=CLAIM_PREVIOUS,

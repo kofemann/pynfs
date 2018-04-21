@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, makeBadID, makeBadIDganesha, makeStaleId
 import rpc
 

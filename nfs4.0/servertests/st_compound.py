@@ -1,8 +1,10 @@
-from nfs4_const import *
-from nfs4_type import nfs_argop4
-from nfs4_pack import NFS4Packer
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import nfs_argop4
+from xdrdef.nfs4_pack import NFS4Packer
 from environment import check, get_invalid_utf8strings
 from rpc import RPCError
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testZeroOps(t, env):
     """COMPOUND without operations should return NFS4_OK
@@ -22,7 +24,7 @@ def testGoodTag(t, env):
     """
     c = env.c1
     tag = 'tag test'
-    res = c.compound([c.putrootfh_op()], tag)
+    res = c.compound([op.putrootfh()], tag)
     check(res)
     if res.tag != tag:
         t.fail("Returned tag '%s' does not equal sent tag '%s'" %
@@ -36,7 +38,7 @@ def testBadTags(t, env):
     """
     c = env.c1
     for tag in get_invalid_utf8strings():
-        res = c.compound([c.putrootfh_op()], tag)
+        res = c.compound([op.putrootfh()], tag)
         check(res, NFS4ERR_INVAL, "Compound with invalid utf8 tag %s" %
               repr(tag))
         if res.tag != tag:
@@ -50,7 +52,7 @@ def testInvalidMinor(t, env):
     CODE: COMP4
     """
     c = env.c1
-    res = c.compound([c.putrootfh_op()], minorversion=50)
+    res = c.compound([op.putrootfh()], minorversion=50)
     check(res, NFS4ERR_MINOR_VERS_MISMATCH,
           "COMPOUND with invalid minor version")
     if res.resarray:
@@ -93,7 +95,7 @@ def testLongCompound(t, env):
     CODE: COMP6
     """
     c = env.c1
-    baseops = [c.putrootfh_op(), c.getfh_op(), c.getattr([FATTR4_SIZE])]
+    baseops = [op.putrootfh(), op.getfh(), c.getattr([FATTR4_SIZE])]
     step = 50
     count = 0
     try:

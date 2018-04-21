@@ -1,9 +1,11 @@
-from nfs4_const import *
-from nfs4_type import nfs_client_id4, clientaddr4, cb_client4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import nfs_client_id4, clientaddr4, cb_client4
 from environment import check
 import os
 import threading
 import time
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 _lock = threading.Lock()
 
@@ -26,8 +28,8 @@ class _handle_error(object):
             
 def _recall(c, op, cbid):
     # Note this will be run in the cb_server thread, not the tester thread
-    ops = [c.putfh_op(op.opcbrecall.fh),
-           c.delegreturn_op(op.opcbrecall.stateid)]
+    ops = [op.putfh(op.opcbrecall.fh),
+           op.delegreturn(op.opcbrecall.stateid)]
     _lock.acquire()
     try:
         res = c.compound(ops)
@@ -290,7 +292,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
             res = c.open_file('newowner', c.homedir + [t.code],
                               access=OPEN4_SHARE_ACCESS_WRITE)
             env.sleep(lease / 2, "Waiting to send RENEW")
-            res = c.compound([c.renew_op(c.clientid)])
+            res = c.compound([op.renew(c.clientid)])
             check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN], "RENEW")
             if res.status != NFS4_OK:
                 noticed = True
@@ -381,7 +383,7 @@ def _set_clientid(c, id, server):
     r_addr = c.ipaddress + server.dotport
     cb_location = clientaddr4('tcp', r_addr)
     callback = cb_client4(server.prog, cb_location)
-    return c.setclientid_op(client_id, callback, 1)
+    return op.setclientid(client_id, callback, 1)
 
 def testChangeDeleg(t, env, funct=_recall):
     """Get a read delegation, change to a different callback server, then
@@ -408,7 +410,7 @@ def testChangeDeleg(t, env, funct=_recall):
     check(res, msg="Switch to new callback server")
     c.clientid = res.resarray[0].switch.switch.clientid
     confirm = res.resarray[0].switch.switch.setclientid_confirm
-    confirmop = c.setclientid_confirm_op(c.clientid, confirm)
+    confirmop = op.setclientid_confirm(c.clientid, confirm)
     res = c.compound([confirmop])
     check(res, [NFS4_OK, NFS4ERR_RESOURCE])
     if res.status == NFS4ERR_RESOURCE:
@@ -531,7 +533,7 @@ def testClaimCur(t, env):
                             claim_type=CLAIM_DELEGATE_CUR,
                             deleg_stateid=deleg_info.read.stateid)
     check(res)
-    ops = c.use_obj(path) + [c.delegreturn_op(deleg_info.read.stateid)]
+    ops = c.use_obj(path) + [op.delegreturn(deleg_info.read.stateid)]
     res = c.compound(ops)
     check(res)
 
@@ -558,7 +560,7 @@ def testRemove(t, env):
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    ops = c.use_obj(c.homedir) + [c.remove_op(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
     _retry_conflicting_op(env, c, ops, "remove")
     _verify_cb_occurred(t, c, count)
 
@@ -575,8 +577,8 @@ def testLink(t, env):
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    ops = c.use_obj(c.homedir + [t.code]) + [c.savefh_op()];
-    ops += c.use_obj(c.homedir) + [c.link_op(t.code + '.link')];
+    ops = c.use_obj(c.homedir + [t.code]) + [op.savefh()];
+    ops += c.use_obj(c.homedir) + [op.link(t.code + '.link')];
     _retry_conflicting_op(env, c, ops, "link")
     _verify_cb_occurred(t, c, count)
 
@@ -593,8 +595,8 @@ def testRename(t, env):
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    ops = c.use_obj(c.homedir) + [c.savefh_op()];
-    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')]
+    ops = c.use_obj(c.homedir) + [op.savefh()];
+    ops += c.use_obj(c.homedir) + [op.rename(t.code, t.code + '.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 
@@ -612,8 +614,8 @@ def testRenameOver(t, env):
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     res = c.create_file(t.code, c.homedir + [t.code])
     _get_deleg(t, c, c.homedir + [t.code + '.rename'], _recall, NFS4_OK)
-    ops = c.use_obj(c.homedir) + [c.savefh_op()];
-    ops += c.use_obj(c.homedir) + [c.rename_op(t.code, t.code + '.rename')]
+    ops = c.use_obj(c.homedir) + [op.savefh()];
+    ops += c.use_obj(c.homedir) + [op.rename(t.code, t.code + '.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 

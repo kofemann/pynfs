@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testSupported(t, env):
     """Do a simple PUTPUBFH
@@ -9,7 +11,7 @@ def testSupported(t, env):
     """
 
     c = env.c1
-    ops = [c.putpubfh_op()]
+    ops = [op.putpubfh()]
     res = c.compound(ops)
     check(res)
 
@@ -26,12 +28,12 @@ def testSameAsRoot(t, env):
     """
 
     c = env.c1
-    ops = [c.putpubfh_op(), c.getfh_op()]
+    ops = [op.putpubfh(), op.getfh()]
     res = c.compound(ops)
     check(res)
     pubfh = res.resarray[-1].switch.switch.object
 
-    ops = [c.putrootfh_op(), c.getfh_op()]
+    ops = [op.putrootfh(), op.getfh()]
     res = c.compound(ops)
     check(res)
     rootfh = res.resarray[-1].switch.switch.object

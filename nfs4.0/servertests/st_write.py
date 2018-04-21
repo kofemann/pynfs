@@ -1,8 +1,10 @@
-from nfs4_const import *
-from nfs4_type import *
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
 from environment import check, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 import struct
 import rpc
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 _text = 'write data' # len=10
 
@@ -358,8 +360,8 @@ def testDoubleWrite(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
     ops = c.use_obj(fh)
-    ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, 'one')]
-    ops += [c.write_op(stateid4(0, ''), 3, UNSTABLE4, 'two')]
+    ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, 'one')]
+    ops += [op.write(stateid4(0, ''), 3, UNSTABLE4, 'two')]
     res = c.compound(ops)
     res = c.read_file(fh, 0, 6)
     _compare(t, res, 'onetwo', True)
@@ -407,7 +409,7 @@ def testSizes(t, env):
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
     for i in range(0, max):
         ops = c.use_obj(fh)
-        ops += [c.write_op(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
+        ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
         ops += [c.getattr([FATTR4_SIZE]), c.getattr([FATTR4_SIZE])]
         res = c.compound(ops)
         check(res, msg="length %d WRITE" % i)
@@ -430,8 +432,8 @@ def testLargeReadWrite(t, env):
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                     deny=OPEN4_SHARE_DENY_NONE)
     ops = c.use_obj(fh)
-    ops += [c.read_op(stateid, 0, size)]
-    ops += [c.write_op(stateid, 0, UNSTABLE4, writedata)]
+    ops += [op.read(stateid, 0, size)]
+    ops += [op.write(stateid, 0, UNSTABLE4, writedata)]
     res = c.compound(ops)
     check(res)
     data = res.resarray[-2].switch.switch.data
@@ -462,7 +464,7 @@ def testMultipleReadWrites(t,env):
     fh, stateid = c.create_confirm(t.code)
     ops = c.use_obj(fh)
     for i in range(0, len(offsets) - 1):
-        ops += [c.write_op(stateid, offsets[i], UNSTABLE4,
+        ops += [op.write(stateid, offsets[i], UNSTABLE4,
 					data[offsets[i]:offsets[i+1]])]
     res = c.compound(ops)
     check(res, msg="compound with multiple WRITE operations")
@@ -472,7 +474,7 @@ def testMultipleReadWrites(t,env):
     for i in range(0, len(read_offsets) - 1):
         offset = read_offsets[i]
         bytes = read_offsets[i+1] - offset;
-        ops += [c.read_op(stateid, offset, bytes)]
+        ops += [op.read(stateid, offset, bytes)]
     res = c.compound(ops)
     check(res, msg="compound with multiple READ operations")
     for i in range(0, len(read_offsets) - 2):
@@ -496,10 +498,10 @@ def testChangeGranularityWrite(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
-        + [c.write_op(stateid, 0,  UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.write_op(stateid, 10, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.write_op(stateid, 20, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.write_op(stateid, 30, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])]
+        + [op.write(stateid, 0,  UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [op.write(stateid, 10, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [op.write(stateid, 20, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
+        + [op.write(stateid, 30, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])]
     res = c.compound(ops)
     check(res)
     chattr1 = res.resarray[1].obj_attributes

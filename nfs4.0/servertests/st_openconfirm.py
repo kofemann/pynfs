@@ -1,10 +1,12 @@
-from nfs4_const import *
-from nfs4_type import stateid4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import stateid4
 from environment import check, makeStaleId
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _confirm(t, c, file, stateid):
     ops = c.use_obj(file)
-    ops += [c.open_confirm_op(stateid, c.get_seqid(t.code))]
+    ops += [op.open_confirm(stateid, c.get_seqid(t.code))]
     res = c.compound(ops)
     c.advance_seqid(t.code, res)
     return res
@@ -57,7 +59,7 @@ def testBadSeqid(t, env):
     check(res)
     stateid = res.resarray[-2].switch.switch.stateid
     fh = res.resarray[-1].switch.switch.object
-    ops = [c.putfh_op(fh), c.open_confirm_op(stateid, 50)]
+    ops = [op.putfh(fh), op.open_confirm(stateid, 50)]
     res = c.compound(ops)
     check(res, NFS4ERR_BAD_SEQID, "OPEN_CONFIRM with a bad seqid=50")
 

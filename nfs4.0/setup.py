@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
-DESCRIPTION = """\
-pynfs is a collection of tools and libraries for NFS4. It includes
-a NFS4 library and a server test application.
-"""
-
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 from distutils.core import setup, Extension
 from distutils.dep_util import newer_group
@@ -15,6 +12,11 @@ try:
 except ImportError:
     import use_local
     import xdrgen
+
+DESCRIPTION = """\
+pynfs is a collection of tools and libraries for NFS4. It includes
+a NFS4 library and a server test application.
+"""
 
 topdir = os.getcwd()
 if  __name__ == "__main__":
@@ -38,20 +40,17 @@ def use_xdr(dir, xdrfile):
     if needs_updating(xdrfile):
         xdrgen.run(xdrfile)
         for file in glob.glob(os.path.join(dir, 'parse*')):
-            print "deleting", file
+            print("deleting", file)
             os.remove(file)
 
 def generate_files():
     home = os.getcwd()
-    use_xdr(topdir, 'nfs4.x')
-    import ops_gen # this must be delayed until nfs4.x is parsed
-    sources = [ os.path.join(topdir, 'lib', 'ops_gen.py'),
-                'nfs4_const.py', 'nfs4_type.py' ]
-    if newer_group(sources, 'nfs4_ops.py'):
-        print "Generating nfs4_ops.py"
-        ops_gen.run()
+    use_xdr(os.path.join(topdir, 'xdrdef'), 'nfs4.x')
+    use_xdr(os.path.join(topdir, 'xdrdef'), 'nfs3.x')
+
     dir = os.path.join(topdir, 'lib', 'rpc')
     use_xdr(dir, 'rpc.x')
+
     dir = os.path.join(topdir, 'lib', 'rpc', 'rpcsec')
     use_xdr(dir, 'gss.x')
     os.chdir(home)
@@ -83,4 +82,4 @@ information on various ways to set the search path.
 One easy way is to set the environment variable PYTHONPATH.
 """
 if "install" in sys.argv:
-    print PATHHELP
+    print(PATHHELP)

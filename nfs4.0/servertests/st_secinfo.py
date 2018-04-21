@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, get_invalid_utf8strings
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 # XXX Do this for each object type
 def testValid(t, env):
@@ -13,7 +15,7 @@ def testValid(t, env):
     dir = env.opts.usefile[:-1]
     filename = env.opts.usefile[-1]
     ops = c.use_obj(dir)
-    ops += [c.secinfo_op(filename)]
+    ops += [op.secinfo(filename)]
     res = c.compound(ops)
     check(res)
     # Make sure at least one security mechanisms is returned.
@@ -29,7 +31,7 @@ def testNotDir(t, env):
     """
     c = env.c1
     ops = c.use_obj(env.opts.usefile)
-    ops += [c.secinfo_op('foo')]
+    ops += [op.secinfo('foo')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "SECINFO with cfh a file")
 
@@ -45,7 +47,7 @@ def testVaporFile(t, env):
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
-    ops += [c.secinfo_op('vapor')]
+    ops += [op.secinfo('vapor')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOENT, "SECINFO on nonexistant file %s/vapor" % t.code)
 
@@ -57,7 +59,7 @@ def testNoFh(t, env):
     CODE: SEC4
     """
     c = env.c1
-    ops = [c.secinfo_op('vapor')]
+    ops = [op.secinfo('vapor')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "SECINFO with no <cfh>")
 
@@ -73,7 +75,7 @@ def testZeroLenName(t, env):
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
-    ops += [c.secinfo_op('')]
+    ops += [op.secinfo('')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "SECINFO with zero-length name")
 
@@ -90,7 +92,7 @@ def testInvalidUtf8(t, env):
     check(res)
     baseops = c.use_obj(newdir)
     for name in get_invalid_utf8strings():
-        res = c.compound(baseops + [c.secinfo_op(name)])
+        res = c.compound(baseops + [op.secinfo(name)])
         check(res, NFS4ERR_INVAL, "SECINFO of non-existant file with invalid "
                                   "utf8 name %s" % repr(name))
         
@@ -108,7 +110,7 @@ def testRPCSEC_GSS(t, env):
     dir = env.opts.usefile[:-1]
     filename = env.opts.usefile[-1]
     ops = c.use_obj(dir)
-    ops += [c.secinfo_op(filename)]
+    ops += [op.secinfo(filename)]
     res = c.compound(ops)
     check(res)
     # Make sure at least one security mechanisms is RPCSEC_GSS

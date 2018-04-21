@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, get_invalid_utf8strings
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _basictest(t, c, path, error=NFS4_OK):
     """Link to path, and make sure FATTR4_NUMLINKS increases by one"""
@@ -99,7 +101,7 @@ def testNoSfh(t, env):
     """
     c = env.c1
     ops = c.go_home()
-    ops += [c.link_op(t.code)]
+    ops += [op.link(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LINK with no <sfh>")
 
@@ -111,7 +113,7 @@ def testNoCfh(t, env):
     CODE: LINK3
     """
     c = env.c1
-    ops = [c.link_op(t.code)]
+    ops = [op.link(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LINK with no <cfh>")
 

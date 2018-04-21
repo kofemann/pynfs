@@ -1,6 +1,8 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check, get_invalid_utf8strings
 import rpc
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testDir(t, env):
     """LOOKUP testtree dir
@@ -86,7 +88,7 @@ def testNoFh(t, env):
     CODE: LOOK1
     """
     c = env.c1
-    ops = [c.lookup_op('foo')]
+    ops = [op.lookup('foo')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LOOKUP with no <cfh>")
 
@@ -98,7 +100,7 @@ def testNonExistent(t, env):
     """
     c = env.c1
     ops = c.go_home()
-    ops += [c.lookup_op(t.code)]
+    ops += [op.lookup(t.code)]
     res = c.compound(ops)
     check(res, NFS4ERR_NOENT,
           "LOOKUP with no non-existant component '%s'" % t.code)
@@ -110,7 +112,7 @@ def testZeroLength(t, env):
     CODE: LOOK3
     """
     c = env.c1
-    ops = [c.putrootfh_op(), c.lookup_op('')]
+    ops = [op.putrootfh(), op.lookup('')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "LOOKUP with no zero-length component")
 
@@ -121,7 +123,7 @@ def testLongName(t, env):
     CODE: LOOK4
     """
     c = env.c1
-    ops = [c.putrootfh_op(), c.lookup_op(env.longname)]
+    ops = [op.putrootfh(), op.lookup(env.longname)]
     res = c.compound(ops)
     check(res, NFS4ERR_NAMETOOLONG, "LOOKUP with very long component")
 
@@ -307,7 +309,7 @@ def testBadOpaque(t, env):
         p = c.nfs4packer
         orig = p.pack_opaque
         p.pack_opaque = bad_opaque
-        res = c.compound([c.putrootfh_op(), c.lookup_op("setlength=0xcccccccc")])
+        res = c.compound([op.putrootfh(), op.lookup("setlength=0xcccccccc")])
         e = "operation erroneously suceeding"
         check(res, NFS4ERR_BADXDR)
     except rpc.RPCAcceptError, e:
@@ -340,8 +342,8 @@ def testBadOpaque(t, env):
         # Ok, lets try LOOKUP on all accepted names
         lookup_dir_ops = self.ncl.lookup_path(self.tmp_dir)
         for filename in accepted_names:
-            ops = [self.ncl.putrootfh_op()] + lookup_dir_ops
-            ops.append(self.ncl.lookup_op(filename))
+            ops = [op.putrootfh()] + lookup_dir_ops
+            ops.append(op.lookup(filename))
             res = self.ncl.do_ops(ops)
             self.assert_OK(res)
             
@@ -367,7 +369,7 @@ def testBadOpaque(t, env):
         # Ok, lets try LOOKUP on all rejected names
         lookup_dir_ops = self.ncl.lookup_path(self.tmp_dir)
         for filename in rejected_names:
-            ops = [self.ncl.putrootfh_op()] + lookup_dir_ops
-            ops.append(self.ncl.lookup_op(filename))
+            ops = [op.putrootfh()] + lookup_dir_ops
+            ops.append(op.lookup(filename))
             res = self.ncl.do_ops(ops)
             self.assert_status(res, [NFS4ERR_INVAL,NFS4ERR_NOENT])

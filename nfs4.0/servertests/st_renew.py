@@ -1,5 +1,7 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testRenew(t, env):
     """RENEW with valid clientid
@@ -9,7 +11,7 @@ def testRenew(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.compound([c.renew_op(c.clientid)])
+    res = c.compound([op.renew(c.clientid)])
     check(res, msg="RENEW")
 
 def testBadRenew(t, env):
@@ -19,7 +21,7 @@ def testBadRenew(t, env):
     CODE: RENEW2
     """
     c = env.c1
-    res = c.compound([c.renew_op(0)])
+    res = c.compound([op.renew(0)])
     check(res, NFS4ERR_STALE_CLIENTID, "RENEW with bad clientid")
 
 def testExpired(t, env):
@@ -38,6 +40,6 @@ def testExpired(t, env):
     c2.init_connection()
     c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
                     deny=OPEN4_SHARE_DENY_NONE)
-    res = c.compound([c.renew_op(c.clientid)])
+    res = c.compound([op.renew(c.clientid)])
     check(res, NFS4ERR_EXPIRED, "RENEW with expired lease")
 

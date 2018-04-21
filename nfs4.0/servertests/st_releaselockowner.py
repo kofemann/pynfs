@@ -1,6 +1,8 @@
-from nfs4_const import *
-from nfs4_type import lock_owner4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import lock_owner4
 from environment import check
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testFile(t, env):
     """RELEASE_LOCKOWNER - basic test
@@ -20,5 +22,5 @@ def testFile(t, env):
 
     # Release lockowner
     owner = lock_owner4(c.clientid, "lockowner_RLOWN1")
-    res = c.compound([c.release_lockowner_op(owner)])
+    res = c.compound([op.release_lockowner(owner)])
     check(res)

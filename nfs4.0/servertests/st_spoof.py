@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
 
 def testSpoofUser(t, env):

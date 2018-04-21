@@ -1,6 +1,6 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
-from nfs4_type import nfsace4
+from xdrdef.nfs4_type import nfsace4
 from nfs4lib import list2bitmap
 
 # assuming server will accept any small positive integer as an owner

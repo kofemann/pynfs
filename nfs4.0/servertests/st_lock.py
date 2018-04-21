@@ -1,7 +1,9 @@
-from nfs4_const import *
-from nfs4_type import stateid4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import stateid4
 from environment import check, get_invalid_clientid, makeStaleId, makeBadIDganesha
 import time
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def testFile(t, env):
     """LOCK and LOCKT a regular file
@@ -659,7 +661,7 @@ def testBlockTimeout(t, env):
     # Wait for queued lock to timeout
     for i in range(3):
         env.sleep(sleeptime, "Waiting for queued blocking lock to timeout")
-        res = c.compound([c.renew_op(c.clientid)])
+        res = c.compound([op.renew(c.clientid)])
         check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
     # Standard owner releases lock
     res1 = c.unlock_file(1, fh1, res1.lockid)

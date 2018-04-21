@@ -1,7 +1,9 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
 import os
 import struct, time
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _checkprinciples(t, env):
     """Make sure c1 and c2 have different principles"""
@@ -239,7 +241,7 @@ def testConfUnConfDiffVerifier1(t, env):
     tconfirm = res.resarray[0].switch.switch.setclientid_confirm
 
     # removes the unconfirmed { w, x, d, m, t }
-    ops = [c1.setclientid_confirm_op(uclientid, uconfirm)]
+    ops = [op.setclientid_confirm(uclientid, uconfirm)]
     res = c1.compound(ops)
     check(res, NFS4ERR_STALE_CLIENTID)
 
@@ -284,7 +286,7 @@ def testConfUnConfDiffVerifier2(t, env):
     tconfirm = res.resarray[0].switch.switch.setclientid_confirm
 
     # removes the unconfirmed { w, x, d, m, t }
-    ops = [c1.setclientid_confirm_op(uclientid, uconfirm)]
+    ops = [op.setclientid_confirm(uclientid, uconfirm)]
     res = c1.compound(ops)
     check(res, NFS4ERR_STALE_CLIENTID)
 
@@ -330,7 +332,7 @@ def testUnConfReplaced(t, env):
     tconfirm = res.resarray[0].switch.switch.setclientid_confirm
 
     # removes the unconfirmed { w, x, d, m, t }
-    ops = [c1.setclientid_confirm_op(uclientid, uconfirm)]
+    ops = [op.setclientid_confirm(uclientid, uconfirm)]
     res = c1.compound(ops)
     check(res, NFS4ERR_STALE_CLIENTID)
 

@@ -1,4 +1,4 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from nfs4lib import get_attr_name
 from environment import check
 

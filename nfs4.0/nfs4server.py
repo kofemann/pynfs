@@ -25,9 +25,9 @@ if  __name__ == "__main__":
     if os.path.isfile(os.path.join(sys.path[0], 'lib', 'testmod.py')):
         sys.path.insert(1, os.path.join(sys.path[0], 'lib'))
 
-from nfs4_const import *
-from nfs4_type import *
-import nfs4_pack
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
+import xdrdef.nfs4_pack as nfs4_pack
 import rpc.rpc as rpc
 import nfs4lib
 import time, StringIO, random, traceback, codecs

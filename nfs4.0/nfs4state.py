@@ -1,6 +1,5 @@
-from nfs4_const import *
-from nfs4_type import *
-import nfs4_pack
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import *
 import rpc.rpc
 import nfs4acl
 import nfs4lib

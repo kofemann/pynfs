@@ -29,12 +29,11 @@
 import rpc
 import threading
 from xdrlib import Error as XDRError
-import nfs4_const
-from nfs4_const import *
-import nfs4_type
-from nfs4_type import *
-import nfs4_pack
-import nfs4_ops
+import xdrdef.nfs4_const as nfs4_const
+from xdrdef.nfs4_const import *
+import xdrdef.nfs4_type as nfs4_type
+from xdrdef.nfs4_type import *
+import xdrdef.nfs4_pack as nfs4_pack
 import time
 import struct
 import socket
@@ -42,6 +41,9 @@ import sys
 import re
 import inspect
 from os.path import basename
+
+import nfs_ops
+op4 = nfs_ops.NFS4ops()
 
 class NFSException(rpc.RPCError):
     pass
@@ -269,7 +271,7 @@ class CBServer(rpc.RPCServer):
 # STUB
 AuthSys = rpc.SecAuthSys(0,'jupiter',103558,100,[])
 
-class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
+class NFS4Client(rpc.RPCClient):
     def __init__(self, id, host='localhost', port=2049, homedir=['pynfs'],
                  sec_list=[AuthSys], opts=None):
         self._start_cb_server("cb_server_%s" % id)
@@ -391,7 +393,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         self.clientid = res.resarray[0].switch.switch.clientid
         confirm = res.resarray[0].switch.switch.setclientid_confirm
         # SETCLIENTID_CONFIRM
-        confirmop = self.setclientid_confirm_op(self.clientid, confirm)
+        confirmop = op4.setclientid_confirm(self.clientid, confirm)
         res = self.compound([confirmop])
         try: check_result(res)
         except BadCompoundRes:
@@ -419,7 +421,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         cb_location = clientaddr4('tcp', r_addr)
         callback = cb_client4(self.cb_server.prog, cb_location)
 
-        return self.setclientid_op(client_id, callback, cb_ident)
+        return op4.setclientid(client_id, callback, cb_ident)
 
     def get_cbid(self):
         self.cbid += 1
@@ -443,21 +445,21 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
 
     def getattr(self, attrlist=[]):
         # The argument to GETATTR4args is a list of integers.
-        return self.getattr_op(list2bitmap(attrlist))
+        return op4.getattr(list2bitmap(attrlist))
 
     def readdir(self, cookie=0, cookieverf='', dircount=0, maxcount=4096,
                 attr_request=[]):
         attrs = list2bitmap(attr_request)
-        return self.readdir_op(cookie, cookieverf, dircount, maxcount, attrs)
+        return op4.readdir(cookie, cookieverf, dircount, maxcount, attrs)
 
     def setattr(self, attrdict, stateid=None):
         if stateid is None: stateid = stateid4(0, "")
-        return self.setattr_op(stateid, attrdict)
+        return op4.setattr(stateid, attrdict)
 
     def link(self, old, new):
-        ops = self.use_obj(old) + [self.savefh_op()]
+        ops = self.use_obj(old) + [op4.savefh()]
         ops += self.use_obj(new[:-1])
-        ops += [self.link_op(new[-1])]
+        ops += [op4.link(new[-1])]
         return self.compound(ops)
 
     def open(self, owner, name=None, type=OPEN4_NOCREATE,
@@ -474,26 +476,26 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         elif type == OPEN4_CREATE:
             openhow = openflag4(type, createhow4(mode, attrs, verf))
         claim = open_claim4(claim_type, name, deleg_type, deleg_cur_info)
-        return self.open_op(seqid, access, deny, openowner, openhow, claim)
+        return op4.open(seqid, access, deny, openowner, openhow, claim)
 
     def lookup_path(self, dir):
-        return [self.lookup_op(comp) for comp in dir]
+        return [op4.lookup(comp) for comp in dir]
 
     def lookupp_path(self, dir):
-    	return [self.lookupp_op() for comp in dir]
+    	return [op4.lookupp() for comp in dir]
 
     def go_home(self):
         """Return LOOKUP ops to get to homedir"""
-        return [self.putrootfh_op()] + self.lookup_path(self.homedir)
+        return [op4.putrootfh()] + self.lookup_path(self.homedir)
 
     def use_obj(self, file):
         """File is either None, a fh, or a list of path components"""
         if file is None or file == [None]:
             return []
         elif type(file) is str:
-            return [self.putfh_op(file)]
+            return [op4.putfh(file)]
         else:
-            return [self.putrootfh_op()] + self.lookup_path(file)
+            return [op4.putrootfh()] + self.lookup_path(file)
 
     def do_getattrdict(self, file, attrlist):
         """file can be either a fh or a path"""
@@ -514,8 +516,8 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
 
     def do_getfh(self, path):
         """Get filehandle"""
-        ops = [self.putrootfh_op()] + self.lookup_path(path)
-        ops += [self.getfh_op()]
+        ops = [op4.putrootfh()] + self.lookup_path(path)
+        ops += [op4.getfh()]
         res = self.compound(ops)
         check_result(res)
         return res.resarray[-1].switch.switch.object
@@ -533,7 +535,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         count = 0
         while 1:
             count += 1
-            readdirop = self.readdir_op(cookie, cookieverf,
+            readdirop = op4.readdir(cookie, cookieverf,
                                         dircount, maxcount, attrs)
             res = self.compound(baseops + [readdirop])
             check_result(res, "READDIR with cookie=%i, maxcount=%i" %
@@ -565,11 +567,11 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         entries = self.do_readdir(fh)
         for e in entries:
             # We separate setattr and remove to avoid an inode locking bug
-            ops = [self.putfh_op(fh), self.lookup_op(e.name)]
-            ops += [self.setattr_op(stateid, {FATTR4_MODE:0755})]
+            ops = [op4.putfh(fh), op4.lookup(e.name)]
+            ops += [op4.setattr(stateid, {FATTR4_MODE:0755})]
             res = self.compound(ops)
             check_result(res, "Making sure %s is writable" % repr(e.name))
-            ops = [self.putfh_op(fh), self.remove_op(e.name)]
+            ops = [op4.putfh(fh), op4.remove(e.name)]
             res = self.compound(ops)
             if res.status == NFS4ERR_NOTEMPTY:
                 self.clean_dir(path + [e.name])
@@ -591,7 +593,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                    linkdata="/etc/X11"):
         if __builtins__['type'](path) is str:
             path = self.homedir + [path]
-        ops = [self.putrootfh_op()] + self.lookup_path(path[:-1])
+        ops = [op4.putrootfh()] + self.lookup_path(path[:-1])
         if type in [NF4DIR, NF4SOCK, NF4FIFO, NF4REG]:
             objtype = createtype4(type)
         elif type == NF4LNK:
@@ -599,16 +601,16 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         elif type in [NF4BLK, NF4CHR]:
             devdata = specdata4(1, 2)
             objtype = createtype4(type, devdata=devdata)
-        ops += [self.create_op(objtype, path[-1], attrs)]
+        ops += [op4.create(objtype, path[-1], attrs)]
         return self.compound(ops)
 
     def rename_obj(self, oldpath, newpath):
         # Set (sfh) to olddir
-        ops = self.use_obj(oldpath[:-1]) + [self.savefh_op()]
+        ops = self.use_obj(oldpath[:-1]) + [op4.savefh()]
         # Set (cfh) to newdir
         ops += self.use_obj(newpath[:-1])
         # Call rename
-        ops += [self.rename_op(oldpath[-1], newpath[-1])]
+        ops += [op4.rename(oldpath[-1], newpath[-1])]
         return self.compound(ops)
 
     def create_file(self, owner, path=None, attrs={FATTR4_MODE: 0644},
@@ -632,7 +634,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         ops = self.use_obj(dir)
         ops += [self.open(owner, name, OPEN4_CREATE, mode, attrs, verifier,
                           access, deny)]
-        ops += [self.getfh_op()]
+        ops += [op4.getfh()]
         res = self.compound(ops)
         self.advance_seqid(owner, res)
         if set_recall and (res.status != NFS4_OK or \
@@ -661,14 +663,14 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                 self.cb_server.set_cb_recall(self.cbid,
                                              recall_funct, recall_return)
         elif claim_type==CLAIM_PREVIOUS:
-            ops = [self.putfh_op(path)]
+            ops = [op4.putfh(path)]
         elif claim_type==CLAIM_DELEGATE_CUR:
             ops = self.use_obj(dir)
             deleg_cur_info = open_claim_delegate_cur4(deleg_stateid, name)
         ops += [self.open(owner, name, access=access, deny=deny,
                           claim_type=claim_type, deleg_type=deleg_type,
                           deleg_cur_info=deleg_cur_info)]
-        ops += [self.getfh_op()]
+        ops += [op4.getfh()]
         res = self.compound(ops)
         self.advance_seqid(owner, res)
         if set_recall and (res.status != NFS4_OK or \
@@ -691,8 +693,8 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         stateid = res.resarray[-2].switch.switch.stateid
         rflags = res.resarray[-2].switch.switch.rflags
         if rflags & OPEN4_RESULT_CONFIRM:
-            ops = [self.putfh_op(fhandle)]
-            ops += [self.open_confirm_op(stateid, self.get_seqid(owner))]
+            ops = [op4.putfh(fhandle)]
+            ops += [op4.open_confirm(stateid, self.get_seqid(owner))]
             res = self.compound(ops)
             self.advance_seqid(owner, res)
             check_result(res)
@@ -732,13 +734,13 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
 ##         if fh is None:
 ##             ops = []
 ##         else:
-##             ops = [self.putfh_op(fh)]
+##             ops = [op4.putfh(fh)]
 ##         claim = open_claim4(CLAIM_PREVIOUS,
 ##                             delegate_type=OPEN_DELEGATE_NONE)
 ##         openowner = open_owner4(self.clientid, owner)
 ##         how = openflag4(OPEN4_NOCREATE)
-##         ops += [self.open_op(seqid, access, deny, openowner, how, claim)]
-##         ops += [self.getfh_op()]
+##         ops += [op4.open(seqid, access, deny, openowner, how, claim)]
+##         ops += [op4.getfh()]
 ##         res = self.compound(ops)
 ##         self.advance_seqid(owner, res)
 ##         check(res, error, msg)
@@ -754,7 +756,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                        seqid=None):
         if seqid is None: seqid = self.get_seqid(owner)
         ops = self.use_obj(file)
-        ops += [self.open_downgrade_op(stateid, seqid, access, deny)]
+        ops += [op4.open_downgrade(stateid, seqid, access, deny)]
         res = self.compound(ops)
         self.advance_seqid(owner, res)
         if res.status == NFS4_OK:
@@ -764,7 +766,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
     def write_file(self, file, data, offset=0, stateid=stateid4(0, ''),
                    how=FILE_SYNC4):
         ops = self.use_obj(file)
-        ops += [self.write_op(stateid, offset, how, data)]
+        ops += [op4.write(stateid, offset, how, data)]
         res = self.compound(ops)
         if res.status == NFS4_OK:
             res.count = res.resarray[-1].switch.switch.count
@@ -773,7 +775,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
     
     def read_file(self, file, offset=0, count=2048, stateid=stateid4(0, '')):
         ops =  self.use_obj(file)
-        ops += [self.read_op(stateid, offset, count)]
+        ops += [op4.read(stateid, offset, count)]
         res = self.compound(ops)
         if res.status == NFS4_OK:
             res.eof = res.resarray[-1].switch.switch.eof
@@ -795,7 +797,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         nfs4_open_owner = open_to_lock_owner4(openseqid, openstateid,
                                               lockseqid, nfs4_lock_owner)
         locker = locker4(TRUE, open_owner=nfs4_open_owner)
-        ops += [self.lock_op(type, FALSE, offset, len, locker)]
+        ops += [op4.lock(type, FALSE, offset, len, locker)]
         res = self.compound(ops)
         self.advance_seqid(openowner, res)
         if res.status == NFS4_OK:
@@ -806,10 +808,10 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                     offset=0, len=0xffffffffffffffff, type=WRITE_LT):
         """Lock the file using stateid and seqid from previous lock operation
         """
-        ops = [self.putfh_op(fh)]
+        ops = [op4.putfh(fh)]
         existing_lock_owner = exist_lock_owner4(stateid, seqid)
         locker = locker4(FALSE, lock_owner=existing_lock_owner)
-        ops += [self.lock_op(type, FALSE, offset, len, locker)]
+        ops += [op4.lock(type, FALSE, offset, len, locker)]
         res = self.compound(ops)
         if res.status==NFS4_OK:
             res.lockid = res.resarray[-1].switch.switch.lock_stateid
@@ -818,7 +820,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
     def unlock_file(self, seqid, file, stateid,
                     offset=0, len=0xffffffffffffffff):
         ops = self.use_obj(file)
-        ops += [self.locku_op(READ_LT, seqid, stateid, offset, len)]
+        ops += [op4.locku(READ_LT, seqid, stateid, offset, len)]
         res = self.compound(ops)
         if res.status==NFS4_OK:
             res.lockid = res.resarray[-1].switch.lock_stateid
@@ -828,7 +830,7 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
                   tester="tester"):
         ops = self.use_obj(file)
         test_owner = lock_owner4(self.clientid, tester)
-        ops += [self.lockt_op(type, offset, len, test_owner)]
+        ops += [op4.lockt(type, offset, len, test_owner)]
         return self.compound(ops)
                   
     def close_file(self, owner, fh, stateid, seqid=None):
@@ -837,15 +839,15 @@ class NFS4Client(rpc.RPCClient, nfs4_ops.NFS4Operations):
         if fh is None:
             ops = []
         else:
-            ops = [self.putfh_op(fh)]
-        ops += [self.close_op(seqid, stateid)]
+            ops = [op4.putfh(fh)]
+        ops += [op4.close(seqid, stateid)]
         res = self.compound(ops)
         self.advance_seqid(owner, res)
         return res
 
     def commit_file(self, file, offset=0, count=0):
         ops = self.use_obj(file)
-        ops += [self.commit_op(offset, count)]
+        ops += [op4.commit(offset, count)]
         return self.compound(ops)
 
     def maketree(self, tree, root=None, owner=None):

@@ -28,9 +28,9 @@ except ImportError:
 #    readline.parse_and_bind("tab: complete")
 #import cmd
 import nfs4lib
-import nfs4_type
-import nfs4_const
-import nfs4_pack
+import xdrdef.nfs4_type
+import xdrdef.nfs4_const
+import xdrdef.nfs4_pack
 import code
 import traceback
 

@@ -1,5 +1,5 @@
-from nfs4_const import *
-from nfs4_type import stateid4
+from xdrdef.nfs4_const import *
+from xdrdef.nfs4_type import stateid4
 from environment import check, makeStaleId
 
 def testFile(t, env):

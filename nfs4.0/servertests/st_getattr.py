@@ -1,6 +1,8 @@
-from nfs4_const import *
+from xdrdef.nfs4_const import *
 from environment import check
 from nfs4lib import get_attr_name
+import nfs_ops
+op = nfs_ops.NFS4ops()
 
 def _try_mandatory(t, env, path):
     c = env.c1
@@ -531,8 +533,8 @@ def testOwnerName(t, env):
         """
 
         request = [FATTR4_MOUNTED_ON_FILEID, FATTR4_FILEID, FATTR4_FSID]
-        lookupops = [self.ncl.lookup_op("unix")]
-        ops = [self.ncl.putrootfh_op()]
+        lookupops = [op.lookup("unix")]
+        ops = [op.putrootfh()]
         ops.append(self.ncl.getattr(request))
 	ops += lookupops
         ops.append(self.ncl.getattr(request))
@@ -543,7 +545,7 @@ def testOwnerName(t, env):
         print
         print "From Getattr /unix - ", res.resarray[-1].obj_attributes
 
-        ops = [self.ncl.putrootfh_op()]
+        ops = [op.putrootfh()]
         attrmask = nfs4lib.list2bitmap(request)
         ops.append(self.ncl.readdir(attr_request=attrmask))
         res = self.ncl.do_ops(ops)
