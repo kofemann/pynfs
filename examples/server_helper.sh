@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# A simple script that can reboot a virtual guest using virsh, or unlink
+# A simple script that can restart knfsd, or unlink
 # a file on the server. It would be used by adding
 # --serverhelper=sample/server_helper.sh --serverhelperarg=SERVERNAME
-# to testserver.py's commandline arguments, where SERVERNAME is
-# something that works either as a libvirt domain or as a hostname to
-# ssh to.
+# to testserver.py's commandline arguments.
 
 server=$1
 command=$2
@@ -13,8 +11,16 @@ shift; shift
 
 case $command in
 reboot )
-	virsh destroy $server
-	virsh start $server
+	# This would maybe more interesting; note server would have to
+	# work either as a libvirt domain or as a hostname to ssh to:
+	#   virsh destroy $server
+	#   virsh start $server
+	# But just restarting knfsd is faster.  Also the full reboot was
+	# interfering with my testing because I had a very short lease
+	# period set, I was waiting for ssh to come up to decide when
+	# the boot was done, and ssh wasn't coming up till the lease
+	# period was done.
+	ssh root@$server "systemctl restart nfs-server.service"
 	;;
 unlink )
 	ssh $server "rm $1"
