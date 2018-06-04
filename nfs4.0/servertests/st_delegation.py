@@ -26,10 +26,10 @@ class _handle_error(object):
                 pass
             _lock.release()
             
-def _recall(c, op, cbid):
+def _recall(c, thisop, cbid):
     # Note this will be run in the cb_server thread, not the tester thread
-    ops = [op.putfh(op.opcbrecall.fh),
-           op.delegreturn(op.opcbrecall.stateid)]
+    ops = [op.putfh(thisop.opcbrecall.fh),
+           op.delegreturn(thisop.opcbrecall.stateid)]
     _lock.acquire()
     try:
         res = c.compound(ops)
