@@ -410,7 +410,7 @@ def testTimedoutGrabLock(t, env):
     sleeptime = c2.getLeaseTime() // 2
     for i in range(3):
         env.sleep(sleeptime)
-        res = c2.compound([c2.renew_op(c2.clientid)])
+        res = c2.compound([op.renew_op(c2.clientid)])
         check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
     # Client 2: Lock file, should work since Client 1's lock has expired
     res2 = c2.lock_file(t.code, fh2, stateid2, type=READ_LT)
