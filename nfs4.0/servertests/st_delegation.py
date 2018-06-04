@@ -721,7 +721,7 @@ def testServerSelfConflict(t, env):
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
-    _get_deleg(t, c, c.homedir + [t.code], None, response)
+    _get_deleg(t, c, c.homedir + [t.code], None, NFS4_OK)
 
     sleeptime = 1
     while 1:
