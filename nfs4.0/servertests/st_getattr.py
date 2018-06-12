@@ -501,7 +501,7 @@ def testLotsofGetattrsFile(t, env):
     for i in range(90):
         ops += [c.getattr(mandatory)]
     res = c.compound(ops)
-    check(res)
+    check(res, [NFS4_OK, NFS4ERR_RESOURCE])
 
 def testOwnerName(t, env):
     """GETATTR on owner
