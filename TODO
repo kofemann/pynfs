@@ -35,7 +35,8 @@
 - make block/char/etc tests more automatic: use an INFO level test to
   probe whether the server allows creating these things as a regular
   user, or as root, give an INFO level result, and make further tests
-  depend on this somehow.
+  depend on this somehow.  SATT18 and possibly others could also use
+  some sort of "needs root" tag.
 
 - Search for other similar pieces between 4.0 and 4.1 which can obviously be
   shared--any .x files?
