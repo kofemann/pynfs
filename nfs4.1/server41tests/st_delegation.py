@@ -27,8 +27,8 @@ def __create_file_with_deleg(sess, name, access):
     return (fh, deleg)
 
 def _create_file_with_deleg(sess, name, access):
-	fh, deleg = __create_file_with_deleg(sess, name, access)
-	return fh
+    fh, deleg = __create_file_with_deleg(sess, name, access)
+    return fh
 
 def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     recall = threading.Event()
@@ -182,7 +182,7 @@ def testDelegRevocation(t, env):
         if res.status == NFS4_OK:
             break;
         check(res, [NFS4_OK, NFS4ERR_DELAY])
-	# just to keep sess1 renewed.  This is a bit fragile, as we
+        # just to keep sess1 renewed.  This is a bit fragile, as we
         # depend on the above compound waiting no longer than the
         # server's lease period:
         res = sess1.compound([])
@@ -196,7 +196,7 @@ def testDelegRevocation(t, env):
              " sucess of open conflicting with delegation")
     flags &= ~SEQ4_STATUS_RECALLABLE_STATE_REVOKED
     if flags:
-	print("WARNING: unexpected status flag(s) 0x%x set" % flags);
+        print("WARNING: unexpected status flag(s) 0x%x set" % flags);
     res = sess1.update_seq_state(res, slot)
     res = sess1.compound([op.test_stateid([delegstateid])])
     stateid_stat = res.resarray[0].tsr_status_codes[0]
@@ -210,7 +210,7 @@ def testDelegRevocation(t, env):
     res = sess1.c.compound([seq_op])
     flags = res.resarray[0].sr_status_flags
     if flags & SEQ4_STATUS_RECALLABLE_STATE_REVOKED:
-	fail("SEQ4_STATUS_RECALLABLE_STATE_REVOKED should be cleared after"
-	     " FREE_STATEID")
+        fail("SEQ4_STATUS_RECALLABLE_STATE_REVOKED should be cleared after"
+             " FREE_STATEID")
     if flags & ~SEQ4_STATUS_RECALLABLE_STATE_REVOKED:
         print("WARNING: unexpected status flag(s) 0x%x set" % flags)

@@ -438,8 +438,8 @@ def testLargeReadWrite(t, env):
     check(res)
     data = res.resarray[-2].switch.switch.data
     if len(data) != len(writedata):
-	    t.fail("READ returned %d bytes, expected %d" %
-                                    (len(data), len(writedata)))
+        t.fail("READ returned %d bytes, expected %d" %
+                           (len(data), len(writedata)))
     if (data != '\0'*size):
         t.fail("READ returned unexpected data")
     res = c.read_file(fh, 0, size)

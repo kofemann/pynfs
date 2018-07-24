@@ -471,12 +471,12 @@ def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0o755}):
 def open_create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                      access=OPEN4_SHARE_ACCESS_BOTH,
                      deny=OPEN4_SHARE_DENY_NONE,
-		     mode=GUARDED4, verifier=None,
-		     claim_type=CLAIM_NULL,
-		     want_deleg=False,
-		     deleg_type=None,
-		     open_create=OPEN4_NOCREATE,
-		     seqid=0, clientid=0):
+                     mode=GUARDED4, verifier=None,
+                     claim_type=CLAIM_NULL,
+                     want_deleg=False,
+                     deleg_type=None,
+                     open_create=OPEN4_NOCREATE,
+                     seqid=0, clientid=0):
     open_op = open_create_file_op(sess, owner, path, attrs, access, deny, mode,
                             verifier, claim_type, want_deleg, deleg_type,
                             open_create, seqid, clientid)
@@ -486,12 +486,12 @@ def open_create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
 def open_create_file_op(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                      access=OPEN4_SHARE_ACCESS_BOTH,
                      deny=OPEN4_SHARE_DENY_NONE,
-		     mode=GUARDED4, verifier=None,
-		     claim_type=CLAIM_NULL,
-		     want_deleg=False,
-		     deleg_type=None,
-		     open_create=OPEN4_NOCREATE,
-		     seqid=0, clientid=0):
+                     mode=GUARDED4, verifier=None,
+                     claim_type=CLAIM_NULL,
+                     want_deleg=False,
+                     deleg_type=None,
+                     open_create=OPEN4_NOCREATE,
+                     seqid=0, clientid=0):
     # Set defaults
     if path is None:
         dir = sess.c.homedir

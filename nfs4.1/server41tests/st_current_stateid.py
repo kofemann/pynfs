@@ -43,7 +43,7 @@ def testLockLockU(t, env):
     open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, "lock1"))
     lock_owner = locker4(open_owner=open_to_lock_owner, new_lock_owner=True)
     lock_ops = [ op.lock(WRITE_LT, False, 0, NFS4_UINT64_MAX, lock_owner),
-	op.locku(WRITE_LT, 0, current_stateid, 0, NFS4_UINT64_MAX) ]
+        op.locku(WRITE_LT, 0, current_stateid, 0, NFS4_UINT64_MAX) ]
     res = sess1.compound([op.putfh(fh)] + lock_ops)
     check(res, NFS4_OK)
     res = close_file(sess1, fh, stateid=stateid)

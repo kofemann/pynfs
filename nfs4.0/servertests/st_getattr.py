@@ -525,18 +525,18 @@ def testOwnerName(t, env):
     def xxxtestMountedOnFileid(self):
         """GETATTR(FATTR4_MOUNTED_ON_FILEID)
 
-	This DOES NOT work on standard test tree.  It assumes that pseudofs
-	root / and pseudo fs node /unix exist, and that /unix is a mountpoint
-	of an exported file system. The fsid of "/" should differ from the
-	fsid of "/unix", and the mounted_on_fileid should != the filed with
-	both the Getattr of "/unix" and the Readdir of "/".
+        This DOES NOT work on standard test tree.  It assumes that pseudofs
+        root / and pseudo fs node /unix exist, and that /unix is a mountpoint
+        of an exported file system. The fsid of "/" should differ from the
+        fsid of "/unix", and the mounted_on_fileid should != the filed with
+        both the Getattr of "/unix" and the Readdir of "/".
         """
 
         request = [FATTR4_MOUNTED_ON_FILEID, FATTR4_FILEID, FATTR4_FSID]
         lookupops = [op.lookup("unix")]
         ops = [op.putrootfh()]
         ops.append(self.ncl.getattr(request))
-	ops += lookupops
+        ops += lookupops
         ops.append(self.ncl.getattr(request))
         res = self.ncl.do_ops(ops)
         self.assert_OK(res)

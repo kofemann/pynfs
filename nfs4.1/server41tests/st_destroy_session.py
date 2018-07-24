@@ -97,7 +97,7 @@ def testDestroy3(t, env):
         recall.happened = True
         env.notify = recall.set # This is called after compound sent to queue
     def bad_post_hook(arg, env, res):
-	return None;
+        return None;
     def good_post_hook(arg, env, res):
         return res
     c = env.c1.new_client(env.testname(t))

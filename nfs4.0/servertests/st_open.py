@@ -331,9 +331,9 @@ def testModeChange(t, env):
     res = c.open_file(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
                       deny=OPEN4_SHARE_DENY_NONE)
     if env.opts.uid == 0:
-	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=0o000" % t.code)
+        check(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=0o000" % t.code)
     else:
-	    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=0o000" % t.code)
+        check(res, NFS4ERR_ACCESS, "Opening file %s with mode=0o000" % t.code)
 
 def testShareConflict1(t, env):
     """OPEN conflicting with previous share

@@ -50,7 +50,7 @@ def testStateid1(t, env):
         # From draft23 12.5.3 "After the layout stateid is established,
         # the server increments by one the value of the "seqid" in each
         # subsequent LAYOUTGET and LAYOUTRETURN response,
-	check_seqid(lo_stateid, i + 2)
+        check_seqid(lo_stateid, i + 2)
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 

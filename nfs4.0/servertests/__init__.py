@@ -1,5 +1,5 @@
 __all__ = [ "st_access.py",
-	    "st_acl.py",
+            "st_acl.py",
             "st_close.py",
             "st_commit.py",
             "st_compound.py",

@@ -222,8 +222,8 @@ class Test(object):
             environment.startUp()
             self.runtest(self, environment)
             self.result = self._pass_result
-	    environment.clean_sessions()
-	    environment.clean_clients()
+            environment.clean_sessions()
+            environment.clean_clients()
         except KeyboardInterrupt:
             raise
         except TestException as e:
@@ -330,8 +330,8 @@ def _import_by_name(name):
 
 def parseversions(t):
     if len(t.vers_list) > 1:
-	    raise RuntimeError("Test %s has invalid version range %s"
-                               % (t.fullname, t.vers_list))
+        raise RuntimeError("Test %s has invalid version range %s"
+                           % (t.fullname, t.vers_list))
     if len(t.vers_list) == 0:
         return (0, sys.maxsize)
     limits = t.vers_list[0].split("-")

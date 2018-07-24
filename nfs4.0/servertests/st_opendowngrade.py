@@ -136,16 +136,15 @@ class open_sequence:
 						deny=OPEN4_SHARE_DENY_NONE,
 						mode=UNCHECKED4)
     def downgrade(self, access):
-	    res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
+        res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
 					access=access,
 					deny=OPEN4_SHARE_DENY_NONE)
-	    self.stateid = res.stateid
+        self.stateid = res.stateid
     def close(self):
         self.client.close_file(self.owner, self.fh, self.stateid)
     def lock(self, type):
         self.client.lock_file(self.owner, self.fh, self.stateid,
                     type=type)
-	
 
 def testOpenDowngradeSequence(t, env):
     """test complex upgrade/downgrade sequence
