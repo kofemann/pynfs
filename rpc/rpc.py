@@ -614,7 +614,7 @@ class ConnectionHandler(object):
             msg_data = record[p.get_position():] # RPC payload
             # Remember length of the header
             msg.length = p.get_position()
-        except (rpc_pack.XDRError, EOFError), e:
+        except (rpc_pack.XDRError, EOFError) as e:
             log_t.warn("XDRError: %s, dropping packet" % e)
             log_t.debug("unpacking raised the following error", exc_info=True)
             self._notify_drop()
