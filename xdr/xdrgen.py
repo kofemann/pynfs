@@ -341,10 +341,7 @@ def p_constant(t):
     '''constant : CONST10
                 | CONST8
                 | CONST16'''
-    if len(t[1]) > 9:
-        t[0] = t[1] + 'L'
-    else:
-        t[0] = t[1]
+    t[0] = t[1]
 
 def p_value(t):
     '''value : constant
