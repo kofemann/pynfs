@@ -7,6 +7,7 @@
 #                    Information Technology Integration
 #
 
+from __future__ import absolute_import
 import struct
 import xdrlib
 import socket
@@ -14,17 +15,17 @@ import select
 import threading
 import errno
 
-from rpc_const import *
-from rpc_type import *
-import rpc_pack
+from rpc.rpc_const import *
+from rpc.rpc_type import *
+import rpc.rpc_pack as rpc_pack
 
 # Import security flavors and store valid ones
-from rpcsec.sec_auth_none import SecAuthNone
-from rpcsec.sec_auth_sys import SecAuthSys
+from .rpcsec.sec_auth_none import SecAuthNone
+from .rpcsec.sec_auth_sys import SecAuthSys
 supported = {'none' : SecAuthNone,
              'sys'  : SecAuthSys }
 try:
-    from rpcsec.sec_auth_gss import SecAuthGss
+    from .rpcsec.sec_auth_gss import SecAuthGss
     supported['gss'] = SecAuthGss
 except ImportError:
     pass
@@ -427,11 +428,11 @@ class RPCClient(object):
         cred = self.security.make_cred()
         p.pack_uint(xid)
         p.pack_enum(CALL)
-	p.pack_uint(RPCVERSION)
-	p.pack_uint(prog)
-	p.pack_uint(vers)
-	p.pack_uint(proc)
-	p.pack_opaque_auth(cred)
+        p.pack_uint(RPCVERSION)
+        p.pack_uint(prog)
+        p.pack_uint(vers)
+        p.pack_uint(proc)
+        p.pack_opaque_auth(cred)
         verf = self.security.make_verf(p.get_buffer())
         p.pack_opaque_auth(verf)
         return p.get_buffer(), cred

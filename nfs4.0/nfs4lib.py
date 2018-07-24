@@ -24,16 +24,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from __future__ import absolute_import
 
-
-import rpc
-import threading
-from xdrlib import Error as XDRError
-import xdrdef.nfs4_const as nfs4_const
-from xdrdef.nfs4_const import *
-import xdrdef.nfs4_type as nfs4_type
-from xdrdef.nfs4_type import *
-import xdrdef.nfs4_pack as nfs4_pack
 import time
 import struct
 import socket
@@ -41,6 +33,16 @@ import sys
 import re
 import inspect
 from os.path import basename
+import threading
+
+import rpc.rpc as rpc
+import rpc.rpc_const as rpc_const
+import xdrdef.nfs4_const as nfs4_const
+from  xdrdef.nfs4_const import *
+import xdrdef.nfs4_type as nfs4_type
+from xdrdef.nfs4_type import *
+from xdrlib import Error as XDRError
+import xdrdef.nfs4_pack as nfs4_pack
 
 import nfs_ops
 op4 = nfs_ops.NFS4ops()

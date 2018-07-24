@@ -1354,6 +1354,8 @@ allow_attr_passthrough = True # Option which allows substructure attrs to
                               # be referenced directly, in cases where there
                               # is a unique substructure to search.
 pack_header = """\
+import sys,os
+sys.path.append(os.path.dirname(__file__))
 import %s as const
 import %s as types
 import xdrlib
@@ -1438,7 +1440,7 @@ def run(infile, filters=True, pass_attrs=True, debug=False):
     const_fd.write(comment_string)
     type_fd = open(types_file + ".py", "w")
     type_fd.write(comment_string)
-    type_fd.write("import %s as const\n" % constants_file)
+    type_fd.write("import sys,os\nsys.path.append(os.path.dirname(__file__))\nimport %s as const\n" % constants_file)
     pack_fd = open(packer_file + ".py", "w")
     pack_fd.write(comment_string)
     pack_fd.write(pack_header % (constants_file, types_file))

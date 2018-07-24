@@ -1,4 +1,4 @@
-from base import SecFlavor, SecError
+from .base import SecFlavor, SecError
 from rpc.rpc_const import RPCSEC_GSS
 from rpc.rpc_type import opaque_auth
 from gss_const import *

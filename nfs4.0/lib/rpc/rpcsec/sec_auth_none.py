@@ -1,4 +1,4 @@
-from base import SecFlavor
+from .base import SecFlavor
 
 class SecAuthNone(SecFlavor):
     pass
