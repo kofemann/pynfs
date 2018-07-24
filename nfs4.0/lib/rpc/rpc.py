@@ -176,9 +176,14 @@ def _send_record(self, data, chunksize=2048):
         mark = struct.pack('>L', last | len(chunk))
         self.sendall(mark + chunk)
 
-socket._socketobject.recv_all = _recv_all
-socket._socketobject.recv_record = _recv_record
-socket._socketobject.send_record = _send_record
+try:     #for python2
+    socket._socketobject.recv_all = _recv_all
+    socket._socketobject.recv_record = _recv_record
+    socket._socketobject.send_record = _send_record
+except:  #for python3
+    socket.recv_all = _recv_all
+    socket.recv_record = _recv_record
+    socket.send_record = _send_record
 
 #################################################
 
