@@ -190,8 +190,8 @@ class %(CompoundState)s(object):
 '''
 
 # Create normal code
-exec code_str % _d
+exec(code_str % _d)
 
 # Create callback code
-exec code_str % _cb_d
+exec(code_str % _cb_d)
 
