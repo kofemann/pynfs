@@ -177,7 +177,7 @@ class NFS4Client(rpc.Client, rpc.Server):
     def op_cb_compound(self, args, cred):
         env = CompoundState(args, cred)
         # Check for problems with the compound itself
-        if args.minorversion <> 0:
+        if args.minorversion != 0:
             if args.minorversion not in self.minor_versions:
                 env.results.set_empty_return(NFS4ERR_MINOR_VERS_MISMATCH)
                 return env

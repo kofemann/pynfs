@@ -227,7 +227,7 @@ class CBServer(rpc.RPCServer):
             cbid = cmp4args.callback_ident
         except XDRError:
             return NFS4ERR_BADXDR, [], tag
-        if cmp4args.minorversion <> 0:
+        if cmp4args.minorversion != 0:
             return NFS4ERR_MINOR_VERS_MISMATCH, [], tag
         results = []
         ok = NFS4_OK
@@ -239,7 +239,7 @@ class CBServer(rpc.RPCServer):
                 resop4 = CB_ILLEGAL4res(NFS4ERR_OP_ILLEGAL)
                 result = nfs_cb_resop4(resop=OP_ILLEGAL, opcbillegal=resop4)
             results += [ result ]
-            if ok <> NFS4_OK:
+            if ok != NFS4_OK:
                 break
         return ok, results, tag
         

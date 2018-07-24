@@ -171,7 +171,7 @@ class NFS4Server(rpc.RPCServer):
             return NFS4ERR_BADXDR, [], tag
         print("TCP NFSv4 COMPOUND call, tag: %s, n_ops: %d" % \
               (repr(tag), len(cmp4args.argarray)))
-        if cmp4args.minorversion <> 0:
+        if cmp4args.minorversion != 0:
             return NFS4ERR_MINOR_VERS_MISMATCH, [], tag
         if not verify_utf8(tag):
             return NFS4ERR_INVAL, [], tag
@@ -183,7 +183,7 @@ class NFS4Server(rpc.RPCServer):
             print("*** %s (%d) ***" % (opname, op.argop))
             ok, result = getattr(self, opname.lower())(op)
             results += [ result ]
-            if ok <> NFS4_OK:
+            if ok != NFS4_OK:
                 print(" ! error %s" % nfsstat4[ok])
                 break
         print("Replying. Status %s (%d)" % (nfsstat4[ok], ok))
