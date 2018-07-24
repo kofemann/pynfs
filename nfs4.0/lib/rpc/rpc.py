@@ -519,7 +519,7 @@ class RPCServer(Server):
         for secname, sectype in {'none': AUTH_NONE,
                                  'sys':  AUTH_SYS,
                                  'gss':  RPCSEC_GSS,
-                                }.iteritems():
+                                }.items():
             if secname in supported:
                 self.security[sectype] = supported[secname]()
 
