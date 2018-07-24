@@ -504,7 +504,7 @@ class NFS4Server(rpc.RPCServer):
                         if op.opopen.openhow.how.mode == GUARDED4:
                             raise NFS4Error(NFS4ERR_EXIST)
                         # with an existing file ignore attrs except size=0
-                        if attrs.has_key(FATTR4_SIZE) and attrs[FATTR4_SIZE]==0:
+                        if FATTR4_SIZE in attrs and attrs[FATTR4_SIZE]==0:
                             attrset = existing.set_attributes(attrdict={FATTR4_SIZE:0})
                         # Now break out and use existing as is
                     else:
@@ -593,7 +593,7 @@ class NFS4Server(rpc.RPCServer):
     def op_putfh(self, op):
         print("  FILEHANDLE '%s'" % repr(op.opputfh.object))
         # check access!
-        if not self.fhcache.has_key(op.opputfh.object):
+        if not op.opputfh.object in self.fhcache:
             return simple_error(NFS4ERR_BADHANDLE)
         self.curr_fh = self.fhcache[op.opputfh.object] 
         return simple_error(NFS4_OK)

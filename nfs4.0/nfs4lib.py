@@ -232,7 +232,7 @@ class CBServer(rpc.RPCServer):
         results = []
         ok = NFS4_OK
         for op in cmp4args.argarray:
-            if self.opcodes.has_key(op.argop):
+            if op.argop in self.opcodes:
                 ok, result = self.opcodes[op.argop](op, cbid)
             else:
                 ok = NFS4ERR_OP_ILLEGAL

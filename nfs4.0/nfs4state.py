@@ -1014,7 +1014,7 @@ class VirtualHandle(NFSFileHandle):
         # Must make sure that if it fails, nothing is changed
         if self.fattr4_type != NF4DIR:
             raise "create called on non-directory (%s)" % self.ref
-        if self.dirent.has_key(name):
+        if self.dirent.has_name(name):
             raise "attempted to create already existing file."
         fh = VirtualHandle(name, type, self)
         if FATTR4_SIZE in attrs and type.type != NF4REG:
@@ -1116,7 +1116,7 @@ class VirtualHandle(NFSFileHandle):
         mapping = nfs4lib.list2bitmap
         ret_list = []
         for attr in attrdict.keys():
-            if not self.supported.has_key(attr):
+            if not attr in self.supported:
                 raise NFS4Error(NFS4ERR_ATTRNOTSUPP, attrs=mapping(ret_list))
             if 'w' not in self.supported[attr]:
                 raise NFS4Error(NFS4ERR_INVAL, attrs=mapping(ret_list))
@@ -1182,7 +1182,7 @@ class VirtualHandle(NFSFileHandle):
         # Make sure any error is recorded in fattr4_rdattr_error
         ret_dict = {}
         for attr in attrlist:
-            if not self.supported.has_key(attr):
+            if not attr in self.supported:
                 # Ignore unknown attributes
                 continue
             if 'r' not in self.supported[attr]:
@@ -1419,7 +1419,7 @@ class HardHandle(NFSFileHandle):
         self.oldfiles = self.dirent.keys()
         for i in os.listdir(self.file):
             fullfile = os.path.join(self.file, i)
-            if not self.dirent.has_key(i):
+            if not self.dirent.has_name(i):
                 self.dirent[i] = HardHandle(i, self, fullfile)
             else:
                 self.oldfiles.remove(i)
@@ -1520,7 +1520,7 @@ class DirList:
         else:
             return self.list[i:]
 
-    def has_key(self, name):
+    def has_name(self, name):
         for x in self.list:
             if x.name == name:
                 return True
