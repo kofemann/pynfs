@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import stateid4
-from environment import check, makeStaleId
+from .environment import check, makeStaleId
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import *
-from environment import check, fail, create_file, open_file, create_confirm
+from .environment import check, fail, create_file, open_file, create_confirm
 import sys
 import os
 import nfs4lib

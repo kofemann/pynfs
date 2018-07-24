@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import createtype4, specdata4
-from environment import check
+from .environment import check
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

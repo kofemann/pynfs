@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check
+from .environment import check
 import os
 import struct, time
 import nfs_ops

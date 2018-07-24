@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, makeStaleId
+from .environment import check, makeStaleId
 
 
 def testCloseCreate(t, env):

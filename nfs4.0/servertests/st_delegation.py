@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import nfs_client_id4, clientaddr4, cb_client4
-from environment import check
+from .environment import check
 import os
 import threading
 import time

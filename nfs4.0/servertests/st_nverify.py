@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, get_invalid_clientid, makeStaleId
+from .environment import check, get_invalid_clientid, makeStaleId
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

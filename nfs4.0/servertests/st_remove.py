@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, get_invalid_utf8strings
+from .environment import check, get_invalid_utf8strings
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

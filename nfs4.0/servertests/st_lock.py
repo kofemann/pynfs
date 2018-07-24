@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import stateid4
-from environment import check, get_invalid_clientid, makeStaleId, makeBadIDganesha
+from .environment import check, get_invalid_clientid, makeStaleId, makeBadIDganesha
 import time
 import nfs_ops
 op = nfs_ops.NFS4ops()

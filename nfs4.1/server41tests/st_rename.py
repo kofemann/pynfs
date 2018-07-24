@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
+from .environment import check, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
 import nfs_ops
 op = nfs_ops.NFS4ops()
 from xdrdef.nfs4_type import *

@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check
+from .environment import check
 from xdrdef.nfs4_type import nfsace4
 from nfs4lib import list2bitmap
 

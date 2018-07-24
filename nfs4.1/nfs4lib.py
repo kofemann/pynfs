@@ -1,5 +1,5 @@
 from __future__ import with_statement
-import rpc
+import rpc.rpc as rpc
 import xdrdef.nfs4_const
 from xdrdef.nfs4_pack import NFS4Packer, NFS4Unpacker
 import xdrdef.nfs4_type

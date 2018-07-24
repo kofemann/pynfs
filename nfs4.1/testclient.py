@@ -33,7 +33,7 @@ import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
 import client41tests.environment as environment
 import socket
-import rpc
+import rpc.rpc as rpc
 import pickle
 
 def parse_useparams(str):

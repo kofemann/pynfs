@@ -3,7 +3,7 @@ from __future__ import with_statement
 import use_local # HACK so don't have to rebuild constantly
 import nfs4lib
 from nfs4lib import inc_u32, NFS4Error, NFS4Replay
-import rpc
+import rpc.rpc as rpc
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import *
 from xdrdef.sctrl_pack import SCTRLPacker, SCTRLUnpacker

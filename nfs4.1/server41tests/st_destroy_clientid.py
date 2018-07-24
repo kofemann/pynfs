@@ -1,6 +1,6 @@
 from st_create_session import create_session
 from xdrdef.nfs4_const import *
-from environment import check, fail
+from .environment import check, fail
 import nfs_ops
 op = nfs_ops.NFS4ops()
 import nfs4lib

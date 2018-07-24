@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from nfs4lib import list2bitmap
-from environment import check
+from .environment import check
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

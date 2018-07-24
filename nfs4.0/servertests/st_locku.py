@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import stateid4
-from environment import check, makeStaleId
+from .environment import check, makeStaleId
 
 def testFile(t, env):
     """LOCKU a regular file

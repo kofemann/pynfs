@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, get_invalid_clientid
+from .environment import check, get_invalid_clientid
 
 def testUnlockedFile(t, env):
     """LOCKT on a regular unlocked file

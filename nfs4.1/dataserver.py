@@ -1,4 +1,4 @@
-import rpc
+import rpc.rpc as rpc
 import nfs4lib
 import xdrdef.nfs4_type as type4
 from xdrdef.nfs4_pack import NFS4Packer

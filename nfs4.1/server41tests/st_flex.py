@@ -3,7 +3,7 @@ from xdrdef.nfs4_type import *
 from xdrdef.nfs4_pack import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from environment import check, fail, create_file, close_file, open_create_file_op
+from .environment import check, fail, create_file, close_file, open_create_file_op
 from xdrdef.nfs4_pack import NFS4Packer as FlexPacker, \
 	NFS4Unpacker as FlexUnpacker
 from nfs4lib import FancyNFS4Packer, get_nfstime

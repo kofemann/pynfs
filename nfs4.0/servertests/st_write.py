@@ -1,8 +1,8 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import *
-from environment import check, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
+from .environment import check, compareTimes, makeBadID, makeBadIDganesha, makeStaleId
 import struct
-import rpc
+import rpc.rpc as rpc
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

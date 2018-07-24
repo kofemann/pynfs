@@ -2,7 +2,7 @@ from xdrdef.nfs4_const import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
 import time
-from environment import check, fail
+from .environment import check, fail
 from xdrdef.nfs4_type import *
 from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids

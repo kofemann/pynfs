@@ -1,8 +1,9 @@
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import nfs_argop4
 from xdrdef.nfs4_pack import NFS4Packer
-from environment import check, get_invalid_utf8strings
-from rpc import RPCError
+from .environment import check, get_invalid_utf8strings
+from rpc.rpc import RPCError
+
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

@@ -1,4 +1,5 @@
 from __future__ import with_statement
+from __future__ import absolute_import
 
 import socket, select
 import struct
@@ -7,7 +8,7 @@ import logging
 from collections import deque as Deque
 from errno import EINPROGRESS, EWOULDBLOCK
 
-import rpc_pack
+import rpc.rpc_pack as rpc_pack
 from rpc_const import *
 from rpc_type import *
 

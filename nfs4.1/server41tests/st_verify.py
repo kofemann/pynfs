@@ -1,7 +1,7 @@
 from xdrdef.nfs4_const import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from environment import check, get_invalid_clientid, makeStaleId, \
+from .environment import check, get_invalid_clientid, makeStaleId, \
     do_getattrdict, use_obj
 
 def _try_mand(t, env, path):

@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
-from environment import check, makeBadID, makeBadIDganesha, makeStaleId
-import rpc
+from .environment import check, makeBadID, makeBadIDganesha, makeStaleId
+import rpc.rpc as rpc
 
 def _compare(t, res, expect, eof=True):
     def shorten(str):

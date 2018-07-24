@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, checkdict, get_invalid_utf8strings
+from .environment import check, checkdict, get_invalid_utf8strings
 from nfs4lib import get_bitnumattr_dict
 
 # Any test that uses create_confirm should depend on this test

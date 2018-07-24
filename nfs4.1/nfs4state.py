@@ -9,7 +9,7 @@ from nfs4lib import NFS4Error
 from xdrdef.nfs4_type import *
 from xdrdef.nfs4_const import *
 import nfs_ops
-import rpc
+import rpc.rpc as rpc
 import logging
 
 log = logging.getLogger("nfs.server.state")

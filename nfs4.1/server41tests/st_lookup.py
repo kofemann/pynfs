@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, fail
+from .environment import check, fail
 import nfs_ops
 op = nfs_ops.NFS4ops()
 
@@ -64,7 +64,7 @@ def testLongName(t, env):
 
 ##############################################################
 if 0:
-    from environment import check, get_invalid_utf8strings
+    from .environment import check, get_invalid_utf8strings
 
     def testDir(t, env):
         """LOOKUP testtree dir

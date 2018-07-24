@@ -1,7 +1,7 @@
 from xdrdef.nfs4_const import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from environment import check, fail
+from .environment import check, fail
 from xdrdef.nfs4_type import *
 import random
 import nfs4lib

@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, fail, use_obj
+from .environment import check, fail, use_obj
 import nfs_ops
 op = nfs_ops.NFS4ops()
 

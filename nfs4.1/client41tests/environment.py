@@ -12,7 +12,7 @@ import time
 import testmod
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import *
-import rpc
+import rpc.rpc as rpc
 import nfs4client
 import os
 import nfs4lib

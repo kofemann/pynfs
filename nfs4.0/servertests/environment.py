@@ -14,7 +14,7 @@ from nfs4lib import NFS4Client, get_attrbitnum_dict
 from xdrdef.nfs4_const import *
 from xdrdef.nfs4_type import fsid4, nfsace4, fs_locations4, fs_location4, \
      specdata4, nfstime4, settime4, stateid4
-import rpc
+import rpc.rpc as rpc
 import sys
 import os
 import nfs_ops

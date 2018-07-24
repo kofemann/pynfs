@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check
+from .environment import check
 
 def testSpoofUser(t, env):
     """SPOOF test, try to spoof user

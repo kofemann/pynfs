@@ -40,7 +40,7 @@ import testmod
 from optparse import OptionParser, OptionGroup, IndentedHelpFormatter
 import servertests.environment as environment
 import socket
-import rpc
+import rpc.rpc as rpc
 import pickle
 
 VERSION="0.2" # How/when update this?

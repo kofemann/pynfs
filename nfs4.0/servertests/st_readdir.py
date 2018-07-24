@@ -1,6 +1,6 @@
 from xdrdef.nfs4_const import *
 from nfs4lib import get_attr_name
-from environment import check
+from .environment import check
 
 def _compare(t, entries, expect, attrlist=[]):
     names = [e.name for e in entries]

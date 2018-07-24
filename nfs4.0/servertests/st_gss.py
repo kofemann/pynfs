@@ -1,7 +1,7 @@
 from xdrdef.nfs4_const import *
-from environment import check
+from .environment import check
 from socket import timeout
-import rpc
+import rpc.rpc as rpc
 import rpc.rpcsec.gss_const as gss
 from rpc.rpcsec.gss_type import rpc_gss_cred_t
 import nfs_ops

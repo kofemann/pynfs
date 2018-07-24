@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from environment import check, get_invalid_utf8strings
+from .environment import check, get_invalid_utf8strings
 from nfs4lib import bitmap2list, dict2fattr
 from xdrdef.nfs4_type import nfstime4, settime4
 import nfs_ops
