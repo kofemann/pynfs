@@ -178,8 +178,9 @@ _invalid_ops = [
 class OpsConfigServer(object):
     __metaclass__ = MetaConfig
     value = ['ERROR', 0, 0] # Note must have value == _opline(value)
-    attrs = [ConfigLine(name.lower()[3:], value, "Generic comment", _opline)
-             for name in nfs_opnum4.values()]
+    attrs = (lambda value=value: [ConfigLine(name.lower()[3:], value, "Generic comment", _opline)
+                                  for name in nfs_opnum4.values()])()
+
 
 class Actions(object):
     __metaclass__ = MetaConfig
