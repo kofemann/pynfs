@@ -1,7 +1,7 @@
 #
 # environment.py
 #
-# Requires python 2.3
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -144,7 +144,7 @@ class Environment(testmod.Environment):
         path = os.path.join(self.root, "config", "ops", opname)
         fd = open(path, "w")
         fd.write(data)
-        print "wait for leasetime: ", lease[1], "seconds"
+        print("wait for leasetime: ", lease[1], "seconds")
         fd.close()
         time.sleep(int(lease[1]))
 

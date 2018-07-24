@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from distutils.core import setup
 
 import sys
@@ -19,7 +21,7 @@ def setup(*args, **kwargs):
     cwd = os.getcwd()
     command = " ".join(sys.argv)
     for dir in DIRS:
-        print "\n\nMoving to %s" % dir 
+        print("\n\nMoving to %s" % dir )
         os.chdir(join(cwd, dir))
         os.system("python %s" % command)
     os.chdir(cwd)

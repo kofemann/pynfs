@@ -28,7 +28,7 @@
 import use_local # HACK so don't have to rebuild constantly
 import sys
 if sys.hexversion < 0x02050000:
-    print "Requires python 2.5 or higher"
+    print("Requires python 2.5 or higher")
     sys.exit(1)
 import os
 
@@ -196,16 +196,16 @@ def printflags(list):
     command_names = [s.lower()[3:].replace('_', '') \
                      for s in nfs_opnum4.values()]
     list.sort()
-    # First print command names
+    # First print(command names)
     print
     for s in list:
         if s in command_names:
-            print s
+            print(s)
     # Then everything else
     print
     for s in list:
         if s not in command_names:
-            print s
+            print(s)
     
 def main():
     p = OptionParser("%prog SERVER:/PATH [options] flags|testcodes\n"
@@ -229,14 +229,14 @@ def main():
         codes = cdict.keys()
         codes.sort()
         for c in codes:
-            print c
+            print(c)
         sys.exit(0)
 
     if opt.showcodesflags:
         codes = cdict.keys()
         codes.sort()
         for c in codes:
-            print c, "FLAGS:", ', '.join(cdict[c].flags_list)
+            print(c, "FLAGS:", ', '.join(cdict[c].flags_list))
         sys.exit(0)
 
     # Grab server info and set defaults
@@ -257,14 +257,14 @@ def main():
     for attr in dir(opt):
         if attr.startswith('use') and attr != "usefh":
             path = getattr(opt, attr)
-            #print attr, path
+            #print(attr, path)
             if path is None:
                 path = opt.path + ['tree', attr[3:]]
             else:
                 # FIXME - have funct that checks path validity
                 if path[0] != '/':
                     p.error("Need to use absolute path for --%s" % attr)
-                # print path
+                # print(path)
                 if path[-1] == '/' and attr != 'usedir':
                     p.error("Can't use dir for --%s" %attr)
                 try:
@@ -316,21 +316,21 @@ def main():
     # Place tests in desired order
     tests.sort() # FIXME - add options for random sort
 
-    # Run the tests and save/print results
+    # Run the tests and save/print(results)
     try:
         env = environment.Environment(opt)
         env.init()
     except socket.gaierror, e:
         if e.args[0] == -2:
-            print "Unknown server '%s'" % opt.server
-        print sys.exc_info()[1]
+            print("Unknown server '%s'" % opt.server)
+        print(sys.exc_info()[1])
         sys.exit(1)
     except Exception, e:
-        print "Initialization failed, no tests run."
+        print("Initialization failed, no tests run.")
         if not opt.maketree:
-            print "Perhaps you need to use the --maketree option"
+            print("Perhaps you need to use the --maketree option")
         raise
-        print sys.exc_info()[1]
+        print(sys.exc_info()[1])
         sys.exit(1)
     if opt.outfile is not None:
         fd = file(opt.outfile, 'w')
@@ -350,7 +350,7 @@ def main():
         fail = True
     testmod.printresults(tests, opt)
     if fail:
-        print "\nWARNING: could not clean testdir due to:\n%s\n" % str(e)
+        print("\nWARNING: could not clean testdir due to:\n%s\n" % str(e))
 
     if opt.xmlout is not None:
         testmod.xml_printresults(tests, opt.xmlout)

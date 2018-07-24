@@ -6,6 +6,7 @@
 # Copyright (C) 2004 University of Michigan, Center for 
 #                    Information Technology Integration
 #
+from __future__ import print_function
 from __future__ import with_statement
 import nfs4lib
 import re
@@ -212,11 +213,11 @@ class Test(object):
 
     def run(self, environment, verbose=False):
         """Run self.runtest, storing result"""
-        #print "*********Running test %s (%s)" % (self.name, self.code)
+        #print("*********Running test %s (%s)" % (self.name, self.code))
         self.result = self._run_result
         start_time = time.time()
         if verbose:
-            print repr(self)
+            print(repr(self))
         try:
             environment.startUp()
             self.runtest(self, environment)
@@ -245,7 +246,7 @@ class Test(object):
         self.time_taken = stop_time - start_time
 
         if verbose:
-            print repr(self)
+            print(repr(self))
 
 class Environment(object):
     """Base class for a test environment"""
@@ -419,8 +420,8 @@ def printresults(tests, opts, file=None):
     count = [0] * 6
     for t in tests:
         if not hasattr(t, "result"):
-            print dir(t)
-            print t.__dict__
+            print(dir(t))
+            print(t.__dict__)
             raise
         if t.result == TEST_NOTRUN:
             count[NOTRUN] += 1
@@ -434,7 +435,7 @@ def printresults(tests, opts, file=None):
             count[WARN] += 1
         elif t.result == TEST_PASS:
             count[PASS] += 1
-    print >> file, "*"*50 
+    print("*"*50, file=file)
     for t in tests:
         if t.result == TEST_NOTRUN:
             continue
@@ -448,16 +449,16 @@ def printresults(tests, opts, file=None):
             continue
         if (not opts.showfail) and t.result == TEST_FAIL:
             continue
-        print >> file, t.display(0,0)
-    print >> file, "*"*50
+        print(t.display(0,0), file=file)
+    print("*"*50, file=file)
     if count[NOTRUN]:
-        print >> file, "Tests interrupted! Only %i tests run" % \
-              sum(count[SKIP:])
+        print("Tests interrupted! Only %i tests run" % \
+              sum(count[SKIP:]), file=file)
     else:
-        print >> file, "Command line asked for %i of %i tests" % \
-              (sum(count[SKIP:]), len(tests))
-    print >> file, "Of those: %i Skipped, %i Failed, %i Warned, %i Passed" % \
-          (count[SKIP], count[FAIL], count[WARN], count[PASS])
+        print("Command line asked for %i of %i tests" % \
+              (sum(count[SKIP:]), len(tests)), file=file)
+    print("Of those: %i Skipped, %i Failed, %i Warned, %i Passed" % \
+          (count[SKIP], count[FAIL], count[WARN], count[PASS]), file=file)
     return count[FAIL]
 
 def xml_printresults(tests, file_name, suite='all'):

@@ -244,14 +244,14 @@ class NFSServerState:
         See RFC 3530 sec 8.1.5
         """
         # This is getting too complicated.  Should split off creation
-        #print "  check_seqid: Entered"
+        #print("  check_seqid: Entered")
         if isinstance(obj, stateid4):
             mustexist = True
         try:
             info = self.__getinfo(obj, allownew=not mustexist)
         except ValueError, e:
             if mustexist: raise
-        #print "  check_seqid: %s" % info
+        #print("  check_seqid: %s" % info)
         if info is None:
             # A reserved stateid
             raise NFS4Error(NFS4ERR_BAD_STATEID)
@@ -267,9 +267,9 @@ class NFSServerState:
             info.lastseqid = mod32(-1)
             return
         lastseq = info.lastseqid
-        #print "  check_seqid: new: %s, last: %s" % (seqid, lastseq)
+        #print("  check_seqid: new: %s, last: %s" % (seqid, lastseq))
         if lastseq == seqid:
-            print " ***REPLAY*** "
+            print(" ***REPLAY*** ")
             return info.cached_response
         if not info.confirmed and not open_confirm:
             # RFC 3530 sec 14.2.18
@@ -294,7 +294,7 @@ class NFSServerState:
             # FIXME - does this behave correctly for reserved stateids?
             return
         info.cached_response = (cfh, args, op)
-        #print "  advance_seqid - went from: %s" % info.lastseqid
+        #print("  advance_seqid - went from: %s" % info.lastseqid)
         if args[0] not in [NFS4ERR_STALE_CLIENTID, NFS4ERR_STALE_STATEID,
                            NFS4ERR_BAD_STATEID, NFS4ERR_BAD_SEQID,
                            NFS4ERR_BADXDR, NFS4ERR_RESOURCE,
@@ -303,7 +303,7 @@ class NFSServerState:
                 info.lastseqid = 0
             else:
                 info.lastseqid = mod32(info.lastseqid + 1)
-        #print "  advance_seqid -        to: %s" % info.lastseqid
+        #print("  advance_seqid -        to: %s" % info.lastseqid)
 
     def confirm(self, fh, stateid):
         """Confirm an open"""
@@ -352,7 +352,7 @@ class NFSServerState:
             raise NFS4Error(NFS4ERR_BAD_STATEID)
         info = self.state[id].owner
         fh = self.__getfh(id)
-        #print "Close fh from id", fh.handle
+        #print("Close fh from id", fh.handle)
         # Remove locks from file and deal with associated lockowners
         for lockinfo in info.lockowners:
             if fh.handle in lockinfo.files:
@@ -412,7 +412,7 @@ class NFSServerState:
         except KeyError:
             if not allownew:
                 raise ValueError, "File %s not open for %s" % (fh.name, info)
-            #print "Creating new id %i for fh %s" % (self.next_id, fh.handle)
+            #print("Creating new id %i for fh %s" % (self.next_id, fh.handle))
             id = info.files[fh.handle] = self.next_id
             self.next_id += 1
             self.state[id] = self.StateIDInfo(fh, info)
@@ -434,7 +434,7 @@ class NFSServerState:
             info = ownerdict[owner.clientid][owner.owner]
         except KeyError:
             if not allownew: raise ValueError, "Unknown owner %s" % str(owner)
-            #print "Creating new info"
+            #print("Creating new info")
             info = self.OwnerInfo(owner)
             if owner.clientid in ownerdict:
                 ownerdict[owner.clientid][owner.owner] = info
@@ -853,14 +853,14 @@ class NFSFileState:
                list[i].type == list[i-1].type:
                   list[i-1].end = list[i].end
                   del list[i]
-        print list
+        print(list)
 
     def removeposixlock(self, list, type, start, end):
         """Removes lock from sorted list, splitting existing locks as necessary
         """
         self.__removerange(list, start, end)
         list.sort()
-        print list
+        print(list)
 
     def __removerange(self, list, start, end):
         """Removes locks in given range, shrinking locks that half-overlap"""
@@ -1171,9 +1171,9 @@ class VirtualHandle(NFSFileHandle):
             try:
                 nfs4acl.maps_to_posix(acl)
             except nfs4acl.ACLError, e:
-                print "*"*50
-                print e
-                print "*"*50
+                print("*"*50)
+                print(e)
+                print("*"*50)
                 raise NFS4Error(NFS4ERR_INVAL)
         self.fattr4_acl = acl
         self.fattr4_mode = nfs4acl.acl2mode(acl)
@@ -1257,7 +1257,7 @@ class VirtualHandle(NFSFileHandle):
         # FRED - Note this currently does nothing -
         #      - and should do nothing if link count is positive
         if self.fattr4_numlinks > 0: return
-        #print "destructing: %s" % repr(self)
+        #print("destructing: %s" % repr(self))
         if self.fattr4_type == NF4DIR:
             for subfile in self.dirent.values():
                 subfile.destruct()
@@ -1324,7 +1324,7 @@ class VirtualHandle(NFSFileHandle):
         self.fattr4_change += 1
         try: self.file.seek(offset)
         except MemoryError:
-            print "MemError, offset=%s, count=%s" % (str(offset), str(len(data)))
+            print("MemError, offset=%s, count=%s" % (str(offset), str(len(data))))
             raise
         self.file.write(data)
         self.file.seek(0, 2) # Seek to eof

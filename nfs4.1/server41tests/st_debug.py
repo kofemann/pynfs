@@ -31,7 +31,7 @@ def testSupported2(t, env):
                       owner, how, claim)
     res = sess2.compound(env.home + [open_op])
     # STUB - since we are not handling callback, deleg_return never gets done
-    print res
+    print(res)
     check(res)
     fh2 = res.resarray[-1].object
     stateid2 = res.resarray[-2].stateid
@@ -55,16 +55,16 @@ def testReadWrite(t, env):
                       owner, how, claim)
     fh_op = op.putrootfh()
     res = sess1.compound([fh_op, open_op, op.getfh()]) # OPEN
-    print res
+    print(res)
     check(res)
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
     stateid.seqid = 0
     res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, "write test data")])
-    print res
+    print(res)
     check(res)
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
-    print res
+    print(res)
     check(res)
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
@@ -95,7 +95,7 @@ def testDeadlock(t, env):
     for xid in xids:
         res = sess1.listen(xid)
         check(res)
-        print res
+        print(res)
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
 

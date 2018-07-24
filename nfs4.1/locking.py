@@ -32,7 +32,7 @@ def _collect_acq_data(suffix=""):
     def _deco(acquire):
         def wrapper(self):
             suf = ("" if not suffix else "_%s" % suffix)
-            print "ACQUIRE%s tried for lock %s" % (suf.upper(), self.name)
+            print("ACQUIRE%s tried for lock %s" % (suf.upper(), self.name))
             t = threading.currentThread()
             try:
                 t.locks[self.name] = "waiting%s" % suf
@@ -40,7 +40,7 @@ def _collect_acq_data(suffix=""):
                 t.locks = {self.name: "waiting%s" % suf}
             acquire(self)
             t.locks[self.name] = "holding%s" % suf
-            print "ACQUIRE%s succeeded for lock %s" % (suf.upper(), self.name)
+            print("ACQUIRE%s succeeded for lock %s" % (suf.upper(), self.name))
         return wrapper
     return _deco
 
@@ -49,7 +49,7 @@ def _collect_rel_data(suffix=""):
     def _deco(release):
         def wrapper(self, *args, **kwargs):
             suf = ("" if not suffix else "_%s" % suffix)
-            print "RELEASE%s lock %s" % (suf.upper(), self.name)
+            print("RELEASE%s lock %s" % (suf.upper(), self.name))
             t = threading.currentThread()
             t.locks[self.name] = "released%s" % suf
             release(self, *args, **kwargs)

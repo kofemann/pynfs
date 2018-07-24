@@ -112,7 +112,7 @@ class ErrorParser():
             except IndexError: # function
                 functions = Errors()
                 func = getattr(functions, random.choice(err.function))
-                print func
+                print(func)
                 if callable(func):
                     func(opname, arg, env)
 

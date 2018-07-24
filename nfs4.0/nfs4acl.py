@@ -214,6 +214,6 @@ def printableacl(acl):
     for ace in acl:
         out += "<type=%6s, flag=%2x, access=%8x, who=%s>\n" % \
                (type_str[ace.type], ace.flag, ace.access_mask, ace.who)
-    #print "leaving printableacl with out = %s" % out
+    #print("leaving printableacl with out = %s" % out)
     return out
     

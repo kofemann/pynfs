@@ -49,23 +49,23 @@ def _opline(value):
     message-type of error has this form: "ERROR NFS4ERR_code ceiling"
     new message types and more values can be added
     """
-    print '**************** OPLINE typevalue ', type(value)
+    print('**************** OPLINE typevalue ', type(value))
     if type(value) is str:
         l = value.strip().split()
     elif type(value) is list:
         l = value
     else:
-        print '                 OPLINE type ', type(value)
+        print('                 OPLINE type ', type(value))
         raise TypeError, 'Only type list or str accepted'
     if l[0] == "ERROR":
         if not len(l) == 3:
-            print '                 OPLINE length ', len
+            print('                 OPLINE length ', len)
             raise ValueError("ERROR messages only accepts 3 entries")
-        print 'OPLINE len ', len(l)
+        print('OPLINE len ', len(l))
         value = [l[0], _statcode(l[1]), int(l[2])]
     else:
         raise ValueError("Only message-type ERROR accepted")
-    print '**************** OPLINE return ', value
+    print('**************** OPLINE return ', value)
     return value
 
 ###################################################

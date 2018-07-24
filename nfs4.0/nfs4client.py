@@ -9,8 +9,8 @@
 #
 
 import sys
-if sys.hexversion < 0x02030000:
-    print "Requires python 2.3 or higher"
+if sys.hexversion < 0x02070000:
+    print("Requires python 2.7 or higher")
     sys.exit(1)
 import os
 # Allow to be run stright from package root
@@ -22,7 +22,7 @@ import readline
 try:
     import readline
 except ImportError:
-    print "Module readline not available."
+    print("Module readline not available.")
 #else:
 #    import rlcompleter
 #    readline.parse_and_bind("tab: complete")
@@ -75,11 +75,11 @@ class PyShell(code.InteractiveConsole):
                 return self.locals[attr]
             else:
                 return getattr(inst, attr)
-        #print "\nCalled complete(%s, %i)" % (text, state)
+        #print("\nCalled complete(%s, %i)" % (text, state))
         if text.startswith('.'):
             # XXX TODO - handle array indexing
             line = readline.get_line_buffer()
-            # print "Line: ", repr(line)
+            # print("Line: ", repr(line))
             return None
         vars = text.split('.')
         base = vars[:-1]
@@ -88,7 +88,7 @@ class PyShell(code.InteractiveConsole):
             try:
                 inst = eval('.'.join(base), self.locals)
             except:
-                print "\nFAIL"
+                print("\nFAIL")
                 traceback.print_exc()
                 return None
         else:
@@ -125,7 +125,7 @@ class PyShell(code.InteractiveConsole):
 def main(server):
     c = PyShell(server)
     c.interact("Try COMPOUND([PUTROOTFH()])")
-    print "Goodbye!"
+    print("Goodbye!")
         
 if __name__ == "__main__":
     main(sys.argv[1])

@@ -22,14 +22,14 @@ def testStateid1(t, env):
     # Get layout 1
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
-    print open_stateid
+    print(open_stateid)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
-    print lo_stateid
+    print(lo_stateid)
     if lo_stateid.seqid != 1:
         # From draft23 12.5.2 "The first successful LAYOUTGET processed by
         # the server using a non-layout stateid as an argument MUST have the
@@ -43,7 +43,7 @@ def testStateid1(t, env):
         res = sess.compound(ops)
         check(res)
         lo_stateid = res.resarray[-1].logr_stateid
-        print lo_stateid
+        print(lo_stateid)
         if lo_stateid.seqid != i + 2:
             # From draft23 12.5.3 "After the layout stateid is established,
             # the server increments by one the value of the "seqid" in each
@@ -63,7 +63,7 @@ def testStateid2(t, env):
     # Get layout 1
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
-    print open_stateid
+    print(open_stateid)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, open_stateid, 0xffff)]
@@ -71,7 +71,7 @@ def testStateid2(t, env):
     check(res)
     # Get layout 2
     lo_stateid1 = res.resarray[-1].logr_stateid
-    print lo_stateid1
+    print(lo_stateid1)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         8192, 8192, 8192, lo_stateid1, 0xffff)]
@@ -79,14 +79,14 @@ def testStateid2(t, env):
     check(res)
     # Get layout 3 (merge of prior two)
     lo_stateid2 = res.resarray[-1].logr_stateid
-    print lo_stateid2
+    print(lo_stateid2)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         0, 2*8192, 2*8192, lo_stateid2, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid3 = res.resarray[-1].logr_stateid
-    print lo_stateid3
+    print(lo_stateid3)
     # lo_stateid3.seqid = 3 # BUG - work around emc problem
     # Parse opaque to get info for commit
     # STUB not very general
@@ -122,7 +122,7 @@ def testEmptyCommit(t, env):
     # Get layout 1
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
-    print open_stateid
+    print(open_stateid)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, open_stateid, 0xffff)]
@@ -130,14 +130,14 @@ def testEmptyCommit(t, env):
     check(res)
     # Get layout 2
     lo_stateid1 = res.resarray[-1].logr_stateid
-    print lo_stateid1
+    print(lo_stateid1)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         8192, 8192, 8192, lo_stateid1, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid2 = res.resarray[-1].logr_stateid
-    print lo_stateid2
+    print(lo_stateid2)
     # Parse opaque to get info for commit
     # STUB not very general
     layout = res.resarray[-1].logr_layout[-1]
@@ -183,7 +183,7 @@ def testSplitCommit(t, env):
     # Get layout 1
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
-    print open_stateid
+    print(open_stateid)
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_BLOCK_VOLUME, LAYOUTIOMODE4_RW,
                         0, 2*8192, 2*8192, open_stateid, 0xffff)]
@@ -191,7 +191,7 @@ def testSplitCommit(t, env):
     check(res)
 
     lo_stateid1 = res.resarray[-1].logr_stateid
-    print lo_stateid1
+    print(lo_stateid1)
     # Parse opaque to get info for commit
     # STUB not very general
     layout = res.resarray[-1].logr_layout[-1]

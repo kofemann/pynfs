@@ -204,12 +204,12 @@ def testTwoValueSetupOrCleanup(t, env):
     echo "Messagetype value value" > $CONFIG/ops/<operation>
 
     """
-    #print 'env.opts.useparams ', env.opts.useparams
+    #print('env.opts.useparams ', env.opts.useparams)
     if len(env.opts.useparams) != 4:
-        print 'TWO_VALUE_SETUP_OR_CLEANUP requires '
-        print 'testclient.py --useparams'
-        print 'Example: --useparams=sequence:ERROR:NFS4ERR_SEQ_MISORDERED:50 '
-        print 'which returns NFS4ERR_SEQ_MISORDERED every 50th sequence op'
+        print('TWO_VALUE_SETUP_OR_CLEANUP requires ')
+        print('testclient.py --useparams')
+        print('Example: --useparams=sequence:ERROR:NFS4ERR_SEQ_MISORDERED:50 ')
+        print('which returns NFS4ERR_SEQ_MISORDERED every 50th sequence op')
         fail("Bad Input to test")
 
     operation = env.opts.useparams[0]

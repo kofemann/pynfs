@@ -91,7 +91,7 @@ def testSSV(t, env):
     # This should fail if not using GSS?  What about E_ID?
 
     res = sess.set_ssv('\x5a' * c.protect.context.ssv_len)
-    print res
+    print(res)
     
 def testNoImplId(t, env):
     """Do a simple EXCHANGE_ID w/o setting client impl_id
@@ -118,7 +118,7 @@ def testLongArray(t, env):
     xid = c.compound_async(ops, checks=False)
     try:
         res = c.listen(xid)
-        print res
+        print(res)
     except RPCAcceptError, e:
         if e.stat == GARBAGE_ARGS:
             # Legitimate return

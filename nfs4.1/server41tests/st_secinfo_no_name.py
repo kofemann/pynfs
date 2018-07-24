@@ -32,7 +32,7 @@ def testSupported2(t, env):
 
     # GETFH after do a SECINFO_NO_NAME should get error NFS4ERR_NOFILEHANDLE
     res = sess.compound([op.putrootfh(), op.secinfo_no_name(0), op.getfh()])
-    print res
+    print(res)
     check(res, NFS4ERR_NOFILEHANDLE)
 
 def testSupported3(t, env):

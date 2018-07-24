@@ -22,7 +22,7 @@ class _handle_error(object):
             try:
                 self.c.compound(ops)
             except Exception, e:
-                print "CALLBACK error in _recall:", e
+                print("CALLBACK error in _recall:", e)
                 pass
             _lock.release()
             
@@ -34,7 +34,7 @@ def _recall(c, thisop, cbid):
     try:
         res = c.compound(ops)
     except Exception, e:
-        print "CALLBACK error in _recall:", e
+        print("CALLBACK error in _recall:", e)
         res = None
     _lock.release()
     if res is not None and res.status != NFS4_OK:
@@ -260,7 +260,7 @@ def testManyReaddeleg(t, env, funct=_recall, response=NFS4_OK):
             cbids.append(c.cbid)
     if not cbids:
         t.pass_warn("Could not get any read delegations")
-    print "Got %i out of %i read delegations" % (len(cbids), count)
+    print("Got %i out of %i read delegations" % (len(cbids), count))
     # Cause them to be recalled
     fh2, stateid2 = _cause_recall(t, env)
     miss_count = 0

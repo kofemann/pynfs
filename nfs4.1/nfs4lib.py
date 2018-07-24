@@ -208,7 +208,7 @@ class FancyNFS4Packer(NFS4Packer):
         """Change simple list of entry4 into strange chain structure"""
         out = []
         for e in data.entries[::-1]:
-            # print "handle", e
+            # print("handle", e)
             # This reverses the direction of the list, so start with reversed
             out = [xdrdef.nfs4_type.entry4(e.cookie, e.name, e.attrs, out)]
         # Must not modify original data structure
@@ -297,10 +297,10 @@ def bitmap2list(bitmap):
 def printhex(str, pretty=True):
     """Print string as hex digits"""
     if pretty:
-        print "".join(["%02x " % ord(c) for c in str])
+        print("".join(["%02x " % ord(c) for c in str]))
     else:
         # Can copy/paste this string
-        print "".join(["\\x%02x" % ord(c) for c in str])
+        print("".join(["\\x%02x" % ord(c) for c in str]))
 
 def str_xor(a, b):
     """xor two string which represent binary data"""

@@ -204,7 +204,7 @@ class SecAuthGss(SecFlavor):
             p.done()
             d = gssapi.acceptSecContext(token, body.handle)
             if d["major"] == GSS_S_COMPLETE:
-                print "SUCCESS!"
+                print("SUCCESS!")
                 class C(object):
                     pass
                 out = C()
@@ -223,11 +223,11 @@ class SecAuthGss(SecFlavor):
             else:
                 out = hint_string(d)
                 if out is not None:
-                    print out
+                    print(out)
                 return rpc.GARBAGE_ARGS, ''
         else:
             # Stub
-            print "Unable to handle gss_proc==%i" % body.gss_proc
+            print("Unable to handle gss_proc==%i" % body.gss_proc)
             return rpc.GARBAGE_ARGS, ''
     def make_verf(self, data):
         """Verifier sent with each RPC call
@@ -374,7 +374,7 @@ class SecAuthGss(SecFlavor):
             p.reset()
             p.pack_uint(cred.seq_num)
             d = gssapi.verifyMIC(self.gss_context, p.get_buffer(), rverf.body)
-            #print "Verify(%i):"%cred.seq_num, show_major(d['major']), show_minor(d['minor'])
+            #print("Verify(%i):"%cred.seq_num, show_major(d['major']), show_minor(d['minor']))
             
         else:
             pass

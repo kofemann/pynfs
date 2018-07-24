@@ -109,7 +109,7 @@ def testDestroy3(t, env):
     check(res)
     fh = res.resarray[-1].object
     deleg = res.resarray[-2].delegation
-    print "OPEN fh =", repr(fh)
+    print("OPEN fh =", repr(fh))
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
     recall.happened = False

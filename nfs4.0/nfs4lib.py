@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # nfs4lib.py - NFS4 library for Python
 #
-# Requires python 2.3
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -199,7 +199,7 @@ class CBServer(rpc.RPCServer):
         rpc.RPCServer.run(self)
 
     def handle_0(self, data, cred):
-        #print "*****CB received NULL******"
+        #print("*****CB received NULL******")
         if data != '':
             return rpc.GARBAGE_ARGS, ''
         else:
@@ -207,7 +207,7 @@ class CBServer(rpc.RPCServer):
     
     def handle_1(self, data, cred):
         """Deal with CB_COMPOUND"""
-        print "*****CB received COMPOUND******"
+        print("*****CB received COMPOUND******")
         self.nfs4unpacker.reset(data)
         ok, results, tag = self.O_CB_Compound()
         try:
@@ -245,7 +245,7 @@ class CBServer(rpc.RPCServer):
         
     # FIXME
     def O_CB_GetAttr(self, op, cbid):
-        print "******* CB_Getattr *******"
+        print("******* CB_Getattr *******")
         self.opcounts[OP_CB_GETATTR] += 1
         if not self.curr_fh:
             return self.simple_status(NFS4ERR_NOFILEHANDLE)
@@ -254,7 +254,7 @@ class CBServer(rpc.RPCServer):
 
     # FIXME
     def O_CB_Recall(self, op, cbid):
-        print "******* CB_Recall (id=%i)********" % cbid
+        print("******* CB_Recall (id=%i)********" % cbid)
         self.opcounts[OP_CB_RECALL] += 1
         if self.recall_funct.get(cbid, None) is not None:
             res = self.recall_funct[cbid](self.client, op, cbid)
@@ -301,7 +301,7 @@ class NFS4Client(rpc.RPCClient):
                 self.cb_control.connect(('127.0.0.1', self.cb_server.port))
                 break
             except socket.error:
-                print "Waiting for Callback server to start"
+                print("Waiting for Callback server to start")
 
     def cb_command(self, comm):
         self.cb_control.sendall('\x80\x00\x00\x04\x00\x00\x00%s' % chr(comm))
@@ -327,7 +327,7 @@ class NFS4Client(rpc.RPCClient):
                                      minorversion=minorversion)
         if SHOW_TRAFFIC:
             print
-            print compoundargs
+            print(compoundargs)
         p = self.nfs4packer
         un_p = self.nfs4unpacker
         p.reset()
@@ -336,7 +336,7 @@ class NFS4Client(rpc.RPCClient):
         un_p.reset(res)
         res = un_p.unpack_COMPOUND4res()
         if SHOW_TRAFFIC:
-            print res
+            print(res)
         un_p.done()
 
         # Do some error checking
@@ -688,7 +688,7 @@ class NFS4Client(rpc.RPCClient):
         #expect = attrs.keys()
         #expect.sort()
         #if attrlist != expect:
-        #    print "WARNING: OPENresok.attrset mismatches requested attrs"
+        #    print("WARNING: OPENresok.attrset mismatches requested attrs")
         fhandle = res.resarray[-1].switch.switch.object
         stateid = res.resarray[-2].switch.switch.stateid
         rflags = res.resarray[-2].switch.switch.rflags

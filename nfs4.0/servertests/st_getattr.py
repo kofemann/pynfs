@@ -486,7 +486,7 @@ def testFSLocations(t, env):
     check(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(fs_locations)")
     if res.status == NFS4ERR_ATTRNOTSUPP:
         t.fail_support("fs_locations not a supported attribute")
-    # print res.resarray[-1].obj_attributes
+    # print(res.resarray[-1].obj_attributes)
 
 def testLotsofGetattrsFile(t, env):
     """Send lots of getattrs
@@ -517,7 +517,7 @@ def testOwnerName(t, env):
     check(res, [NFS4_OK, NFS4ERR_ATTRNOTSUPP], "GETATTR(owner)")
     if res.status == NFS4ERR_ATTRNOTSUPP:
         t.fail_support("owner not a supported attribute")
-    # print res.resarray[-1].obj_attributes
+    # print(res.resarray[-1].obj_attributes)
 
 
 ####################################################
@@ -541,9 +541,9 @@ def testOwnerName(t, env):
         res = self.ncl.do_ops(ops)
         self.assert_OK(res)
         print
-        print "From Getattr / - ", res.resarray[-3].obj_attributes
+        print("From Getattr / - ", res.resarray[-3].obj_attributes)
         print
-        print "From Getattr /unix - ", res.resarray[-1].obj_attributes
+        print("From Getattr /unix - ", res.resarray[-1].obj_attributes)
 
         ops = [op.putrootfh()]
         attrmask = nfs4lib.list2bitmap(request)
@@ -561,6 +561,6 @@ def testOwnerName(t, env):
             if not entry.nextentry:
                 self.fail("Could not find mountpoint /unix")
             entry = entry.nextentry[0]
-        print "From Readdir / - ", entry.attrs
+        print("From Readdir / - ", entry.attrs)
         
 

@@ -310,7 +310,7 @@ def testRdmaArray2(t, env):
     xid = c.compound_async(ops, checks=False)
     try:
         res = c.listen(xid)
-        print res
+        print(res)
     except RPCAcceptError, e:
         if e.stat == GARBAGE_ARGS:
             # Legitimate return
@@ -339,7 +339,7 @@ def testCallbackProgram(t, env):
     cb_occurred = threading.Event()
     transient = 0x40000004
     def mycheck(prog):
-        print "Got call using prog=0x%x" % prog
+        print("Got call using prog=0x%x" % prog)
         cb_occurred.prog = prog
         cb_occurred.set()
         return True;
@@ -366,7 +366,7 @@ def testCallbackVersion(t, env):
     cb_occurred = threading.Event()
     transient = 0x40000000
     def mycheck(low, hi, vers):
-        print "Got call using version=%i" % vers
+        print("Got call using version=%i" % vers)
         cb_occurred.low = low
         cb_occurred.hi = hi
         cb_occurred.vers = vers

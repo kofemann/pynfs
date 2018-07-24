@@ -69,7 +69,7 @@ class NFS4Proxy(rpc.Server):
             while True:
                 try:
                     server_address = (self.dserver, self.dport)
-                    print server_address
+                    print(server_address)
                     pipe = self.connect(server_address)
                 except:
                     traceback.print_exc(file=sys.stdout)

@@ -159,7 +159,7 @@ class Simple(Volume):
         return pnfs_block_volume4(PNFS_BLOCK_VOLUME_SIMPLE, bv_simple_info=info)
 
     def resolve(self, i):
-        # print "resolve(%i) %r" % (i, self)
+        # print("resolve(%i) %r" % (i, self))
         if i < 0 or i >= self._size:
             raise ValueError("Asked for %i of %i" % (i, self._size))
         return (self, i)
@@ -186,8 +186,8 @@ class Slice(Volume):
         return pnfs_block_volume4(PNFS_BLOCK_VOLUME_SLICE, bv_slice_info=info)
 
     def resolve(self, i):
-        # print "resolve(%i) %r" % (i, self)
-        # print self.start, self._size, self.length
+        # print("resolve(%i) %r" % (i, self))
+        # print(self.start, self._size, self.length)
         if i < 0 or i >= self._size:
             raise ValueError("Asked for %i of %i" % (i, self._size))
         return self.volumes[0].resolve(self.start + i)
@@ -212,7 +212,7 @@ class Concat(Volume):
         return "Concat %i of %r" % (self.id, [v.id for v in self.volumes])
 
     def resolve(self, i):
-        # print "resolve(%i) %r" % (i, self)
+        # print("resolve(%i) %r" % (i, self))
         if i < 0 or i >= self._size:
             raise ValueError("Asked for %i of %i" % (i, self._size))
         sum = 0

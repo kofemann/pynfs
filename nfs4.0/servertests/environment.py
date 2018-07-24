@@ -1,7 +1,7 @@
 #
 # environment.py
 #
-# Requires python 2.3
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -183,7 +183,7 @@ class Environment(testmod.Environment):
             path = tree + [name[type]]
             res = c.create_obj(path, type)
             if res.status != NFS4_OK:
-                print "WARNING - could not create /%s" % '/'.join(path)
+                print("WARNING - could not create /%s" % '/'.join(path))
         c.init_connection()
         fh, stateid = c.create_confirm('maketree', tree + ['file'],
                                        deny=OPEN4_SHARE_DENY_NONE)
@@ -209,18 +209,18 @@ class Environment(testmod.Environment):
 
     def sleep(self, sec, msg=''):
         """Sleep for given seconds"""
-        print "Sleeping for %g seconds:" % sec, msg
+        print("Sleeping for %g seconds:" % sec, msg)
         time.sleep(sec)
-        print "Woke up"
+        print("Woke up")
 
     def serverhelper(self, args):
         """Perform a special operation on the server side (such as
         rebooting the server)"""
         if self.opts.serverhelper is None:
-            print "Manual operation required on server:"
-            print args + " and hit ENTER when done"
+            print("Manual operation required on server:")
+            print(args + " and hit ENTER when done")
             sys.stdin.readline()
-            print "Continuing with test"
+            print("Continuing with test")
         else:
             cmd = self.opts.serverhelper
             if self.opts.serverhelperarg:

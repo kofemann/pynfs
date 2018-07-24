@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # showresults.py - redisplay results from nfsv4 server tester output file
 #
-# Requires python 2.3
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
 #                    Information Technology Integration
 #
 
+from __future__ import print_function
 
 # Allow to be run stright from package root
 if  __name__ == "__main__":

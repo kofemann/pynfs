@@ -878,8 +878,8 @@ class ConnectionHandler(object):
     def listen(self, pipe, xid):
         # STUB - should be overwritten by subclass
         header, data = pipe.listen(xid)
-        print "HEADER", header
-        print "DATA", repr(data)
+        print("HEADER", header)
+        print("DATA", repr(data))
 
 #################################################
 

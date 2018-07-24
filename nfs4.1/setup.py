@@ -31,10 +31,10 @@ class build_py(_build_py):
                 self.build_module(module, module_file, package)
 
     def expand_xdr(self, dir):
-        print "expand = %r" % dir
+        print("expand = %r" % dir)
         cwd = os.getcwd()
         xdrdir = os.path.join(cwd, dir, 'xdrdef')
-        print "xdrdir = %r" % xdrdir
+        print("xdrdir = %r" % xdrdir)
         if os.path.exists(xdrdir):
             try:
                 os.chdir(xdrdir)
@@ -47,7 +47,7 @@ class build_py(_build_py):
                         os.remove("parser.out")
                         os.remove("parsetab.py")
                     except:
-                        print "Remove parse* failed"
+                        print("Remove parse* failed")
             finally:
                 os.chdir(cwd)
 

@@ -20,7 +20,7 @@ def testReference(t, env):
     res = c.compound(ops)
     check(res, NFS4ERR_MOVED, "GETFH of path indicated by --usespecial")
     locs = c.do_getattr(FATTR4_FS_LOCATIONS, path)
-    print "After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs
+    print("After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs)
 
 def testReference2(t, env):
     """FSLOCATION test of referral node
@@ -33,7 +33,7 @@ def testReference2(t, env):
     c = env.c1
     path = env.opts.usespecial
     locs = c.do_getattr(FATTR4_FS_LOCATIONS, path)
-    print "After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs
+    print("After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs)
 
 def testReference3(t, env):
     """FSLOCATION test of referral node
@@ -46,7 +46,7 @@ def testReference3(t, env):
     c = env.c1
     path = env.opts.usespecial
     locs = c.do_getattr(FATTR4_FS_LOCATIONS, c.homedir)
-    print "After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs
+    print("After NFS4ERR_MOVED, GETATTR(fs_locations) = %s" % locs)
 
 def testAttr1a(t, env):
     """GETATTR with attributes should return _MOVED
@@ -104,10 +104,10 @@ def testAttr2b(t, env):
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_RDATTR_ERROR, FATTR4_FSID]
     entries = c.do_readdir(path, attr_request=attrlist)
     moved = [e for e in entries if e.attrdict[FATTR4_RDATTR_ERROR] == NFS4ERR_MOVED]
-    print "RDATTR==MOVED for:", [e.name for e in moved]
+    print("RDATTR==MOVED for:", [e.name for e in moved])
     for e in moved:
         if len(e.attrdict) != 2:
-            print e.attrdict
+            print(e.attrdict)
             t.fail("Expected 2 attrs returned for file %s, got %i" % (e.name, len(e.attrdict)))
         
 def testAttr3a(t, env):
@@ -137,7 +137,7 @@ def testAttr3b(t, env):
     entries = c.do_readdir(path, attr_request=attrlist)
     moved = [e for e in entries if e.name == env.opts.usespecial[-1]][0]
     if len(moved.attrdict) != 3:
-        print moved.attrdict
+        print(moved.attrdict)
         t.fail("Expected 3 attrs returned for file %s, got %i" % (moved.name, len(moved.attrdict)))
         
 def testAttr4a(t, env):
@@ -150,7 +150,7 @@ def testAttr4a(t, env):
     path = env.opts.usespecial
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_RDATTR_ERROR, FATTR4_FSID, FATTR4_FS_LOCATIONS]
     d = c.do_getattrdict(path, attrlist)
-    print d
+    print(d)
     if len(d) != 3:
         t.fail("Expected 3 attrs returned, got %i" % len(d))
 
@@ -167,10 +167,10 @@ def testAttr4b(t, env):
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_RDATTR_ERROR, FATTR4_FSID, FATTR4_FS_LOCATIONS]
     entries = c.do_readdir(path, attr_request=attrlist)
     moved = [e for e in entries if e.attrdict[FATTR4_RDATTR_ERROR] == NFS4ERR_MOVED]
-    print "RDATTR==MOVED for:", [e.name for e in moved]
+    print("RDATTR==MOVED for:", [e.name for e in moved])
     for e in moved:
         if len(e.attrdict) != 3:
-            print e.attrdict
+            print(e.attrdict)
             t.fail("Expected 3 attrs returned for file %s, got %i" % (e.name, len(e.attrdict)))
         
 def testAttr5a(t, env):
@@ -183,7 +183,7 @@ def testAttr5a(t, env):
     path = env.opts.usespecial
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_FSID, FATTR4_FS_LOCATIONS]
     d = c.do_getattrdict(path, attrlist)
-    print d
+    print(d)
     if len(d) != 2:
         t.fail("Expected 3 attrs returned, got %i" % len(d))
 
@@ -201,6 +201,6 @@ def testAttr5b(t, env):
     entries = c.do_readdir(path, attr_request=attrlist)
     moved = [e for e in entries if e.name == env.opts.usespecial[-1]][0]
     if len(moved.attrdict) != 2:
-        print moved.attrdict
+        print(moved.attrdict)
         t.fail("Expected 2 attrs returned for file %s, got %i" % (moved.name, len(moved.attrdict)))
         

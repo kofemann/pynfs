@@ -1,6 +1,6 @@
 # rpc.py - based on RFC 1831
 #
-# Requires python 2.3
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -230,7 +230,7 @@ class RPCClient(object):
                 if why[0] == errno.EADDRINUSE:
                     port += 1
                 else:
-                    print "Could not use low port"
+                    print("Could not use low port")
                     return
 
     def getsocket(self):
@@ -326,13 +326,13 @@ class RPCClient(object):
         header, cred = self.get_call_header(xid, program, version, procedure)
         data = self.security.secure_data(data, cred)
         try:
-            if self.debug: print "send %i" % xid
+            if self.debug: print("send %i" % xid)
             self.socket.send_record(header + data)
         except socket.timeout:
             raise
         except socket.error, e:
-            print "Got error:", e
-            if self.debug: print "resend", xid
+            print("Got error:", e)
+            if self.debug: print("resend", xid)
             try:
                 self.reconnect().send_record(header + data)
             except socket.error:
@@ -346,7 +346,7 @@ class RPCClient(object):
         # If xid not on list, return error.
         # Listen until get reply with given xid.  Cache others received
         # on list.  Return error if get one not on list.
-        if self.debug: print "listen", xid
+        if self.debug: print("listen", xid)
         list = self.get_outstanding_xids()
         if xid not in list:
             raise
@@ -361,8 +361,8 @@ class RPCClient(object):
             except socket.timeout:
                 raise
             except socket.error, e:
-                print "Got error:", e
-                if self.debug: print "relisten", xid
+                print("Got error:", e)
+                if self.debug: print("relisten", xid)
                 try:
                     s = self.reconnect()
                     s.send_record(list[xid].header + list[xid].data)
@@ -472,21 +472,21 @@ class Server(object):
 
     def run(self, debug=0):
         while 1:
-            if debug: print "%s: Calling poll" % self.name
+            if debug: print("%s: Calling poll" % self.name)
             res = self.p.poll()
-            if debug: print "%s: %s" % (self.name, res)
+            if debug: print("%s: %s" % (self.name, res))
             for fd, event in res:
                 if debug:
-                    print "%s: Handling fd=%i, event=%x" % \
-                          (self.name, fd, event)
+                    print("%s: Handling fd=%i, event=%x" % \
+                          (self.name, fd, event))
                 if event & select.POLLHUP:
                     self.event_hup(fd)
                 elif event & select.POLLNVAL:
-                    if debug: print "%s: POLLNVAL for fd=%i" % (self.name, fd)
+                    if debug: print("%s: POLLNVAL for fd=%i" % (self.name, fd))
                     self.p.unregister(fd)
                 elif event & ~(select.POLLIN | select.POLLOUT):
-                    print "%s: ERROR: event %i for fd %i" % \
-                          (self.name, event, fd)
+                    print("%s: ERROR: event %i for fd %i" % \
+                          (self.name, event, fd))
                     self.event_error(fd)
                 else:
                     if event & select.POLLOUT:
@@ -534,9 +534,9 @@ class RPCServer(Server):
         csock, caddr = self.s.accept()
         csock.setblocking(0)
         if debug:
-            print "SERVER: got connection from %s, " \
+            print("SERVER: got connection from %s, " \
                   "assigned to fd=%i" % \
-                  (csock.getpeername(), csock.fileno())
+                  (csock.getpeername(), csock.fileno()))
         self.p.register(csock, _readmask)
         cfd = csock.fileno()
         self.readbufs[cfd] = ''
@@ -550,7 +550,7 @@ class RPCServer(Server):
 
         Also responds to command codes sent as encoded integers
         """
-        if debug: print "SERVER: In read event for %i" % fd
+        if debug: print("SERVER: In read event for %i" % fd)
         self.readbufs[fd] += data
         loop = True
         while loop:
@@ -566,7 +566,7 @@ class RPCServer(Server):
                     if self.readbufs[fd]:
                         loop = True # We've received data past last 
                     if last:
-                        if debug: print "SERVER: Received record from %i" % fd
+                        if debug: print("SERVER: Received record from %i" % fd)
                         recv_data = ''.join(self.packetbufs[fd])
                         self.packetbufs[fd] = []
                         if len(recv_data) == 4:
@@ -579,14 +579,14 @@ class RPCServer(Server):
                             self.p.register(fd, _bothmask)
 
     def event_write(self, fd, chunksize=2048, debug=0):
-        if debug: print "SERVER: In write event for %i" % fd
+        if debug: print("SERVER: In write event for %i" % fd)
         if self.writebufs[fd]:
-            if debug: print "  writing from writebuf"
+            if debug: print("  writing from writebuf")
             count = self.sockets[fd].send(self.writebufs[fd])
             self.writebufs[fd] = self.writebufs[fd][count:]
             # check if done?
         elif self.recordbufs[fd]:
-            if debug: print "  writing from recordbuf"
+            if debug: print("  writing from recordbuf")
             data = self.recordbufs[fd][0]
             chunk = data[:chunksize]
             if len(data) > chunksize:
@@ -601,12 +601,12 @@ class RPCServer(Server):
             count = self.sockets[fd].send(self.writebufs[fd])
             self.writebufs[fd] = self.writebufs[fd][count:]
         else:
-            if debug: print "  done writing"
+            if debug: print("  done writing")
             self.p.register(fd, _readmask)
 
     def event_command(self, cfd, comm, debug=0):
         if debug:
-            print "SERVER: command = %i, cfd = %i" % (comm, cfd)
+            print("SERVER: command = %i, cfd = %i" % (comm, cfd))
         if comm == 0: # Turn off server
             self.compute_reply = lambda x: None
             return '\0'*4
@@ -616,7 +616,7 @@ class RPCServer(Server):
 
     def event_close(self, fd, debug=0):
         if debug:
-            print "SERVER: closing %i" % fd
+            print("SERVER: closing %i" % fd)
         self.event_error(fd)
 
     def event_error(self, fd):
@@ -636,16 +636,16 @@ class RPCServer(Server):
         try:
             recv_msg = self.rpcunpacker.unpack_rpc_msg()
         except xdrlib.Error, e:
-            print "XDRError", e
+            print("XDRError", e)
             return
         if recv_msg.body.mtype != CALL:
-            print "Received a REPLY, expected a CALL"
+            print("Received a REPLY, expected a CALL")
             return
         # Check for reasons to deny the call
         call = recv_msg.body.cbody
         cred = call.cred
         flavor = cred.flavor
-        #print call
+        #print(call)
         reply_stat = MSG_ACCEPTED
         areply = rreply = None
         proc_response = ''

@@ -217,7 +217,7 @@ def testRootSquash(t, env):
     oldname = oldowner.split('@')[0]
     if oldname == 'root':
         t.fail_support("No root squashing detected")
-    print "Detected root squashing: root -> %s" % oldname
+    print("Detected root squashing: root -> %s" % oldname)
     
     # Wait for grace period to have *just* expired
     _waitForReboot(c, env)

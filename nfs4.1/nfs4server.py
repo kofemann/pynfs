@@ -521,7 +521,7 @@ class SummaryOutput:
         print_summary_line = True
         if summary_line != self._last or role != self._last_role:
             if self._last and self._repeat_count:
-                print "  (repeated %u times)" % self._repeat_count
+                print("  (repeated %u times)" % self._repeat_count)
             self._last = summary_line
             self._repeat_count = 0
         else:
@@ -530,11 +530,11 @@ class SummaryOutput:
 
         if self._last_role != role:
             print
-            print role
+            print(role)
             self._last_role = role
 
         if print_summary_line:
-            print summary_line
+            print(summary_line)
 
 
 ##################################################
@@ -613,7 +613,7 @@ class NFS4Server(rpc.Server):
 
         Note that order matters, since the mount hides anything beneath it.
         """
-        print "Mounting %r on %r" % (fs.fsid, path)
+        print("Mounting %r on %r" % (fs.fsid, path))
         # Find directory object on which to mount fs
         dir = self.root
         principal = nfs4lib.NFS4Principal("root", system=True)
@@ -1964,14 +1964,14 @@ class NFS4Server(rpc.Server):
                 calls.append(call)
             if arg.dir & xdrdef.sctrl_const.DIR_REPLY:
                 replies.append(reply)
-        #print calls
-        #print replies
+        #print(calls)
+        #print(replies)
         grabres = xdrdef.sctrl_type.GRABres(calls, replies)
         return xdrdef.sctrl_const.CTRLSTAT_OK, \
                xdrdef.sctrl_type.resdata_t(arg.ctrlop, grab = grabres)
 
     def ctrl_illegal(self, arg):
-        #print "ILLEGAL"
+        #print("ILLEGAL")
         return xdrdef.sctrl_const.CTRLSTAT_ILLEGAL, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
         
     def op_setclientid(self, arg, env):

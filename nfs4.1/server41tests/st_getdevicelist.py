@@ -28,7 +28,7 @@ def testGetDevList(t, env):
         check(res)
         # STUB - check block stuff
         dev_list = res.resarray[-1].gdlr_deviceid_list
-        print dev_list
+        print(dev_list)
 
 def testGetDevInfo(t, env):
     """Check devlist
@@ -60,7 +60,7 @@ def testGetDevInfo(t, env):
                 p.reset(res.resarray[-1].da_addr_body)
                 decode = p.unpack_pnfs_block_deviceaddr4()
                 p.done()
-                print decode
+                print(decode)
 
 
 ## def xxxtestLayout(t, env):
@@ -110,7 +110,7 @@ def testGetLayout(t, env):
             p = BlockUnpacker(layout.loc_body)
             opaque = p.unpack_pnfs_block_layout4()
             p.done()
-            print opaque
+            print(opaque)
 
 def testEMCGetLayout(t, env):
     """Verify layout handling
@@ -142,7 +142,7 @@ def testEMCGetLayout(t, env):
             p = BlockUnpacker(layout.loc_body)
             opaque = p.unpack_pnfs_block_layout4()
             p.done()
-            print opaque
+            print(opaque)
 
 def testLayoutReturnFile(t, env):
     """
@@ -257,9 +257,9 @@ def testLayoutCommit(t, env):
         p = BlockUnpacker(layout.loc_body)
         opaque = p.unpack_pnfs_block_layout4()
         p.done()
-        print opaque
+        print(opaque)
     final_extent = opaque.blo_extents[-1]
-    print final_extent
+    print(final_extent)
     if final_extent.bex_state != PNFS_BLOCK_INVALID_DATA:
         fail("Expected INVALID_DATA in extent")
     # LAYOUTCOMMIT
@@ -276,6 +276,6 @@ def testLayoutCommit(t, env):
                            layoutupdate4(LAYOUT4_BLOCK_VOLUME, p.get_buffer()))]
     res = sess.compound(ops)
     check(res)
-    print res
+    print(res)
          
     
