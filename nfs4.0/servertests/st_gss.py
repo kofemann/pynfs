@@ -109,11 +109,11 @@ def testInconsistentGssSeqnum(t, env):
         try:
             res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
-        except rpc.RPCAcceptError, e:
+        except rpc.RPCAcceptError as e:
             if e.stat == rpc.GARBAGE_ARGS:
                 # This is correct response
                 return
-        except Exception, e:
+        except Exception as e:
             pass
         t.fail("Using inconsistent gss_seq_nums in header and body of message "
                "should return GARBAGE_ARGS, instead got %s" % e)
@@ -138,11 +138,11 @@ def testBadVerfChecksum(t, env):
         try:
             res = c.compound([op.putrootfh()])
             e = "peration erroneously suceeding"
-        except rpc.RPCDeniedError, e:
+        except rpc.RPCDeniedError as e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CREDPROBLEM:
                 # This is correct response
                 return
-        except Exception, e:
+        except Exception as e:
             pass
         t.fail("Using bad verifier checksum in header "
                "should return RPCSEC_GSS_CREDPROBLEM, instead got %s" % e)
@@ -174,11 +174,11 @@ def testBadDataChecksum(t, env):
         try:
             res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
-        except rpc.RPCAcceptError, e:
+        except rpc.RPCAcceptError as e:
             if e.stat == rpc.GARBAGE_ARGS:
                 # This is correct response
                 return
-        except Exception, e:
+        except Exception as e:
             pass
         t.fail("Using bad data checksum for body of message "
                "should return GARBAGE_ARGS, instead got %s" % e)
@@ -214,11 +214,11 @@ def testBadVersion(t, env):
             try:
                 res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
-            except rpc.RPCDeniedError, e:
+            except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
                     e = None
-            except Exception, e:
+            except Exception as e:
                 pass
             if e is not None:
                 t.fail("Using bad gss version number %i "
@@ -241,11 +241,11 @@ def testHighSeqNum(t, env):
         try:
             res = c.compound([op.putrootfh()])
             e = "operation erroneously suceeding"
-        except rpc.RPCDeniedError, e:
+        except rpc.RPCDeniedError as e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CTXPROBLEM:
                 # This is correct response
                 return
-        except Exception, e:
+        except Exception as e:
             pass
         t.fail("Using gss_seq_num over MAXSEQ "
                "should return RPCSEC_GSS_CTXPROBLEM, instead got %s" % e)
@@ -279,11 +279,11 @@ def testBadProcedure(t, env):
             try:
                 res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
-            except rpc.RPCDeniedError, e:
+            except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
                     e = None
-            except Exception, e:
+            except Exception as e:
                 pass
             if e is not None:
                 t.fail("Using bad gss procedure number %i "
@@ -321,11 +321,11 @@ def testBadService(t, env):
             try:
                 res = c.compound([op.putrootfh()])
                 e = "operation erroneously suceeding"
-            except rpc.RPCDeniedError, e:
+            except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
                     e = None
-            except Exception, e:
+            except Exception as e:
                 pass
             if e is not None:
                 t.fail("Using bad gss service number %i "

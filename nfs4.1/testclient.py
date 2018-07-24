@@ -257,7 +257,7 @@ def main():
                     p.error("Can't use dir for --%s" %attr)
                 try:
                     path = nfs4lib.path_components(path)
-                except Exception, e:
+                except Exception as e:
                     p.error(e)
             setattr(opt, attr, [comp for comp in path if comp])
 
@@ -301,11 +301,11 @@ def main():
     try:
         env = environment.Environment(opt)
         env.init()
-    except socket.gaierror, e:
+    except socket.gaierror as e:
         if e.args[0] == -2:
             print("Unknown server '%s'" % opt.server)
         sys.exit(1)
-    except Exception, e:
+    except Exception as e:
         print("Initialization failed, no tests run.")
         if not opt.maketree:
             print("Perhaps you need to use the --maketree option")
@@ -326,7 +326,7 @@ def main():
     try:
         fail = False
         env.finish()
-    except Exception, e:
+    except Exception as e:
         fail = True
     testmod.printresults(tests, opt)
     if fail:

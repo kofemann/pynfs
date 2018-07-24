@@ -82,7 +82,7 @@ def testUndefined(t, env):
             try:
                 res = c.compound([nfs_argop4(argop=opnum)])
                 check(res, NFS4ERR_OP_ILLEGAL, "Sent illegal op=%i" % opnum)
-            except RPCError, e:
+            except RPCError as e:
                 t.fail("COMPOUND with illegal op=%i got %s, "
                        "expected NFS4ERR_OP_ILLEGAL" % (opnum,e))
     finally:
@@ -106,6 +106,6 @@ def testLongCompound(t, env):
                       "COMPOUND with len=%i argarry" % (3*count))
             if res.status == NFS4ERR_RESOURCE:
                 return
-    except RPCError, e:
+    except RPCError as e:
         t.fail("COMPOUND with len=%i argarry got %s, "
                "expected NFS4ERR_RESOURCE" % (3*count, e))

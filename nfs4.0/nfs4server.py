@@ -227,7 +227,7 @@ class NFS4Server(rpc.RPCServer):
                 raise NFS4Error(NFS4ERR_NOFILEHANDLE)
             print("  CLOSE fh", self.curr_fh.handle)
             self.state.close(stateid)
-        except NFS4Error, e:
+        except NFS4Error as e:
             self.state.advance_seqid(stateid, op, (e.code,))
             return simple_error(e.code)
         # Return a garbage state id
@@ -269,7 +269,7 @@ class NFS4Server(rpc.RPCServer):
             attrset = self.curr_fh.create(op.opcreate.objname, op.opcreate.objtype, attrs)
             new_cinfo = self.curr_fh.fattr4_change
             self.curr_fh = self.curr_fh.lookup(op.opcreate.objname)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         cin4 = change_info4(before=old_cinfo, after=new_cinfo, atomic=1)
         c4resok = CREATE4resok(cinfo=cin4, attrset = attrset)
@@ -290,7 +290,7 @@ class NFS4Server(rpc.RPCServer):
                 return simple_error(NFS4ERR_NOFILEHANDLE)
             attrs = nfs4lib.bitmap2list(op.opgetattr.attr_request)
             attrvals = self.curr_fh.get_attributes(attrs)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         garesok = GETATTR4resok(attrvals)
         return simple_error(NFS4_OK, garesok)
@@ -351,7 +351,7 @@ class NFS4Server(rpc.RPCServer):
                 self.state.new_lockowner(op.oplock.locker.open_owner)
             stateid = self.state.lock(self.curr_fh, owner, op.oplock.locktype,
                                       op.oplock.offset, op.oplock.length)
-        except NFS4Error, e:
+        except NFS4Error as e:
             if op.oplock.locker.new_lock_owner:
                 # FIXME - a bug? compare with replay=check_seqid() above
                 self.state.advance_seqid(openstateid, op, (e.code,))
@@ -376,7 +376,7 @@ class NFS4Server(rpc.RPCServer):
             self.state.testlock(self.curr_fh,
                                 op.oplockt.owner, op.oplockt.locktype,
                                 op.oplockt.offset, op.oplockt.length)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code, e.lock_denied)
         return simple_error(NFS4_OK)
 
@@ -393,7 +393,7 @@ class NFS4Server(rpc.RPCServer):
                 raise NFS4Error(NFS4ERR_NOFILEHANDLE)
             sid = self.state.unlock(self.curr_fh, stateid, op.oplocku.locktype,
                                     op.oplocku.offset, op.oplocku.length)
-        except NFS4Error, e:
+        except NFS4Error as e:
             self.state.advance_seqid(stateid, op, (e.code,))
             return simple_error(e.code)
         self.state.advance_seqid(stateid, op, (NFS4_OK, sid), self.curr_fh)
@@ -438,7 +438,7 @@ class NFS4Server(rpc.RPCServer):
             if FATTR4_RDATTR_ERROR in attrreq:
                 return simple_error(NFS4ERR_INVAL)
             attrvals = self.curr_fh.get_attributes(attrreq.keys(), ignore=False)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         if attrvals == attrreq:
             return simple_error(NFS4ERR_SAME)
@@ -524,7 +524,7 @@ class NFS4Server(rpc.RPCServer):
             # 'existing'  now points to a valid file, so check and set shares
             sid, flags = self.state.open(existing, owner,
                                   op.opopen.share_access, op.opopen.share_deny)
-        except NFS4Error, e:
+        except NFS4Error as e:
             print("Open error")
             self.state.advance_seqid(owner, op, (e.code,))
             return simple_error(e.code)
@@ -560,7 +560,7 @@ class NFS4Server(rpc.RPCServer):
             if self.curr_fh.get_type() != NF4REG:
                 raise NFS4Error(NFS4ERR_INVAL)
             sid = self.state.confirm(self.curr_fh, stateid)
-        except NFS4Error, e:
+        except NFS4Error as e:
             self.state.advance_seqid(stateid, op, (e.code,))
             return simple_error(e.code)
         oc4resok = OPEN_CONFIRM4resok(sid)
@@ -583,7 +583,7 @@ class NFS4Server(rpc.RPCServer):
             sid = self.state.downgrade(self.curr_fh, stateid,
                                        op.opopen_downgrade.share_access,
                                        op.opopen_downgrade.share_deny)
-        except NFS4Error, e:
+        except NFS4Error as e:
             self.state.advance_seqid(stateid, op, (e.code,))
             return simple_error(e.code)
         od4resok = OPEN_DOWNGRADE4resok(sid)
@@ -626,7 +626,7 @@ class NFS4Server(rpc.RPCServer):
                                   offset, count)
             read_data = self.curr_fh.read(offset, count)
             print("  READ DATA: len=%i" % len(read_data))
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         if len(read_data) < count:
             read_eof = 1
@@ -693,7 +693,7 @@ class NFS4Server(rpc.RPCServer):
                 d4 = dirlist4(e4, eof=0)
             else:
                 d4 = dirlist4(e4, eof=1)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         rdresok = READDIR4resok(cookieverf=verifier, reply=d4)
         return simple_error(NFS4_OK, rdresok)
@@ -777,7 +777,7 @@ class NFS4Server(rpc.RPCServer):
     def op_renew(self, op):
         try:
             self.state.renew(op.oprenew.clientid)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         return simple_error(NFS4_OK)
 
@@ -830,7 +830,7 @@ class NFS4Server(rpc.RPCServer):
                 self.state.check_write(self.curr_fh, op.opsetattr.stateid,
                                        offset, length)
             attrset = self.curr_fh.set_attributes(attrdict)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code, e.attrs)
         return simple_error(NFS4_OK, attrset)
 
@@ -908,7 +908,7 @@ class NFS4Server(rpc.RPCServer):
             if FATTR4_RDATTR_ERROR in attrreq:
                 return simple_error(NFS4ERR_INVAL)
             attrvals = self.curr_fh.get_attributes(attrreq.keys(), ignore=False)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         if attrvals == attrreq:
             return simple_error(NFS4_OK)
@@ -935,7 +935,7 @@ class NFS4Server(rpc.RPCServer):
                                    offset, len(data))
             count = self.curr_fh.write(offset, data)
             print("  wrote %i bytes" % count)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return simple_error(e.code)
         w4resok = WRITE4resok(count, FILE_SYNC4, self.state.write_verifier)
         return simple_error(NFS4_OK, w4resok)

@@ -264,6 +264,6 @@ def testDots(t, env):
             (x, rejected_names_link) = self.try_file_names(creator=self.create_via_link)
             self.failIf(rejected_names_open != rejected_names_link,
                         "LINK does not obey OPEN naming policy")
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 

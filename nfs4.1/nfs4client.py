@@ -161,7 +161,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                                                        env.results.cache.results))
                 env.cache.data = p.get_buffer()
                 env.cache.valid.set()
-        except NFS4Replay, e:
+        except NFS4Replay as e:
             log_cb.info("Replay...waiting for valid data")
             e.cache.valid.wait()
             log_cb.info("Replay...sending data")
@@ -183,7 +183,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                 return env
         try:
             self.check_utf8str_cs(args.tag)
-        except NFS4Errror, e:
+        except NFS4Errror as e:
             env.results.set_empty_return(e.status, "Invalid utf8 tag")
             return env
         # Handle the individual operations
@@ -202,7 +202,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                 try:
                     # Otherwise, call the function
                     result = funct(arg, env)
-                except NFS4Error, e:
+                except NFS4Error as e:
                     # XXX NOTE this only works for error returns that
                     # include no data.  Must ensure others (eg setattr)
                     # catch error themselves to encode properly.

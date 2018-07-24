@@ -272,7 +272,7 @@ def testUnaccessibleDirAttrs(t, env):
         
         try:
             (accepted_names, rejected_names) = self.try_file_names(remove_files=0)
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         fh = self.do_rpc(self.ncl.do_getfh, self.tmp_dir) 
@@ -309,11 +309,11 @@ def testUnaccessibleDirAttrs(t, env):
         
         try:
             (accepted_names, rejected_names) = self.small_try_file_names(remove_files=0)
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         try: self.clean_dir(self.tmp_dir)
-        except SkipException, e:
+        except SkipException as e:
             self.fail(e)
 
     def small_try_file_names(self, remove_files=1, creator=None):

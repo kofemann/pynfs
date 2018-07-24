@@ -249,7 +249,7 @@ class NFSServerState:
             mustexist = True
         try:
             info = self.__getinfo(obj, allownew=not mustexist)
-        except ValueError, e:
+        except ValueError as e:
             if mustexist: raise
         #print("  check_seqid: %s" % info)
         if info is None:
@@ -286,7 +286,7 @@ class NFSServerState:
         # RFC 3530 sec 8.1.5
         try:
             info = self.__getinfo(owner)
-        except (ValueError, NFS4Error):
+        except (ValueError as NFS4Error):
             # An unknown owner, do nothing
             return
         if info is None:
@@ -1132,7 +1132,7 @@ class VirtualHandle(NFSFileHandle):
             except AttributeError:
                 # Otherwise, just set the variable
                 setattr(self, name, attrdict[attr])
-            except NFS4Error, e:
+            except NFS4Error as e:
                 # Note attributes set so far in any error that occurred
                 e.attrs = mapping(ret_list)
                 raise
@@ -1170,7 +1170,7 @@ class VirtualHandle(NFSFileHandle):
         if POSIXACL:
             try:
                 nfs4acl.maps_to_posix(acl)
-            except nfs4acl.ACLError, e:
+            except nfs4acl.ACLError as e:
                 print("*"*50)
                 print(e)
                 print("*"*50)

@@ -18,7 +18,7 @@ class SecAuthSys(SecFlavor):
             p.pack_uint(gid)
             p.pack_array(gids, p.pack_uint)
             self.cred = p.get_buffer()
-        except Error, e:
+        except Error as e:
             raise SecError("Packing error: %s", str(e))
         self.uid = uid
         self.gid = gid

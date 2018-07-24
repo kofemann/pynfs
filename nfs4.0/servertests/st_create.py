@@ -290,5 +290,5 @@ def testLongName(t, env):
             (x, rejected_names_create) = self.try_file_names(creator=self.create_via_create)
             self.failIf(rejected_names_open != rejected_names_create,
                         "CREATE does not obey OPEN naming policy")
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)

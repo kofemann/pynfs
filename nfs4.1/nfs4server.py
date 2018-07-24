@@ -350,7 +350,7 @@ class ClientRecord(object):
                         state.delete()
                     # STUB - what about LAYOUT?
                     # STUB - config whether DELEG OK or not
-            except StandardError, e:
+            except StandardError as e:
                 log_41.exception("Ignoring problem during state removal")
         self.state = {}
         self.lastused = time.time()
@@ -721,7 +721,7 @@ class NFS4Server(rpc.Server):
                                                  env.results.cache.results))
                 env.cache.data = p.get_buffer()
                 env.cache.valid.set()
-        except NFS4Replay, e:
+        except NFS4Replay as e:
             log_41.info("Replay...waiting for valid data")
             e.cache.valid.wait()
             log_41.info("Replay...sending data")
@@ -808,7 +808,7 @@ class NFS4Server(rpc.Server):
             return env
         try:
             self.check_utf8str_cs(args.tag)
-        except NFS4Errror, e:
+        except NFS4Errror as e:
             env.results.set_empty_return(e.status, "Invalid utf8 tag")
             return env
         # Handle the individual operations
@@ -828,7 +828,7 @@ class NFS4Server(rpc.Server):
                 try:
                     # Otherwise, call the function
                     result = funct(arg, env)
-                except NFS4Error, e:
+                except NFS4Error as e:
                     # XXX NOTE this only works for error returns that
                     # include no data.  Must ensure others (eg setattr)
                     # catch error themselves to encode properly.
@@ -876,7 +876,7 @@ class NFS4Server(rpc.Server):
         # We have a session. Check for injected errors
         try:
             self.check_opsconfig(env, "sequence")
-        except NFS4Error, e:
+        except NFS4Error as e:
             self.error_set_session(session, arg.sa_sessionid, e.status)
 
         # Check connection binding
@@ -962,7 +962,7 @@ class NFS4Server(rpc.Server):
                 self.cb_null(session.cb_prog, connection, credinfo=None)
                 flags |= CREATE_SESSION4_FLAG_CONN_BACK_CHAN
                 cb_channel.connections.append(connection)
-            except rpc.RPCError, e:
+            except rpc.RPCError as e:
                 log_41.warn("cb_null failed with %r, no backchannel created", e)
                 # STUB: backchannel is down: set sequence bits, disable layouts, etc.
                 pass
@@ -1604,7 +1604,7 @@ class NFS4Server(rpc.Server):
                 finally:
                     state.mark_done_writing()
             return encode_status(NFS4_OK, bitmap)
-        except NFS4Error, e:
+        except NFS4Error as e:
             # SETATTR failure does not encode just status
             return encode_status(e.status, e.attrs)
 
@@ -1702,7 +1702,7 @@ class NFS4Server(rpc.Server):
             if FATTR4_RDATTR_ERROR in attrreq:
                 raise NFS4Error(NFS4ERR_INVAL)
             attrvals = self.get_attributes(env.cfh, attrreq.keys(), ignore=False)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return encode_status(e.code)
         if attrvals == attrreq:
             return encode_status(NFS4ERR_SAME)
@@ -1717,7 +1717,7 @@ class NFS4Server(rpc.Server):
             if FATTR4_RDATTR_ERROR in attrreq:
                 raise NFS4Error(NFS4ERR_INVAL)
             attrvals = self.get_attributes(env.cfh, attrreq.keys(), ignore=False)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return encode_status(e.code)
         if attrvals != attrreq:
             return encode_status(NFS4ERR_NOT_SAME)
@@ -1806,7 +1806,7 @@ class NFS4Server(rpc.Server):
                 with find_state(env, arg.lock_stateid, allow_0=False) as state:
                     state.add_lock(arg.locktype, arg.offset, end)
                     stateid = state.get_id()
-        except NFS4Error, e:
+        except NFS4Error as e:
             return encode_status(e.status, denied=e.lock_denied)
         l4resok = LOCK4resok(stateid)
         return encode_status(NFS4_OK, l4resok)
@@ -1820,7 +1820,7 @@ class NFS4Server(rpc.Server):
             with env.cfh.state:
                 env.cfh.state.test_lock(env.session.client, arg.owner.owner,
                                         arg.locktype, arg.offset, end)
-        except NFS4Error, e:
+        except NFS4Error as e:
             return encode_status(e.status, denied=e.lock_denied)
         return encode_status(NFS4_OK)
 
@@ -1904,7 +1904,7 @@ class NFS4Server(rpc.Server):
                 return_on_close = False
                 res = LAYOUTGET4resok(return_on_close, entry.get_id(), [layout])
                 return encode_status(NFS4_OK, res)
-        except NFS4Error, e:
+        except NFS4Error as e:
             # LAYOUTGET failure does not encode just status
             if e.status == NFS4ERR_LAYOUTTRYLATER:
                 return encode_status(e.status, None, False)

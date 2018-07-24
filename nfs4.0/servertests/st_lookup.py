@@ -312,7 +312,7 @@ def testBadOpaque(t, env):
         res = c.compound([op.putrootfh(), op.lookup("setlength=0xcccccccc")])
         e = "operation erroneously suceeding"
         check(res, NFS4ERR_BADXDR)
-    except rpc.RPCAcceptError, e:
+    except rpc.RPCAcceptError as e:
         if e.stat == rpc.GARBAGE_ARGS:
             # This is correct response
             return
@@ -336,7 +336,7 @@ def testBadOpaque(t, env):
         # Saved files for LOOKUP
         try:
             (accepted_names, rejected_names) = self.try_file_names(0)
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try LOOKUP on all accepted names
@@ -363,7 +363,7 @@ def testBadOpaque(t, env):
 
         try:
             (accepted_names, rejected_names) = self.try_file_names()
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try LOOKUP on all rejected names

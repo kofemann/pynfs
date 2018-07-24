@@ -534,7 +534,7 @@ def testLinkRename(t, env):
             (x, rejected_names_rename) = self.try_file_names(creator=self.create_via_rename)
             self.failIf(rejected_names_open != rejected_names_rename,
                         "RENAME does not obey OPEN naming policy")
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
     def testValidNames(t, env):
@@ -550,7 +550,7 @@ def testLinkRename(t, env):
         # Saved files for 
         try:
             (accepted_names, rejected_names) = self.try_file_names(remove_files=0)
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try RENAME on all accepted names
@@ -573,7 +573,7 @@ def testLinkRename(t, env):
 
         try:
             (accepted_names, rejected_names) = self.try_file_names()
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try RENAME on all rejected names

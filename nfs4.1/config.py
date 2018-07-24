@@ -74,7 +74,7 @@ class ConfigLine(object):
     def _set_value(self, value):
         try:
             self._value = self.verify(value)
-        except ConfigAction, e:
+        except ConfigAction as e:
             e.name = self.name
             e.value = value
             raise

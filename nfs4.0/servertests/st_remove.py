@@ -274,7 +274,7 @@ def testNotEmpty(t, env):
         # Save files for REMOVE
         try:
             (accepted_names, rejected_names) = self.try_file_names(remove_files=0)
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try REMOVE on all accepted names
@@ -299,7 +299,7 @@ def testNotEmpty(t, env):
         self.init_connection()
         try:
             (accepted_names, rejected_names) = self.try_file_names()
-        except SkipException, e:
+        except SkipException as e:
             self.skip(e)
 
         # Ok, lets try REMOVE on all rejected names

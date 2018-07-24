@@ -323,7 +323,7 @@ class FSObject(object):
                     base = self.meta
                 try:
                     setattr(base, name, attrs[attr])
-                except NFS4Error, e:
+                except NFS4Error as e:
                     # Note attributes set so far in any error that occurred
                     e.attrs = bitmap
                     raise
@@ -747,7 +747,7 @@ class ConfigObj(FSObject):
             return
         try:
             self.configline.value = lines[0]
-        except ConfigAction, e:
+        except ConfigAction as e:
             if e.name == "reboot":
                 self.fs.server.reboot()
         except:

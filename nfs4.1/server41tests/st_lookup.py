@@ -360,7 +360,7 @@ if 0:
             # Saved files for LOOKUP
             try:
                 (accepted_names, rejected_names) = self.try_file_names(0)
-            except SkipException, e:
+            except SkipException as e:
                 self.skip(e)
 
             # Ok, lets try LOOKUP on all accepted names
@@ -387,7 +387,7 @@ if 0:
 
             try:
                 (accepted_names, rejected_names) = self.try_file_names()
-            except SkipException, e:
+            except SkipException as e:
                 self.skip(e)
 
             # Ok, lets try LOOKUP on all rejected names

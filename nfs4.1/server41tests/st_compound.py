@@ -118,7 +118,7 @@ def testUndefined(t, env):
             check(res, NFS4ERR_OP_ILLEGAL)
             if res.resarray[-1].resop != OP_ILLEGAL:
                 t.fail('Server echoed invalid opcode: Should return OP_ILLEGAL')
-        except RPCAcceptError, e:
+        except RPCAcceptError as e:
             if e.stat == GARBAGE_ARGS:
                 pass
             else:

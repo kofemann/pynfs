@@ -226,7 +226,7 @@ class RPCClient(object):
             try:
                 sock.bind(('', port))
                 return
-            except socket.error, why:
+            except socket.error as why:
                 if why[0] == errno.EADDRINUSE:
                     port += 1
                 else:
@@ -330,7 +330,7 @@ class RPCClient(object):
             self.socket.send_record(header + data)
         except socket.timeout:
             raise
-        except socket.error, e:
+        except socket.error as e:
             print("Got error:", e)
             if self.debug: print("resend", xid)
             try:
@@ -360,7 +360,7 @@ class RPCClient(object):
                 reply = self.socket.recv_record()
             except socket.timeout:
                 raise
-            except socket.error, e:
+            except socket.error as e:
                 print("Got error:", e)
                 if self.debug: print("relisten", xid)
                 try:
@@ -635,7 +635,7 @@ class RPCServer(Server):
         self.rpcunpacker.reset(recv_data)
         try:
             recv_msg = self.rpcunpacker.unpack_rpc_msg()
-        except xdrlib.Error, e:
+        except xdrlib.Error as e:
             print("XDRError", e)
             return
         if recv_msg.body.mtype != CALL:

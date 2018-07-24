@@ -226,19 +226,19 @@ class Test(object):
 	    environment.clean_clients()
         except KeyboardInterrupt:
             raise
-        except TestException, e:
+        except TestException as e:
             self.result = Result(e.type, e, sys.exc_info())
-        except StandardError, e:
+        except StandardError as e:
             if verbose:
                 print_exc()
             self.result = Result(TEST_FAIL, '', sys.exc_info())
             self.result.msg = self.result.tb[-1]
-        except Exception, e:
+        except Exception as e:
             self.result = Result(TEST_FAIL, e, sys.exc_info())
             self.result.msg = self.result.tb[-1]
         try:
             environment.shutDown()
-        except StandardError, e:
+        except StandardError as e:
             self.result = Result(TEST_FAIL, '', sys.exc_info())
             self.result.msg = self.result.tb[-1]
 

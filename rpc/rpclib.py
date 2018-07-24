@@ -33,7 +33,7 @@ class RPCDeniedReply(RPCFlowContol):
             else:
                 # Something has gone haywire
                 rreply = rejected_reply(AUTH_ERROR, astat=AUTH_FAILED)
-        except Exception, e:
+        except Exception as e:
             log.critical("Oops, encountered bug", exc_info=True)
             rreply = rejected_reply(AUTH_ERROR, astat=AUTH_FAILED)
         return reply_body(MSG_DENIED, rreply=rreply), ''
@@ -52,7 +52,7 @@ class RPCUnsuccessfulReply(RPCFlowContol):
                 data = rpc_reply_data(self.stat)
             if self.stat == PROG_MISMATCH:
                 data.mismatch_info = rpc_mismatch_info(*self.statdata)
-        except Exception, e:
+        except Exception as e:
             log.critical("Oops, encountered bug", exc_info=True)
             data = rpc_reply_data(SYSTEM_ERR)
         areply = accepted_reply(NULL_CRED, data)

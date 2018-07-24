@@ -169,7 +169,7 @@ class Alarm(object):
         self._s.setblocking(0)
         try:
             self._s.connect(address)
-        except socket.error, e:
+        except socket.error as e:
             if e.args[0] in [EINPROGRESS, EWOULDBLOCK]:
                 # address has not yet called accept, since this is done in a
                 # single thread, so get "op in progress error".  When the
@@ -330,7 +330,7 @@ class Pipe(object):
             raise RuntimeError
         try:
             count = self._s.send(self._write_buf)
-        except socket.error, e:
+        except socket.error as e:
             log_p.error("flush_pipe got exception %s" % str(e))
             return True # This is to stop retries
         self._write_buf = self._write_buf[count:]
@@ -513,13 +513,13 @@ class ConnectionHandler(object):
             for fd in w:
                 try:
                     self._event_write(fd)
-                except socket.error, e:
+                except socket.error as e:
                     self._event_close(fd)
             for fd in r:
                 if fd in self.listeners:
                     try:
                         self._event_connect_incoming(fd)
-                    except socket.error, e:
+                    except socket.error as e:
                         self._event_close(fd)
                 elif fd == self._alarm_poll.fileno():
                     commands = self._alarm_poll.recv(self.rsize)
@@ -527,7 +527,7 @@ class ConnectionHandler(object):
                         data = self._alarm.pop()
                         try:
                             switch[c](data)
-                        except socket.error, e:
+                        except socket.error as e:
                             self._event_close(fd)
                 else:
                     try:
@@ -557,7 +557,7 @@ class ConnectionHandler(object):
                 s.setblocking(0)
             else:
                 csock, caddr = s.accept()
-        except socket.error, e:
+        except socket.error as e:
             log_p.error("accept() got error %s" % str(e))
             return
         csock.setblocking(0)
@@ -700,7 +700,7 @@ class ConnectionHandler(object):
             # Silently drop the request
             self._notify_drop()
             return
-        except rpclib.RPCFlowContol, e:
+        except rpclib.RPCFlowContol as e:
             body, data = e.body()
         except Exception:
             log_t.warn("Unexpected exception", exc_info=True)
@@ -832,7 +832,7 @@ class ConnectionHandler(object):
             try:
                 s.bind(('', using))
                 return
-            except socket.error, why:
+            except socket.error as why:
                 if why[0] == errno.EADDRINUSE:
                     using += 1
                     if port < 1024 <= using:

@@ -379,7 +379,7 @@ class AuthGss(AuthNone):
             else:
                 # Can't get here, but doesn't hurt
                 log_gss.error("Unknown service %i for RPCSEC_GSS" % cred.service)
-        except gssapi.Error, e:
+        except gssapi.Error as e:
             log_gss.warn("unsecure_data: gssapi call returned %s" % e.name)
             raise rpclib.RPCUnsuccessfulReply(GARBAGE_ARGS)
         return data
@@ -413,7 +413,7 @@ class AuthGss(AuthNone):
             else:
                 # Can't get here, but doesn't hurt
                 log_gss.error("Unknown service %i for RPCSEC_GSS" % cred.service)
-        except gssapi.Error, e:
+        except gssapi.Error as e:
             # XXX What now?
             log_gss.warn("secure_data: gssapi call returned %s" % e.name)
             raise
@@ -449,7 +449,7 @@ class AuthGss(AuthNone):
             data = self.partially_packed_header(xid, body)
             try:
                 qop = self._get_context(body.cred.body.handle).verifyMIC(data, body.verf.body)
-            except gssapi.Error, e:
+            except gssapi.Error as e:
                 log_gss.warn("Verifier checksum failed verification with %s" %
                              e.name)
                 return False
@@ -522,7 +522,7 @@ class AuthGss(AuthNone):
             context = self._get_context(cred.body.handle)
         try:
             token = context.accept(token)
-        except gssapi.Error, e:
+        except gssapi.Error as e:
             log_gss.debug("RPCSEC_GSS_INIT failed (%s, %i)!" %
                           (e.name, e.minor))
             res = rpc_gss_init_res('', e.major, e.minor, 0, '')

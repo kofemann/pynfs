@@ -21,7 +21,7 @@ class _handle_error(object):
             _lock.acquire()
             try:
                 self.c.compound(ops)
-            except Exception, e:
+            except Exception as e:
                 print("CALLBACK error in _recall:", e)
                 pass
             _lock.release()
@@ -33,7 +33,7 @@ def _recall(c, thisop, cbid):
     _lock.acquire()
     try:
         res = c.compound(ops)
-    except Exception, e:
+    except Exception as e:
         print("CALLBACK error in _recall:", e)
         res = None
     _lock.release()

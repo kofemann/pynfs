@@ -311,7 +311,7 @@ def testRdmaArray2(t, env):
     try:
         res = c.listen(xid)
         print(res)
-    except RPCAcceptError, e:
+    except RPCAcceptError as e:
         if e.stat == GARBAGE_ARGS:
             # Legitimate return
             return
