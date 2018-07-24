@@ -38,7 +38,7 @@ class MyUnpickler(pickle.Unpickler):
             return self.Unknown(name)
 
 def show(filename, opt):
-    fd = file(filename, 'r')
+    fd = open(filename, 'r')
     p = MyUnpickler(fd)
     tests = p.load()
     testmod.printresults(tests, opt)

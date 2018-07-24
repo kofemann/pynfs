@@ -333,7 +333,7 @@ def main():
         print(sys.exc_info()[1])
         sys.exit(1)
     if opt.outfile is not None:
-        fd = file(opt.outfile, 'w')
+        fd = open(opt.outfile, 'w')
     try:
         clean_finish = False
         testmod.runtests(tests, opt, env, run_filter)
