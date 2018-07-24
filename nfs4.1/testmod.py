@@ -333,7 +333,7 @@ def parseversions(t):
 	    raise RuntimeError("Test %s has invalid version range %s"
                                % (t.fullname, t.vers_list))
     if len(t.vers_list) == 0:
-        return (0, sys.maxint)
+        return (0, sys.maxsize)
     limits = t.vers_list[0].split("-")
     if len(limits) != 2:
         raise RuntimeError("Test %s has invalid version range %s"
@@ -343,7 +343,7 @@ def parseversions(t):
     else:
         left = int(limits[0])
     if limits[1] == '':
-        right = sys.maxint
+        right = sys.maxsize
     else:
         right = int(limits[1])
     return (left, right)
