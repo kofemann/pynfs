@@ -119,7 +119,7 @@ class Environment(testmod.Environment):
         self.filedata = "This is the file test data."
         self.linkdata = "/etc/X11"
         self.stateid0 = stateid4(0, '')
-        self.stateid1 = stateid4(0xffffffffL, '\xff'*12)
+        self.stateid1 = stateid4(0xffffffff, '\xff'*12)
 
     def _get_security(self, opts):
         if opts.security == 'none':

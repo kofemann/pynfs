@@ -306,7 +306,7 @@ class FSObject(object):
         # STUB - need to check principal, and set owner/group if needed
         log_o.log(5, "FSObject.set_attrs(%r)" % attrs)
         info = nfs4lib.attr_info
-        bitmap = 0L
+        bitmap = 0
         try:
             for attr in attrs:
                 if self.fs.fattr4_supported_attrs & attr == 0:

@@ -265,8 +265,8 @@ class Pipe(object):
                 # We don't even have the packet length yet, wait for more data
                 break
             packetlen = struct.unpack('>L', buf[0:4])[0]
-            last = 0x80000000L & packetlen
-            packetlen &= 0x7fffffffL
+            last = 0x80000000 & packetlen
+            packetlen &= 0x7fffffff
             packetlen += 4 # Include size of record mark
             if len(buf) < packetlen:
                 # We don't have a full packet yet, wait for more data
@@ -310,7 +310,7 @@ class Pipe(object):
                 chunk = record[i: i + count]
                 i += count
                 if i >= dlen:
-                    last = 0x80000000L
+                    last = 0x80000000
                 mark = struct.pack('>L', last | len(chunk))
                 out += mark + chunk
             return out
@@ -351,7 +351,7 @@ class RpcPipe(Pipe):
         Pipe.__init__(self, *args, **kwargs)
         self._pending = {} # {xid:defer}
         self._lock = threading.Lock() # Protects fields below
-        self._xid = random.randint(0, 0x7fffffffL)
+        self._xid = random.randint(0, 0x7fffffff)
         self.set_active()
 
     def _get_xid(self):

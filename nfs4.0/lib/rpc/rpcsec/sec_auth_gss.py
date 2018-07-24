@@ -72,7 +72,7 @@ def show_major(m):
     """Return string corresponding to major code"""
     if m == 0:
         return gss_major_codes[0]
-    call = m & 0xff000000L
+    call = m & 0xff000000
     routine = m & 0xff0000
     supp = m & 0xffff
     out = []

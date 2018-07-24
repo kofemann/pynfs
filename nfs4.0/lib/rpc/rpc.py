@@ -157,9 +157,9 @@ def _recv_record(self):
     while not last:
         rec_mark = self.recv_all(4)
         count = struct.unpack('>L', rec_mark)[0]
-        last = count & 0x80000000L
+        last = count & 0x80000000
         if last:
-            count &= 0x7fffffffL
+            count &= 0x7fffffff
         data += self.recv_all(count)
     return data
 
@@ -171,7 +171,7 @@ def _send_record(self, data, chunksize=2048):
         chunk = data[i:i+chunksize]
         i += chunksize
         if i >= dlen:
-            last = 0x80000000L
+            last = 0x80000000
         mark = struct.pack('>L', last | len(chunk))
         self.sendall(mark + chunk)
 
@@ -202,7 +202,7 @@ class RPCClient(object):
         self._rpcunpacker = {t : rpc_pack.RPCUnpacker('')}
         self.default_prog = program
         self.default_vers = version
-        self.xid = 0L
+        self.xid = 0
         self._xidlist = {}
         if sec_list is None:
             sec_list = [SecAuthNone()]
@@ -558,8 +558,8 @@ class RPCServer(Server):
             str = self.readbufs[fd]
             if len(str) >= 4:
                 packetlen = struct.unpack('>L', str[0:4])[0]
-                last = 0x80000000L & packetlen
-                packetlen &= 0x7fffffffL
+                last = 0x80000000 & packetlen
+                packetlen &= 0x7fffffff
                 if len(str) >= 4 + packetlen:
                     self.packetbufs[fd].append(str[4:4 + packetlen])
                     self.readbufs[fd] = str[4 + packetlen:]
@@ -593,7 +593,7 @@ class RPCServer(Server):
                 last = 0
                 self.recordbufs[fd][0] = data[chunksize:]
             else:
-                last = 0x80000000L
+                last = 0x80000000
                 del self.recordbufs[fd][0]
             mark = struct.pack('>L', last | len(chunk))
             self.writebufs[fd] = (mark + chunk)

@@ -374,7 +374,7 @@ def createtests(testdir):
     # Reduce doc string info into format easier to work with
     used_codes = {}
     flag_dict = {}
-    bit = 1L
+    bit = 1
     for t in tests:
 ##         if not t.flags_list:
 ##             raise RuntimeError("%s has no flags" % t.fullname)

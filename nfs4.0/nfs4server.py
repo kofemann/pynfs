@@ -475,7 +475,7 @@ class NFS4Server(rpc.RPCServer):
             e = verify_name(filename)
             if e: raise NFS4Error(e)
             # At this point we know it is CLAIM_NULL with valid filename and cfh
-            attrset = 0L
+            attrset = 0
             ci_old = self.curr_fh.fattr4_change
             if op.opopen.openhow.opentype == OPEN4_CREATE:
                 print("  CREATING FILE.")
@@ -812,13 +812,13 @@ class NFS4Server(rpc.RPCServer):
         print("  CURRENT FILEHANDLE: %s" % repr(self.curr_fh))
         print(op.opsetattr.obj_attributes)
         if not self.curr_fh:
-            return simple_error(NFS4ERR_NOFILEHANDLE, 0L)
+            return simple_error(NFS4ERR_NOFILEHANDLE, 0)
         try:
             attrdict = op.opsetattr.obj_attributes
             if FATTR4_SIZE in attrdict:
                 # This counts as a write, so must do some checking
                 if self.curr_fh.get_type() != NF4REG:
-                    return simple_error(NFS4ERR_BAD_STATEID, 0L)
+                    return simple_error(NFS4ERR_BAD_STATEID, 0)
                 oldsize = self.curr_fh.fattr4_size
                 newsize = attrdict[FATTR4_SIZE]
                 if oldsize <= newsize:

@@ -26,7 +26,7 @@ POSIXLOCK = True # If True, allow locks to be split/joined automatically
 POSIXACL = True # If True, forces acls to follow posix mapping rules
 
 class NFS4Error(Exception):
-    def __init__(self, code, msg=None, attrs=0L, lock_denied=None):
+    def __init__(self, code, msg=None, attrs=0, lock_denied=None):
         self.code = code
         self.name = nfsstat4[code]
         if msg is None:
@@ -384,7 +384,7 @@ class NFSServerState:
         # Check for special stateids
         if stateid.seqid==0 and stateid.other==chr(0)*12:
             return 0
-        if stateid.seqid==0xffffffffL and stateid.other==chr(0xff)*12:
+        if stateid.seqid==0xffffffff and stateid.other==chr(0xff)*12:
             return 1
         # Check for self consistency
         if stateid.other[:4] != self.instance:

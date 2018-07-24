@@ -194,7 +194,7 @@ class FancyNFS4Packer(NFS4Packer):
     def filter_bitmap4(self, data):
         out = []
         while data:
-            out.append(data & 0xffffffffL)
+            out.append(data & 0xffffffff)
             data >>= 32
         return out
 
@@ -217,7 +217,7 @@ class FancyNFS4Packer(NFS4Packer):
 class FancyNFS4Unpacker(NFS4Unpacker):
     def filter_bitmap4(self, data):
         """Put bitmap into single long, instead of array of 32bit chunks"""
-        out = 0L
+        out = 0
         shift = 0
         for i in data:
             out |= (long(i) << shift)
@@ -276,9 +276,9 @@ def fattr2dict(obj):
 
 def list2bitmap(list):
     """Construct a bitmap from a list of bit numbers"""
-    mask = 0L
+    mask = 0
     for bit in list:
-        mask |= 1L << bit
+        mask |= 1 << bit
     return mask
 
 def bitmap2list(bitmap):
@@ -565,7 +565,7 @@ def attr_name(bitnum):
     return bitnum2attr.get(bitnum, "unknown_%r" % bitnum)
 
 class NFS4Error(Exception):
-    def __init__(self, status, attrs=0L, lock_denied=None, tag=None, check_msg=None):
+    def __init__(self, status, attrs=0, lock_denied=None, tag=None, check_msg=None):
         self.status = status
         self.name = xdrdef.nfs4_const.nfsstat4[status]
         if check_msg is None:

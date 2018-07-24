@@ -42,7 +42,7 @@ def testCommitOffsetMax1(t, env):
     DEPEND: MKFILE
     CODE: CMT1c
     """
-    _commit(t, env.c1, 0xffffffffffffffffL, statlist=[NFS4_OK, NFS4ERR_INVAL])
+    _commit(t, env.c1, 0xffffffffffffffff, statlist=[NFS4_OK, NFS4ERR_INVAL])
 
 def testCommitOffsetMax2(t, env):
     """COMMIT
@@ -51,7 +51,7 @@ def testCommitOffsetMax2(t, env):
     DEPEND: MKFILE
     CODE: CMT1d
     """
-    _commit(t, env.c1, 0xfffffffffffffffeL, statlist=[NFS4_OK, NFS4ERR_INVAL])
+    _commit(t, env.c1, 0xfffffffffffffffe, statlist=[NFS4_OK, NFS4ERR_INVAL])
 
 def testCommitCount1(t, env):
     """COMMIT
@@ -69,7 +69,7 @@ def testCommitCountMax(t, env):
     DEPEND: MKFILE
     CODE: CMT1f
     """
-    _commit(t, env.c1, 0, 0xffffffffL)
+    _commit(t, env.c1, 0, 0xffffffff)
 
 def testLink(t, env):
     """COMMIT
@@ -159,5 +159,5 @@ def testCommitOverflow(t, env):
     fh, stateid = c.create_confirm(t.code)
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
-    res = c.commit_file(fh, 0xfffffffffffffff0L, 64)
+    res = c.commit_file(fh, 0xfffffffffffffff0, 64)
     check(res, NFS4ERR_INVAL, "COMMIT with offset + count overflow")

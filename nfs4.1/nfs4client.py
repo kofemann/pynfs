@@ -611,7 +611,7 @@ sha256 = '`\x86H\x01e\x03\x04\x02\x01'
 binding_opts = conn_binding4args(True, ["gibberish", sha256])
 fore_attrs = channel_attrs4(4096,4096,4096,128,8,[])
 cb_sec= callback_sec_parms4(0)
-C.compound([C.create_session_op(0,1,0L,0,binding_opts, fore_attrs, fore_attrs,123,[cb_sec])])
+C.compound([C.create_session_op(0,1,0,0,binding_opts, fore_attrs, fore_attrs,123,[cb_sec])])
 """
 
 """ SEQUENCE

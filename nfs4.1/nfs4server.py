@@ -212,7 +212,7 @@ class ClientList(object):
     def __init__(self):
         self._data = {}
         self.lock = Lock("ClientList")
-        self._nextid = 0L
+        self._nextid = 0
 
     def __getitem__(self, key):
         return self._data.get(key)
@@ -1381,7 +1381,7 @@ class NFS4Server(rpc.Server):
 
     def open_claim_null(self, arg, env):
         """Simulated switch function from op_open that handles CLAIM_NULL"""
-        bitmask = 0L
+        bitmask = 0
         # cfh holds dir, claim.file holds name
         if not env.cfh.isdir:
             raise NFS4Error(NFS4ERR_NOTDIR)

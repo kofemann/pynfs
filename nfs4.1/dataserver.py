@@ -206,7 +206,7 @@ class DataServer41(DataServer):
 
     def get_size(self, fh):
         ops = [op4.putfh(fh),
-               op4.getattr(1L << const4.FATTR4_SIZE)]
+               op4.getattr(1 << const4.FATTR4_SIZE)]
         res = self._execute(ops)
         attrdict = res.resarray[-1].obj_attributes
         return attrdict.get(const4.FATTR4_SIZE, 0)

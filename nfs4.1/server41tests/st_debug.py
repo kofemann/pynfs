@@ -89,7 +89,7 @@ def testDeadlock(t, env):
     def ops(i):
         return [op.putfh(fh),
                 op.write(stateid, i*1000, UNSTABLE4, chr(97+i)*100),
-                op.getattr(42950721818L)
+                op.getattr(42950721818)
                 ]
     xids = [sess1.compound_async(ops(i), slot=i) for i in range(4)]
     for xid in xids:

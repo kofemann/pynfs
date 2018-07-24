@@ -139,7 +139,7 @@ class Environment(testmod.Environment):
         self.filedata = "This is the file test data."
         self.linkdata = "/etc/X11"
         self.stateid0 = stateid4(0, '')
-        self.stateid1 = stateid4(0xffffffffL, '\xff'*12)
+        self.stateid1 = stateid4(0xffffffff, '\xff'*12)
 
         log.info("Created client to %s, %i" % (opts.server, opts.port))
 
@@ -429,7 +429,7 @@ def clean_dir(sess, path):
             res = sess.compound(ops)
         check(res, msg="Trying to remove %s" % repr(e.name))
 
-def do_readdir(sess, file, cookie=0, cookieverf='', attrs=0L,
+def do_readdir(sess, file, cookie=0, cookieverf='', attrs=0,
                dircount=4096, maxcount=4096):
     # Since we may not get whole directory listing in one readdir request,
     # loop until we do. For each request result, create a flat list
