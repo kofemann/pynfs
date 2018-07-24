@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # nfs4stest.py - nfsv4 server tester
 #
-# Requires python 2.5
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -26,8 +26,8 @@
 
 
 import sys
-if sys.hexversion < 0x02050000:
-    print("Requires python 2.5 or higher")
+if sys.hexversion < 0x02070000:
+    print("Requires python 2.7 or higher")
     sys.exit(1)
 import os
 # Allow to be run stright from package root

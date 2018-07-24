@@ -28,7 +28,7 @@ state00 = xdrdef.nfs4_type.stateid4(0, "\0" * 12)
 state11 = xdrdef.nfs4_type.stateid4(0xffffffff, "\xff" * 12)
 state01 = xdrdef.nfs4_type.stateid4(1, "\0" * 12)
 
-import hashlib # Note this requires 2.5 or higher
+import hashlib # Note this requires 2.7 or higher
 
 op4 = nfs_ops.NFS4ops()
 

@@ -1,6 +1,6 @@
 # testmod.py - run tests from a suite
 #
-# Requires python 2.5
+# Requires python 2.7
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
@@ -156,6 +156,9 @@ class Test(object):
             return 0
         else:
             return 1
+
+    def __lt__(self, other):
+        return self.__cmp__(other)
 
     def __str__(self):
         return "%-8s %s" % ( self.code, self.fullname)

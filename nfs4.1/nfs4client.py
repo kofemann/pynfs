@@ -645,7 +645,7 @@ C.compound([C.bind_conn_to_session_op('0000000000000001', False, 3, False, 73, d
 
 
 """ PROGRAM COVERAGE
-python2.5 ~/py_install/bin/coverage.py -x nfs4server.py
+python2.7 ~/py_install/bin/coverage.py -x nfs4server.py
 coverage.py -a -d cover nfs4server.py
 run test suite
 """
