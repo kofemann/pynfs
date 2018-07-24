@@ -7,7 +7,7 @@ op = nfs_ops.NFS4ops()
 
 def _set_mode(t, c, file, stateid=None, msg=" using stateid=0",
               warnlist=[]):
-    mode = 0740
+    mode = 0o740
     dict = {FATTR4_MODE: mode}
     ops = c.use_obj(file) + [c.setattr(dict, stateid)]
     res = c.compound(ops)
@@ -399,7 +399,7 @@ def testInvalidAttr1(t, env):
     path = c.homedir + [t.code]
     res = c.create_obj(path)
     check(res)
-    badattr = dict2fattr({FATTR4_MODE: 0644})
+    badattr = dict2fattr({FATTR4_MODE: 0o644})
     badattr.attr_vals = ''
     res = c.compound(c.use_obj(path) + [op.setattr(env.stateid0, badattr)])
     check(res, NFS4ERR_BADXDR, "SETATTR(FATTR4_MODE) with no data")
@@ -418,7 +418,7 @@ def testInvalidAttr2(t, env):
     path = c.homedir + [t.code]
     res = c.create_obj(path)
     check(res)
-    badattr = dict2fattr({FATTR4_MODE: 0644})
+    badattr = dict2fattr({FATTR4_MODE: 0o644})
     badattr.attr_vals += 'Garbage data'
     res = c.compound(c.use_obj(path) + [op.setattr(env.stateid0, badattr)])
     check(res, NFS4ERR_BADXDR,
@@ -674,7 +674,7 @@ def testInodeLocking(t, env):
     
     # In a single compound statement, setattr on dir and then
     # do a state operation on a file in dir (like write or remove)
-    ops = c.use_obj(basedir) + [c.setattr({FATTR4_MODE:0754})]
+    ops = c.use_obj(basedir) + [c.setattr({FATTR4_MODE:0o754})]
     ops += [op.lookup('file'), op.write(stateid, 0, 0, 'blahblah')]
     res = c.compound(ops)
     check(res, msg="SETATTR on dir and state operation on file in dir")
@@ -690,7 +690,7 @@ def testChange(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     change = c.do_getattr(FATTR4_CHANGE, fh)
-    ops = c.use_obj(fh) + [c.setattr({FATTR4_MODE: 0740})]
+    ops = c.use_obj(fh) + [c.setattr({FATTR4_MODE: 0o740})]
     res = c.compound(ops)
     check(res)
     change2 = c.do_getattr(FATTR4_CHANGE, fh)
@@ -708,10 +708,10 @@ def testChangeGranularity(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.code)
     ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
-        + [c.setattr({FATTR4_MODE: 0740})] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.setattr({FATTR4_MODE: 0741})] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.setattr({FATTR4_MODE: 0742})] + [c.getattr([FATTR4_CHANGE])] \
-        + [c.setattr({FATTR4_MODE: 0743})] + [c.getattr([FATTR4_CHANGE])]
+        + [c.setattr({FATTR4_MODE: 0o740})] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.setattr({FATTR4_MODE: 0o741})] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.setattr({FATTR4_MODE: 0o742})] + [c.getattr([FATTR4_CHANGE])] \
+        + [c.setattr({FATTR4_MODE: 0o743})] + [c.getattr([FATTR4_CHANGE])]
     res = c.compound(ops)
     check(res)
     chattr1 = res.resarray[1].obj_attributes

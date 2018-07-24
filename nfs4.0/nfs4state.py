@@ -953,7 +953,7 @@ class VirtualHandle(NFSFileHandle):
 
         if self.fattr4_type == NF4DIR:
             self.dirent = DirList()
-            self.fattr4_mode = 0755
+            self.fattr4_mode = 0o755
         if self.fattr4_type == NF4REG:
             self.file = StringIO.StringIO()
             self.state = NFSFileState()
@@ -987,7 +987,7 @@ class VirtualHandle(NFSFileHandle):
         self.fattr4_maxname = 128 # Are these enforced?
         self.fattr4_maxread = 1000 # Are these enforced?
         self.fattr4_maxwrite = 1000 # Are these enforced?
-        self.fattr4_mode = 0644 # Currently no access restrictions enforced
+        self.fattr4_mode = 0o644 # Currently no access restrictions enforced
         self.fattr4_acl = nfs4acl.mode2acl(self.fattr4_mode,
                                            self.fattr4_type == NF4DIR)
         self.fattr4_numlinks = 1 # Updated? - Yes

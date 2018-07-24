@@ -270,7 +270,7 @@ if 0:
         DEPEND: MKDIR
         CODE: LOOK6
         """
-        # Create dir/foo, and set mode of dir to 000
+        # Create dir/foo, and set mode of dir to 0o000
         c = env.c1
         dir = c.homedir + [t.code]
         res = c.create_obj(dir)
@@ -283,7 +283,7 @@ if 0:
         res = c.compound(c.use_obj(dir))
         check(res)
         res = c.compound(c.use_obj(dir + ['foo']))
-        check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=000")
+        check(res, NFS4ERR_ACCESS, "LOOKUP object in a dir with mode=0o000")
 
     def testInvalidUtf8(t, env):
         """LOOKUP with bad UTF-8 name strings should return NFS4ERR_INVAL

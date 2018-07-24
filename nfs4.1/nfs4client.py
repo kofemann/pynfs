@@ -560,7 +560,7 @@ class SessionRecord(object):
         return res
 
 ##     def open(self, owner, name=None, type=OPEN4_NOCREATE,
-##              mode=UNCHECKED4, attrs={FATTR4_MODE:0644}, verf=None,
+##              mode=UNCHECKED4, attrs={FATTR4_MODE:0o644}, verf=None,
 ##              access=OPEN4_SHARE_ACCESS_READ,
 ##              deny=OPEN4_SHARE_DENY_WRITE,
 ##              claim_type=CLAIM_NULL, deleg_type=None, deleg_cur_info=None):

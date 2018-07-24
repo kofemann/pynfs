@@ -256,7 +256,7 @@ def testTimedoutUnlock(t, env):
     c = env.c1
     sleeptime = c.getLeaseTime() * 3 // 2
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, attrs={FATTR4_MODE: 0666})
+    fh, stateid = c.create_confirm(t.code, attrs={FATTR4_MODE: 0o666})
     res1 = c.lock_file(t.code, fh, stateid)
     check(res1)
     env.sleep(sleeptime)

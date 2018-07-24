@@ -8,7 +8,7 @@ def getDefaultAttr(c):
     attr = {}
     #attr[FATTR4_OWNER] = c.security.get_owner()
     #attr[FATTR4_OWNER_GROUP] = c.security.get_group()
-    attr[FATTR4_MODE] = 0755
+    attr[FATTR4_MODE] = 0o755
     return attr
 
 def _test_create(t, env, type, name, **keywords):

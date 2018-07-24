@@ -706,7 +706,7 @@ def testServerChmod(t, env):
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     c.create_confirm(t.code, path=c.homedir + [t.code + '-2'])
     _get_deleg(t, c, c.homedir + [t.code], _recall, NFS4_OK)
-    env.serverhelper("chmod 0777 " + _listToPath(c.homedir + [t.code]))
+    env.serverhelper("chmod 0o777 " + _listToPath(c.homedir + [t.code]))
     _verify_cb_occurred(t, c, count)
 
 def testServerSelfConflict(t, env):

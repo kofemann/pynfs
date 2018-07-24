@@ -25,7 +25,7 @@ def testCreateUncheckedFile(t, env):
     c.init_connection()
 
     # Create the file
-    orig_attrs = { FATTR4_MODE: 0644, FATTR4_SIZE: 32 }
+    orig_attrs = { FATTR4_MODE: 0o644, FATTR4_SIZE: 32 }
     res = c.create_file(t.code, attrs=orig_attrs,  deny=OPEN4_SHARE_DENY_NONE)
     check(res, msg="Trying to create file %s" % t.code)
     fh, stateid = c.confirm(t.code, res)
@@ -33,7 +33,7 @@ def testCreateUncheckedFile(t, env):
     checkdict(orig_attrs, rcvd_attrs, get_bitnumattr_dict(),
               "Checking attrs on creation")
     # Create the file again...it should ignore attrs
-    attrs = { FATTR4_MODE: 0600, FATTR4_SIZE: 16 }
+    attrs = { FATTR4_MODE: 0o600, FATTR4_SIZE: 16 }
     res = c.create_file(t.code, attrs=attrs,  deny=OPEN4_SHARE_DENY_NONE)
     check(res, msg="Trying to recreate file %s" % t.code)
     fh, stateid = c.confirm(t.code, res)
@@ -41,12 +41,12 @@ def testCreateUncheckedFile(t, env):
     checkdict(orig_attrs, rcvd_attrs, get_bitnumattr_dict(),
               "Attrs on recreate should be ignored")
     # Create the file again, should truncate size to 0 and ignore other attrs
-    attrs = { FATTR4_MODE: 0600, FATTR4_SIZE: 0 }
+    attrs = { FATTR4_MODE: 0o600, FATTR4_SIZE: 0 }
     res = c.create_file(t.code, attrs=attrs,  deny=OPEN4_SHARE_DENY_NONE)
     check(res, msg="Trying to truncate file %s" % t.code)
     fh, stateid = c.confirm(t.code, res)
     rcvd_attrs = c.do_getattrdict(fh, orig_attrs.keys())
-    expect = { FATTR4_MODE: 0644, FATTR4_SIZE: 0 }
+    expect = { FATTR4_MODE: 0o644, FATTR4_SIZE: 0 }
     checkdict(expect, rcvd_attrs, get_bitnumattr_dict(),
               "Attrs on recreate should be ignored, except for size")
         
@@ -327,13 +327,13 @@ def testModeChange(t, env):
     check(res)
     ops = c.use_obj(fh) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
-    check(res, msg="Setting mode of file %s to 000" % t.code)
+    check(res, msg="Setting mode of file %s to 0o000" % t.code)
     res = c.open_file(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
                       deny=OPEN4_SHARE_DENY_NONE)
     if env.opts.uid == 0:
-	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=000" % t.code)
+	    check(res, [NFS4_OK, NFS4ERR_ACCESS], "Opening file %s with mode=0o000" % t.code)
     else:
-	    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=000" % t.code)
+	    check(res, NFS4ERR_ACCESS, "Opening file %s with mode=0o000" % t.code)
 
 def testShareConflict1(t, env):
     """OPEN conflicting with previous share
@@ -361,13 +361,13 @@ def testFailedOpen(t, env):
     c1.init_connection()
     # Client 1: create a file and deny others access
     fh, stateid = c1.create_confirm(t.code)
-    ops = c1.use_obj(fh) + [c1.setattr({FATTR4_MODE: 0700})]
+    ops = c1.use_obj(fh) + [c1.setattr({FATTR4_MODE: 0o700})]
     check(c1.compound(ops))
     # Client 2: try to open the file
     c2 = env.c2
     c2.init_connection()
     res = c2.open_file(t.code)
-    check(res, NFS4ERR_ACCESS, "Opening file with mode 0700 as 'other'")
+    check(res, NFS4ERR_ACCESS, "Opening file with mode 0o700 as 'other'")
     # Client 1: try to use fh, stateid
     res1 = c1.lock_file(t.code, fh, stateid)
     check(res1, msg="Locking file after another client had a failed open")

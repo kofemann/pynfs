@@ -362,7 +362,7 @@ def clean_dir(sess, path):
     for e in entries:
         # We separate setattr and remove to avoid an inode locking bug
         ops = use_obj(path + [e.name])
-        ops += [op.setattr(stateid, {FATTR4_MODE:0755})]
+        ops += [op.setattr(stateid, {FATTR4_MODE:0o755})]
         res = sess.compound(ops)
         check(res, msg="Setting mode on %s" % repr(e.name))
         ops = use_obj(path)
@@ -405,7 +405,7 @@ def use_obj(file):
     else:
         return [op.putrootfh()] + [op.lookup(comp) for comp in file]
 
-def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0755}):
+def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0o755}):
     """Return ops needed to create given non-file object"""
     # Ensure using createtype4
     if not hasattr(kind, "type"):
@@ -413,7 +413,7 @@ def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0755}):
     ops = use_obj(path[:-1]) + [op.create(kind, path[-1], attrs)]
     return sess.compound(ops)
 
-def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                 access=OPEN4_SHARE_ACCESS_BOTH,
                 deny=OPEN4_SHARE_DENY_NONE,
                 mode=GUARDED4, verifier=None, want_deleg=False):
@@ -434,7 +434,7 @@ def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
                       open_claim4(CLAIM_NULL, name))
     return sess.compound(use_obj(dir) + [open_op, op.getfh()])
 
-def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                    access=OPEN4_SHARE_ACCESS_BOTH,
                    deny=OPEN4_SHARE_DENY_NONE,
                    mode=GUARDED4):

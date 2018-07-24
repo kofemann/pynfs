@@ -463,7 +463,7 @@ class NFS4Client(rpc.RPCClient):
         return self.compound(ops)
 
     def open(self, owner, name=None, type=OPEN4_NOCREATE,
-             mode=UNCHECKED4, attrs={FATTR4_MODE:0644}, verf=None,
+             mode=UNCHECKED4, attrs={FATTR4_MODE:0o644}, verf=None,
              access=OPEN4_SHARE_ACCESS_READ,
              deny=OPEN4_SHARE_DENY_WRITE,
              claim_type=CLAIM_NULL, deleg_type=None, deleg_cur_info=None):
@@ -568,7 +568,7 @@ class NFS4Client(rpc.RPCClient):
         for e in entries:
             # We separate setattr and remove to avoid an inode locking bug
             ops = [op4.putfh(fh), op4.lookup(e.name)]
-            ops += [op4.setattr(stateid, {FATTR4_MODE:0755})]
+            ops += [op4.setattr(stateid, {FATTR4_MODE:0o755})]
             res = self.compound(ops)
             check_result(res, "Making sure %s is writable" % repr(e.name))
             ops = [op4.putfh(fh), op4.remove(e.name)]
@@ -589,7 +589,7 @@ class NFS4Client(rpc.RPCClient):
         d = self.do_getattrdict([], [FATTR4_LEASE_TIME])
         return d[FATTR4_LEASE_TIME]
 
-    def create_obj(self, path, type=NF4DIR, attrs={FATTR4_MODE:0755},
+    def create_obj(self, path, type=NF4DIR, attrs={FATTR4_MODE:0o755},
                    linkdata="/etc/X11"):
         if __builtins__['type'](path) is str:
             path = self.homedir + [path]
@@ -613,7 +613,7 @@ class NFS4Client(rpc.RPCClient):
         ops += [op4.rename(oldpath[-1], newpath[-1])]
         return self.compound(ops)
 
-    def create_file(self, owner, path=None, attrs={FATTR4_MODE: 0644},
+    def create_file(self, owner, path=None, attrs={FATTR4_MODE: 0o644},
                     access=OPEN4_SHARE_ACCESS_BOTH,
                     deny=OPEN4_SHARE_DENY_WRITE,
                     mode=UNCHECKED4, verifier=None,
@@ -702,7 +702,7 @@ class NFS4Client(rpc.RPCClient):
         return (fhandle, stateid)
         
 
-    def create_confirm(self, owner, path=None, attrs={FATTR4_MODE: 0644},
+    def create_confirm(self, owner, path=None, attrs={FATTR4_MODE: 0o644},
                        access=OPEN4_SHARE_ACCESS_BOTH,
                        deny=OPEN4_SHARE_DENY_WRITE,
                        mode=GUARDED4):

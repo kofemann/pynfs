@@ -38,7 +38,7 @@ def testSimpleWrite(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, how=UNSTABLE4)
@@ -55,7 +55,7 @@ def testSimpleWrite2(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, 30)
@@ -72,7 +72,7 @@ def testStateidOne(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, 5, env.stateid1, DATA_SYNC4)
@@ -91,7 +91,7 @@ def testWithOpen(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs)
     res = c.write_file(fh, _text, 50, stateid, FILE_SYNC4)
     check(res, msg="WRITE with openstateid and FILE_SYNC4")
@@ -109,7 +109,7 @@ def testNoData(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs)
     time_prior = c.do_getattr(FATTR4_TIME_MODIFY, fh)
     env.sleep(1)
@@ -281,7 +281,7 @@ def testOpenMode(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                    access=OPEN4_SHARE_ACCESS_READ)
     res = c.write_file(fh, _text, 0, stateid)
@@ -298,7 +298,7 @@ def testShareDeny(t, env):
     """
     c = env.c1
     c.init_connection()
-    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0644}
+    attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
     fh, stateid = c.create_confirm(t.code, attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_WRITE)
     res = c.write_file(fh, _text)
@@ -520,7 +520,7 @@ def testStolenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code, attrs={FATTR4_MODE: 0600})
+    res = c.create_file(t.code, attrs={FATTR4_MODE: 0o600})
     fh, stateid = c.confirm(t.code, res)
     security=c.security
     c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])

@@ -110,7 +110,7 @@ def testTimedoutClose1(t, env):
     sleeptime = c.getLeaseTime() * 2
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
-                                   attrs={FATTR4_MODE: 0666})
+                                   attrs={FATTR4_MODE: 0o666})
     env.sleep(sleeptime)
     # Conflicting open should force server to drop state
     c2 = env.c2
@@ -132,7 +132,7 @@ def testTimedoutClose2(t, env):
     sleeptime = c.getLeaseTime() * 2
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
-                                   attrs={FATTR4_MODE: 0666})
+                                   attrs={FATTR4_MODE: 0o666})
     res = c.lock_file(t.code, fh, stateid)
     check(res)
     env.sleep(sleeptime)

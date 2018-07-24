@@ -130,7 +130,7 @@ class DataServer41(DataServer):
         self.sess.compound([op4.reclaim_complete(const4.FALSE)])
 
     def make_root(self):
-        attrs = {const4.FATTR4_MODE:0777}
+        attrs = {const4.FATTR4_MODE:0o777}
         existing_path = []
         kind = type4.createtype4(const4.NF4DIR)
         for comp in self.path:
@@ -153,7 +153,7 @@ class DataServer41(DataServer):
         seqid=0
         access = const4.OPEN4_SHARE_ACCESS_BOTH
         deny = const4.OPEN4_SHARE_DENY_NONE
-        attrs = {const4.FATTR4_MODE: 0777}
+        attrs = {const4.FATTR4_MODE: 0o777}
         owner = "mds"
         mode = const4.GUARDED4
         verifier = self.sess.c.verifier
@@ -257,7 +257,7 @@ class DataServer3(DataServer):
     def open_file(self, mds_fh):
         name = self.fh_to_name(mds_fh)
         where = type3.diropargs3(self.rootfh, name)
-        attr = type3.sattr3(mode=type3.set_mode3(True, 0777),
+        attr = type3.sattr3(mode=type3.set_mode3(True, 0o777),
                             uid=type3.set_uid3(True, 0),
                             gid=type3.set_gid3(True, 0),
                             size=type3.set_size3(False),

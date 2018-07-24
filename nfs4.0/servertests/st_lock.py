@@ -529,7 +529,7 @@ def testReadLocks2(t, env):
     file = c1.homedir + [t.code]
     # Client1 creates a file
     fh1, stateid1 = c1.create_confirm('owner1', file,
-                                      attrs={FATTR4_MODE: 0666},
+                                      attrs={FATTR4_MODE: 0o666},
                                       access=OPEN4_SHARE_ACCESS_BOTH,
                                       deny=OPEN4_SHARE_DENY_NONE)
     # Client2 opens the file

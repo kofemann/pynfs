@@ -25,7 +25,7 @@ class MetaData(object):
         self.refcnt = 0
         self.createverf = ""
         self.owner = ""
-        self.mode = 0777
+        self.mode = 0o777
         self.time_access = self.time_modify = self.time_create = nfs4lib.get_nfstime()
         if 1:
             self.parent = 0

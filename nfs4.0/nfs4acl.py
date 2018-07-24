@@ -66,9 +66,9 @@ def mode2acl(mode, dir=False):
     """Translate a 3-digit octal mode into a posix compatible acl"""
     if dir: modes = DMODES
     else:   modes = MODES
-    owner = modes[(mode & 0700)//0100] | FLAG_ALL | FLAG_OWN
-    group = modes[(mode & 0070)//010] | FLAG_ALL
-    other = modes[(mode & 0007)] | FLAG_ALL
+    owner = modes[(mode & 0o700)//0o100] | FLAG_ALL | FLAG_OWN
+    group = modes[(mode & 0o070)//0o10] | FLAG_ALL
+    other = modes[(mode & 0o007)] | FLAG_ALL
 
     return [ nfsace4(ALLOWED, 0, owner, "OWNER@"),
              nfsace4(DENIED, 0, negate(owner), "OWNER@"),
@@ -102,7 +102,7 @@ def acl2mode(acl):
     for key in perms:
         if perms[key] is None:
             perm[keys] = 0
-    return perms["OWNER@"]*0100 + perms["GROUP@"]*010 + perms["EVERYONE@"]
+    return perms["OWNER@"]*0o100 + perms["GROUP@"]*0o10 + perms["EVERYONE@"]
         
 def maps_to_posix(acl):
     """Raises ACLError if acl does not map to posix """

@@ -418,7 +418,7 @@ def clean_dir(sess, path):
     for e in entries:
         # We separate setattr and remove to avoid an inode locking bug
         ops = use_obj(path + [e.name])
-        ops += [op.setattr(stateid, {FATTR4_MODE:0755})]
+        ops += [op.setattr(stateid, {FATTR4_MODE:0o755})]
         res = sess.compound(ops)
         check(res, msg="Setting mode on %s" % repr(e.name))
         ops = use_obj(path)
@@ -460,7 +460,7 @@ def do_getattrdict(sess, file, attrlist):
     check(res)
     return res.resarray[-1].obj_attributes
 
-def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0755}):
+def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0o755}):
     """Return ops needed to create given non-file object"""
     # Ensure using createtype4
     if not hasattr(kind, "type"):
@@ -468,7 +468,7 @@ def create_obj(sess, path, kind=NF4DIR, attrs={FATTR4_MODE:0755}):
     ops = use_obj(path[:-1]) + [op.create(kind, path[-1], attrs)]
     return sess.compound(ops)
 
-def open_create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def open_create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                      access=OPEN4_SHARE_ACCESS_BOTH,
                      deny=OPEN4_SHARE_DENY_NONE,
 		     mode=GUARDED4, verifier=None,
@@ -483,7 +483,7 @@ def open_create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
 
     return sess.compound(open_op)
 
-def open_create_file_op(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def open_create_file_op(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                      access=OPEN4_SHARE_ACCESS_BOTH,
                      deny=OPEN4_SHARE_DENY_NONE,
 		     mode=GUARDED4, verifier=None,
@@ -526,7 +526,7 @@ def open_create_file_op(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
 
     return fh_op + [open_op, op.getfh()]
 
-def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def create_file(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                 access=OPEN4_SHARE_ACCESS_BOTH,
                 deny=OPEN4_SHARE_DENY_NONE,
                 mode=GUARDED4, verifier=None, want_deleg=False,
@@ -559,7 +559,7 @@ def open_file(sess, owner, path=None,
                             verifier, claim_type, want_deleg, deleg_type,
                             open_create, seqid, clientid)
 
-def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                    access=OPEN4_SHARE_ACCESS_BOTH,
                    deny=OPEN4_SHARE_DENY_NONE,
                    mode=GUARDED4):
@@ -572,7 +572,7 @@ def create_confirm(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
     fh = res.resarray[-1].object
     return fh, res.resarray[-2].stateid
 
-def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0644},
+def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
                    access=OPEN4_SHARE_ACCESS_BOTH,
                    deny=OPEN4_SHARE_DENY_NONE,
                    mode=GUARDED4):

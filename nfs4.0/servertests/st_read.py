@@ -74,7 +74,7 @@ def testLargeCount(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.code, attrs={FATTR4_SIZE: 10000000,
-                                                  FATTR4_MODE: 0644})
+                                                  FATTR4_MODE: 0o644})
     res = c.read_file(fh, 0, 9000000, stateid)
     check(res, msg="Reading file %s" % t.code)
     _compare(t, res, '\x00'*9000000, False)
@@ -234,7 +234,7 @@ def testStolenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code, attrs={FATTR4_MODE: 0600})
+    res = c.create_file(t.code, attrs={FATTR4_MODE: 0o600})
     fh, stateid = c.confirm(t.code, res)
     security=c.security
     c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])

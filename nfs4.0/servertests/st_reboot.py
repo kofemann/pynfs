@@ -116,7 +116,7 @@ def testEdge1(t, env):
     c1 = env.c1
     c1.init_connection()
     # Client 1: lock file
-    fh1, stateid1 = c1.create_confirm(t.code, attrs={FATTR4_MODE:0666},
+    fh1, stateid1 = c1.create_confirm(t.code, attrs={FATTR4_MODE:0o666},
                                       access=OPEN4_SHARE_ACCESS_BOTH,
                                       deny=OPEN4_SHARE_DENY_NONE)
     res1 = c1.lock_file(t.code, fh1, stateid1)
@@ -161,7 +161,7 @@ def testEdge2(t, env):
     c1 = env.c1
     c1.init_connection()
     # Client 1: lock file
-    fh1, stateid1 = c1.create_confirm(t.code, attrs={FATTR4_MODE:0666},
+    fh1, stateid1 = c1.create_confirm(t.code, attrs={FATTR4_MODE:0o666},
                                       access=OPEN4_SHARE_ACCESS_BOTH,
                                       deny=OPEN4_SHARE_DENY_NONE)
     res1 = c1.lock_file(t.code, fh1, stateid1)
