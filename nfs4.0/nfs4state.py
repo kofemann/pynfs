@@ -146,7 +146,7 @@ class NFSServerState:
 
         def addentry(self, entry):
             if not isinstance(entry, self.CacheEntry):
-                raise TypeError, "Bad entry: %s" % str(entry)
+                raise TypeError("Bad entry: %s" % str(entry))
             if self.exists(x=entry.x) or self.exists(c=entry.c):
                 raise "Bad Cache"
             self.list.append(entry)
@@ -200,7 +200,7 @@ class NFSServerState:
             elif isinstance(owner, lock_owner4):
                 self.openid = openid
             else:
-                raise TypeError, "Passed in owner = %s" % str(owner)
+                raise TypeError("Passed in owner = %s" % str(owner))
             # An owner is confirmed with OpenConfirm, a lock by sending stateid
             self.confirmed = False
             self.owner = owner
@@ -323,7 +323,7 @@ class NFSServerState:
         Conflict will raise NFS4Error.
         """
         if not isinstance(owner, open_owner4):
-            raise TypeError, "Owner was given as %s" % str(owner)
+            raise TypeError("Owner was given as %s" % str(owner))
         info = self.__getinfo(owner)
         if not info.confirmed:
             # Remove any pending open (RFC 3530 sec 14.2.18)
@@ -380,7 +380,7 @@ class NFSServerState:
     def __state2id(self, stateid, checkseq=False):
         """Translate nfs4 stateid to internal id"""
         if not isinstance(stateid, stateid4):
-            raise TypeError, "State was given as %s" % str(stateid)
+            raise TypeError("State was given as %s" % str(stateid))
         # Check for special stateids
         if stateid.seqid==0 and stateid.other==chr(0)*12:
             return 0
@@ -407,11 +407,11 @@ class NFSServerState:
         info = self.__owner2info(owner, allownew)
         try:
             if fh is None:
-                raise ValueError, "File is None"
+                raise ValueError("File is None")
             return info.files[fh.handle]
         except KeyError:
             if not allownew:
-                raise ValueError, "File %s not open for %s" % (fh.name, info)
+                raise ValueError("File %s not open for %s" % (fh.name, info))
             #print("Creating new id %i for fh %s" % (self.next_id, fh.handle))
             id = info.files[fh.handle] = self.next_id
             self.next_id += 1
@@ -428,12 +428,12 @@ class NFSServerState:
         elif isinstance(owner, lock_owner4):
             ownerdict = self.lockowners
         else:
-            raise TypeError, "Gave owner as %s" % str(owner)
+            raise TypeError("Gave owner as %s" % str(owner))
         self.__check_clientid(owner.clientid)
         try:
             info = ownerdict[owner.clientid][owner.owner]
         except KeyError:
-            if not allownew: raise ValueError, "Unknown owner %s" % str(owner)
+            if not allownew: raise ValueError("Unknown owner %s" % str(owner))
             #print("Creating new info")
             info = self.OwnerInfo(owner)
             if owner.clientid in ownerdict:
@@ -694,8 +694,8 @@ class NFSFileState:
             self.start = start
             self.end = end
             if start < 0 or end < start:
-                raise ValueError, "Bad values for start and end (%s, %s)" % \
-                                  (start, end)
+                raise ValueError("Bad values for start and end (%s, %s)" % \
+                                  (start, end))
 
         def __repr__(self):
             if self.type & 1: str = "READ"
@@ -1478,7 +1478,7 @@ class DirList:
         for x in self.list:
             if x.name == name:
                 return x.fh
-        raise KeyError, "Invalid key %s" % name
+        raise KeyError("Invalid key %s" % name)
 
     def __setitem__(self, name, fh):
         """Allows self[name] = fh"""
@@ -1499,18 +1499,18 @@ class DirList:
             if x.name == name:
                 self.list.remove(x)
                 return
-        raise KeyError, "Invalid key %s" % name
+        raise KeyError("Invalid key %s" % name)
 
     def getcookie(self, name):
         for x in self.list:
             if x.name == name:
                 return x.cookie
-        raise KeyError, "Invalid key %s" % name
+        raise KeyError("Invalid key %s" % name)
 
     def readdir(self, cookie):
         """Returns DirEnt list containing all entries larger than cookie"""
         if cookie < 0 or cookie > self.__lastcookie:
-            raise IndexError, "Invalid cookie %i" % cookie
+            raise IndexError("Invalid cookie %i" % cookie)
         i = None
         for x in self.list:
             if x.cookie > cookie:

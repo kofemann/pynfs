@@ -819,7 +819,7 @@ class Info(object):
                         (prefix, self.id)
                 if self.len is not None:
                     limit = "%sif len(data) > %s:\n" \
-                            "%s%sraise XDRError, 'array length too long'\n" %\
+                            "%s%sraise XDRError('array length too long')\n" %\
                             (prefix, self.fullname(self.len), prefix, varindent)
                     array = limit + array
         else:
@@ -846,7 +846,7 @@ class Info(object):
                          (prefix, newdata, self.id)
                 if self.len is not None:
                     limit = "%sif len(%s) > %s:\n" \
-                            "%s%sraise XDRError, 'array length too long'\n" %\
+                            "%s%sraise XDRError('array length too long')\n" %\
                             (prefix, newdata, self.fullname(self.len), prefix, indent)
                     array += limit
             newdata = 'data'
@@ -858,7 +858,7 @@ class Info(object):
         prefix, data, subheader, array = self._array_pack(prefix, data)
         varlist = ["const.%s" % l.id for l in self.body]
         check = "%sif self.check_enum and %s not in [%s]:\n" \
-                "%s%sraise XDRError, 'value=%%s not in enum %s' %% %s\n" % \
+                "%s%sraise XDRError('value=%%s not in enum %s' %% %s)\n" % \
                 (prefix, data, ', '.join(varlist),
                  prefix, indent, self.id, data)
         pack = check + "%sself.pack_int(%s)\n" % (prefix, data)
@@ -868,7 +868,7 @@ class Info(object):
         prefix, data, subheader, array = self._array_unpack(prefix, data)
         varlist = ["const.%s" % l.id for l in self.body]
         check = "%sif self.check_enum and %s not in [%s]:\n" \
-                "%s%sraise XDRError, 'value=%%s not in enum %s' %% %s\n" % \
+                "%s%sraise XDRError('value=%%s not in enum %s' %% %s)\n" % \
                 (prefix, data, ', '.join(varlist),
                  prefix, indent, self.id, data)
         unpack = "%s%s = self.unpack_int()\n" % (prefix, data)
@@ -908,7 +908,7 @@ class Info(object):
         if default != []:
             pack += default[0].packout(prefix + indent, data)
         else:
-            pack += "%s%sraise XDRError, 'bad switch=%%s' %% %s.%s\n" % \
+            pack += "%s%sraise XDRError('bad switch=%%s' %% %s.%s)\n" % \
                     (prefix, indent, data, switch.id)
         return subheader + pack + array
 
@@ -950,7 +950,7 @@ class Info(object):
 ##                       (prefix, indent, data, data, default[0].id)
 ##             unpack += arm
         else:
-            unpack += "%s%sraise XDRError, 'bad switch=%%s' %% %s.%s\n" % \
+            unpack += "%s%sraise XDRError('bad switch=%%s' %% %s.%s)\n" % \
                       (prefix, indent, data, switch.id)
             
         return subheader + unpack + array
@@ -1220,7 +1220,7 @@ class type_info(Info):
 
     def packout(self, prefix='', data='data'):
         check = "%sif %s.%s is None:\n" \
-                "%s%sraise TypeError, '%s.%s == None'\n" % \
+                "%s%sraise TypeError('%s.%s == None')\n" % \
                 (prefix, data, self.id, prefix, indent, data, self.id)
         if self.type == 'void':
             return prefix + 'pass\n'
@@ -1279,8 +1279,8 @@ class type_info(Info):
             limit = ''
         else:
             limit = "%sif len(%s) > %s and self.check_array:\n" \
-                    "%s%sraise XDRError, " \
-                    "'array length too long for %s'\n" % \
+                    "%s%sraise XDRError(" \
+                    "'array length too long for %s')\n" % \
                     (prefix, data, self.fullname(self.len), prefix, indent, data)
         if self.fixed:
             fixchar = 'f'
@@ -1303,8 +1303,8 @@ class type_info(Info):
             limit = ''
         else:
             limit = "%sif len(%s) > %s and self.check_array:\n" \
-                    "%s%sraise XDRError, " \
-                    "'array length too long for %s'\n" % \
+                    "%s%sraise XDRError(" \
+                    "'array length too long for %s')\n" % \
                     (prefix, data, self.fullname(self.len), prefix, indent, data)
         if self.fixed:
             fixchar = 'f'

@@ -127,8 +127,8 @@ class SecAuthGss(SecFlavor):
         self.gss_seq_num = 0
         d = gssapi.importName("nfs@%s" % client.remotehost)
         if d['major'] != gssapi.GSS_S_COMPLETE:
-            raise SecError, "gssapi.importName returned: %s" % \
-                  show_major(d['major'])
+            raise SecError("gssapi.importName returned: %s" % \
+                  show_major(d['major']))
         name = d['name']
         # We need to send NULLPROCs with token from initSecContext
         good_major = [gssapi.GSS_S_COMPLETE, gssapi.GSS_S_CONTINUE_NEEDED]
@@ -141,11 +141,11 @@ class SecAuthGss(SecFlavor):
             major = d['major']
             context = d['context']
             if major not in good_major:
-                raise SecError, "gssapi.initSecContext returned: %s" % \
-                      show_major(major)
+                raise SecError("gssapi.initSecContext returned: %s" % \
+                      show_major(major))
             if (major == gssapi.GSS_S_CONTINUE_NEEDED) and \
                    (reply_major == gssapi.GSS_S_COMPLETE):
-                raise SecError, "Unexpected GSS_S_COMPLETE from server"
+                raise SecError("Unexpected GSS_S_COMPLETE from server")
             token = d['token']
             if reply_major != gssapi.GSS_S_COMPLETE:
                 # FRED - sec 5.2.2 of RFC 2203 mentions possibility that
@@ -161,13 +161,13 @@ class SecAuthGss(SecFlavor):
                 up.done()
                 reply_major = res.gss_major
                 if reply_major not in good_major:
-                    raise SecError, "Server returned: %s" % \
-                          show_major(reply_major)
+                    raise SecError("Server returned: %s" % \
+                          show_major(reply_major))
                 self.init = 2
                 reply_token = res.gss_token
             if major == gssapi.GSS_S_COMPLETE:
                 if reply_major != gssapi.GSS_S_COMPLETE:
-                    raise SecError, "Unexpected COMPLETE from client"
+                    raise SecError("Unexpected COMPLETE from client")
                 break
         self.gss_context = context
         self.gss_handle = res.handle
@@ -240,8 +240,8 @@ class SecAuthGss(SecFlavor):
             d = gssapi.getMIC(self.gss_context, data)
             major = d['major']
             if major != gssapi.GSS_S_COMPLETE:
-                raise SecError, "gssapi.getMIC returned: %s" % \
-                      show_major(major)
+                raise SecError("gssapi.getMIC returned: %s" % \
+                      show_major(major))
             return opaque_auth(RPCSEC_GSS, d['token'])
         
     def _make_cred_gss(self, handle, service, gss_proc=RPCSEC_GSS_DATA, seq=0):
@@ -266,8 +266,8 @@ class SecAuthGss(SecFlavor):
             data = p.get_buffer() + data
             d = gssapi.getMIC(self.gss_context, data)
             if d['major'] != gssapi.GSS_S_COMPLETE:
-                raise SecError, "gssapi.getMIC returned: %s" % \
-                      show_major(d['major'])
+                raise SecError("gssapi.getMIC returned: %s" % \
+                      show_major(d['major']))
             p.reset()
             p.pack_opaque(data)
             p.pack_opaque(d['token'])
@@ -280,14 +280,14 @@ class SecAuthGss(SecFlavor):
             data = p.get_buffer() + data
             d = gssapi.wrap(self.gss_context, data)
             if d['major'] != gssapi.GSS_S_COMPLETE:
-                raise SecError, "gssapi.wrap returned: %s" % \
-                      show_major(d['major'])
+                raise SecError("gssapi.wrap returned: %s" % \
+                      show_major(d['major']))
             p.reset()
             p.pack_opaque(d['msg'])
             data = p.get_buffer()
         else:
             # Not really necessary, should have already raised XDRError
-            raise SecError, "Unknown service %i for RPCSEC_GSS" % gss_cred.service
+            raise SecError("Unknown service %i for RPCSEC_GSS" % gss_cred.service)
         return data
 
     def unsecure_data(self, data, cred):
@@ -305,14 +305,14 @@ class SecAuthGss(SecFlavor):
             p.done()
             d = gssapi.verifyMIC(self.gss_context, data, checksum)
             if d['major'] != gssapi.GSS_S_COMPLETE:
-                raise SecError, "gssapi.verifyMIC returned: %s" % \
-                      show_major(d['major'])
+                raise SecError("gssapi.verifyMIC returned: %s" % \
+                      show_major(d['major']))
             p.reset(data)
             seqnum = p.unpack_uint()
             if seqnum != gss_cred.seq_num:
-                raise SecError, \
+                raise SecError(\
                       "Mismatched seqnum in reply: got %i, expected %i" % \
-                      (seqnum, gss_cred.seq_num)
+                      (seqnum, gss_cred.seq_num))
             data = p.get_buffer()[p.get_position():]
         elif gss_cred.service == rpc_gss_svc_privacy:
             # data = opaque[wrap([gss_seq_num+data])]
@@ -322,18 +322,18 @@ class SecAuthGss(SecFlavor):
             p.done()
             d = gssapi.unwrap(self.gss_context, data)
             if d['major'] != gssapi.GSS_S_COMPLETE:
-                raise SecError, "gssapi.unwrap returned %s" % \
-                      show_major(d['major'])
+                raise SecError("gssapi.unwrap returned %s" % \
+                      show_major(d['major']))
             p.reset(d['msg'])
             seqnum = p.unpack_uint()
             if seqnum != gss_cred.seq_num:
-                raise SecError, \
+                raise SecError(\
                       "Mismatched seqnum in reply: got %i, expected %i" % \
-                      (seqnum, self.gss_cred.seq_num)
+                      (seqnum, self.gss_cred.seq_num))
             data = p.get_buffer()[p.get_position():]
         else:
             # Not really necessary, should have already raised XDRError
-            raise SecError, "Unknown service %i for RPCSEC_GSS" % gss_cred.service
+            raise SecError("Unknown service %i for RPCSEC_GSS" % gss_cred.service)
         return data
 
     def _gss_cred_from_opaque_auth(self, auth):
@@ -361,8 +361,8 @@ class SecAuthGss(SecFlavor):
         p.pack_uint(i)
         d = gssapi.getMIC(self.gss_context, p.get_buffer())
         if d['major'] != gssapi.GSS_S_COMPLETE:
-            raise SecError, "gssapi.getMIC returned: %s" % \
-                  show_major(d['major'])
+            raise SecError("gssapi.getMIC returned: %s" % \
+                  show_major(d['major']))
         return opaque_auth(RPCSEC_GSS, d['token'])
 
     def check_verf(self, rverf, cred):

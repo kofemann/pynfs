@@ -99,8 +99,8 @@ class ByteLock(object):
         self.start = start
         self.end = end
         if start < 0 or end < start:
-            raise ValueError, "Bad values for start and end (%s, %s)" % \
-                              (start, end)
+            raise ValueError("Bad values for start and end (%s, %s)" % \
+                              (start, end))
 
     def __repr__(self):
         str = ("WRITE" if self.iswrite else "READ")

@@ -56,7 +56,7 @@ def _opline(value):
         l = value
     else:
         print('                 OPLINE type ', type(value))
-        raise TypeError, 'Only type list or str accepted'
+        raise TypeError('Only type list or str accepted')
     if l[0] == "ERROR":
         if not len(l) == 3:
             print('                 OPLINE length ', len)
