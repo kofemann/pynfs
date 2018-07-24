@@ -5,10 +5,9 @@ import nfs4acl
 import nfs4lib
 import os, time, array, random, string
 try:
-    import cStringIO
-    StringIO = cStringIO
+    import cStringIO.StringIO as StringIO
 except:
-    import StringIO
+    from io import StringIO
 from stat import *
 import sha
 

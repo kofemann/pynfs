@@ -215,7 +215,10 @@
 
 import sys
 import keyword
-import StringIO
+try:
+    import cStringIO.StringIO as StringIO
+except:
+    from io import StringIO
 import time
 import os
 # Allow to be run stright from package

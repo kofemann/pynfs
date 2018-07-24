@@ -6,7 +6,10 @@ from nfs4lib import NFS4Error
 import struct
 import logging
 from locking import Lock, RWLock
-from cStringIO import StringIO
+try:
+    import cStringIO.StringIO as StringIO
+except:
+    from io import StringIO
 import time
 from xdrdef.nfs4_pack import NFS4Packer
 
