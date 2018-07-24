@@ -144,7 +144,10 @@ class CBServer(rpc.RPCServer):
         self.client = client
         rpc.RPCServer.__init__(self, prog=self.prog, vers=1, port=self.port)
         packed = struct.pack('>H', self.port)
-        self.dotport = '.%s.%s' % (ord(packed[0]), ord(packed[1]))
+        try:     #for python2
+            self.dotport = '.%s.%s' % (ord(packed[0]), ord(packed[1]))
+        except:  #for python3
+            self.dotport = '.%s.%s' % ((packed[0]), (packed[1]))
         self.nfs4packer = FancyNFS4Packer()
         self.nfs4unpacker = FancyNFS4Unpacker('')
         self.recall_lock = threading.Lock()
