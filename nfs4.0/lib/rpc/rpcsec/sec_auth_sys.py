@@ -13,7 +13,10 @@ class SecAuthSys(SecFlavor):
         try:
             p = Packer()
             p.pack_int(stamp)
-            p.pack_string(machinename)
+            try:    # for python2
+                p.pack_string(machinename)
+            except: # for python3
+                p.pack_string(bytes(machinename, 'utf-8'))
             p.pack_uint(uid)
             p.pack_uint(gid)
             p.pack_array(gids, p.pack_uint)
