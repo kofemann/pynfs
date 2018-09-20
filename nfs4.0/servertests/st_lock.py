@@ -879,3 +879,48 @@ def testOpenDowngradeLock(t, env):
     res = c.downgrade_file(t.code, fh, res.lockid,
                            access=OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
+
+class open_sequence:
+    def __init__(self, client, owner, lockowner):
+        self.client = client
+        self.owner = owner
+        self.lockowner = lockowner
+    def open(self, access):
+        self.fh, self.stateid = self.client.create_confirm(self.owner,
+						access=access,
+						deny=OPEN4_SHARE_DENY_NONE,
+						mode=UNCHECKED4)
+    def downgrade(self, access):
+	    res = self.client.downgrade_file(self.owner, self.fh, self.stateid,
+					access=access,
+					deny=OPEN4_SHARE_DENY_NONE)
+	    self.stateid = res.stateid
+    def close(self):
+        self.client.close_file(self.owner, self.fh, self.stateid)
+    def lock(self, type):
+        res = self.client.lock_file(self.owner, self.fh, self.stateid,
+                    type=type, lockowner=self.lockowner)
+        check(res)
+        if res.status == NFS4_OK:
+            self.lockstateid = res.lockid
+    def unlock(self):
+        res = self.client.unlock_file(1, self.fh, self.lockstateid)
+        if res.status == NFS4_OK:
+            self.lockstateid = res.lockid
+
+def testOpenUpgradeLock(t, env):
+    """Try open, lock, open, downgrade, close
+
+    FLAGS: all lock
+    CODE: LOCK24
+    """
+    c= env.c1
+    c.init_connection()
+    os = open_sequence(c, t.code, lockowner="lockowner_LOCK24")
+    os.open(OPEN4_SHARE_ACCESS_READ)
+    os.lock(READ_LT)
+    os.open(OPEN4_SHARE_ACCESS_WRITE)
+    os.unlock()
+    os.downgrade(OPEN4_SHARE_ACCESS_WRITE)
+    os.lock(WRITE_LT)
+    os.close()
