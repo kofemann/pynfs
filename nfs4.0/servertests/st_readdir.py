@@ -187,6 +187,26 @@ def testMaxcountSmall(t, env):
     res = c.compound(ops)
     check(res, msg="READDIR of empty dir with maxcount=16")
 
+def testDircountVarious(t, env):
+    """READDIR with try particular dircount
+
+    FLAGS: readdir all
+    DEPEND: MKDIR
+    CODE: RDDR8b
+    """
+    c = env.c1
+    # remember, dircount doesn't include attr data, so we need pretty long
+    # names if we're going to hit dircount limit first.
+    expected = ["prettylongdirnamelongenoughhowaboutnowohormaybealittlelonger%02i"%i for i in range(100)]
+    c.maketree([t.code] + [[name] for name in expected])
+    path = c.homedir + [t.code]
+    attrlist = [attr.bitnum for attr in env.attr_info if attr.mandatory]
+    for i in range(8000,8300):
+        ops = c.use_obj(path) + [c.readdir(dircount=8172,maxcount=32768,
+                                        attr_request=attrlist)]
+        res = c.compound(ops)
+        check(res)
+
 def testWriteOnlyAttributes(t, env):
     """READDIR with write-only attrs should return NFS4ERR_INVAL
 
