@@ -206,7 +206,7 @@ def testReplayCache006(t, env):
     """
     c = env.c1.new_client(env.testname(t))
     sess = c.create_session()
-    res1 = sess.compound([])
+    res1 = sess.compound([], cache_this=True)
     check(res1)
     res2 = sess.compound([], cache_this=True, seq_delta=0)
     check(res2)
