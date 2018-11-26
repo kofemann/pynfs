@@ -147,12 +147,12 @@ def testOpenLayoutGet(t, env):
     sess = env.c1.new_pnfs_client_session(env.testname(t))
 
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
-    res = sess.compound( open_op + 
+    res = sess.compound( open_op +
            [op.layoutget(False, LAYOUT4_NFSV4_1_FILES, LAYOUTIOMODE4_RW,
                         0, 8192, 8192, current_stateid, 0xffff)])
     check(res, NFS4_OK)
-    fh = res.resarray[-1].object
-    stateid = res.resarray[-2].stateid
+    fh = res.resarray[-2].object
+    stateid = res.resarray[-3].stateid
     res = close_file(sess, fh, stateid=stateid)
     check(res)
 
