@@ -3,9 +3,10 @@ the merge of what were originally two independent projects--initially
 the 4.0 pynfs code was all moved into the nfs4.0 directory, but as time
 passes we expect to merge the two code bases.
 
-Install dependent modules:
-	#Fedora: yum install krb5-devel python-devel swig python-pip
-	#Debian: apt-get install libkrb5-dev python-dev swig python-pip
+Install dependent modules; on Fedora:
+	yum install krb5-devel python-devel swig python-gssapi python-ply
+on Debian:
+	apt-get install libkrb5-dev python-dev swig python-pip
 	pip install ply gssapi
 
 You can prepare both for use with
