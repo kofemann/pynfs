@@ -45,7 +45,8 @@ def _recall(c, thisop, cbid):
     return res
 
 def _cause_recall(t, env):
-    c = env.c1
+    c = env.c2
+    c.init_connection()
     sleeptime = 1
     while 1:
         # need lock around this to prevent _recall from
@@ -81,7 +82,7 @@ def _get_deleg(t, c, path, funct=None, response=NFS4_OK, write=False,
         name = "read delegation"
     # Create the file
     res = c.create_file(t.code, path, access=access, deny=deny, 
-                        set_recall=True,
+                        set_recall=True, attrs={FATTR4_MODE: 0o666},
                         recall_funct=funct, recall_return=response)
     check(res)
     fh, stateid = c.confirm(t.code, res)
@@ -285,11 +286,13 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
     c.init_connection('pynfs%i_%s' % (os.getpid(), t.code), cb_ident=0)
     lease = c.getLeaseTime()
     _get_deleg(t, c, c.homedir + [t.code], funct, response)
+    c2 = env.c2
+    c2.init_connection()
     try:
         c.cb_command(0) # Shut off callback server
         noticed = False
         for i in range(4):
-            res = c.open_file('newowner', c.homedir + [t.code],
+            res = c2.open_file('newowner', c.homedir + [t.code],
                               access=OPEN4_SHARE_ACCESS_WRITE)
             env.sleep(lease / 2, "Waiting to send RENEW")
             res = c.compound([op.renew(c.clientid)])
@@ -521,7 +524,9 @@ def testClaimCur(t, env):
     # Cause it to be recalled, and wait for cb_recall to finish
     # FRED - this is problematic if server doesn't reply until
     # it gets the DELEGRETURN
-    res = c.open_file('newowner', c.homedir + [t.code],
+    c2 = env.c2
+    c2.init_connection()
+    res = c2.open_file('newowner', c.homedir + [t.code],
                       access=OPEN4_SHARE_ACCESS_WRITE,
                       deny=OPEN4_SHARE_DENY_NONE)
     check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
