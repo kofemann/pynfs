@@ -1,3 +1,17 @@
+- default behavior in testmod.py of catching all exceptions is extremely
+  annoying when debugging a test, when it would be useful to have full
+  backtrace.  For now workaround is to patch like:
+	--- a/nfs4.0/testserver.py
+	+++ b/nfs4.0/testserver.py
+	@@ -364,6 +364,8 @@ def main():
+	             pickle.dump(tests, fd, 0)
+	         if not clean_finish:
+	             nfail = testmod.printresults(tests, opt)
+	+    except:
+	+        raise
+	     try:
+	         fail = False
+	         env.finish()
 - need BIND_CONN_TO_SESSION, other trunking tests.
 	- jlayton suggests: open and get a delegation or try to get a
 	  blocking lock, close socket, break deleg/drop conflicting
