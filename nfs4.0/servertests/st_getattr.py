@@ -1,12 +1,14 @@
 from xdrdef.nfs4_const import *
 from .environment import check
-from nfs4lib import get_attr_name
+from nfs4lib import get_attr_name, get_attrbitnum_dict
 import nfs_ops
 op = nfs_ops.NFS4ops()
 
 def _try_mandatory(t, env, path):
     c = env.c1
     mandatory = [attr.bitnum for attr in env.attr_info if attr.mandatory]
+    # don't expect rdattr_error to be a part of returned attributes
+    mandatory.remove(get_attrbitnum_dict()['rdattr_error'])
     ops = c.use_obj(path)
     ops += [c.getattr(mandatory)]
     res = c.compound(ops)
