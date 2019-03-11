@@ -1,6 +1,6 @@
 from st_create_session import create_session
 from xdrdef.nfs4_const import *
-from .environment import check, fail, bad_sessionid, create_file
+from .environment import check, fail, bad_sessionid, create_file, close_file
 from xdrdef.nfs4_type import channel_attrs4
 import nfs_ops
 op = nfs_ops.NFS4ops()
@@ -223,12 +223,15 @@ def testReplayCache007(t, env):
     sess1 = env.c1.new_client_session(env.testname(t))
     res = create_file(sess1, "%s_1" % env.testname(t))
     check(res)
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
     ops = env.home + [op.savefh(),\
           op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
     res1 = sess1.compound(ops, cache_this=False)
     check(res1, NFS4_OK)
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
     check(res2, [NFS4_OK, NFS4ERR_RETRY_UNCACHED_REP])
+    close_file(sess1, fh, stateid=stateid)
 
 def testOpNotInSession(t, env):
     """Operations other than SEQUENCE, BIND_CONN_TO_SESSION, EXCHANGE_ID,
