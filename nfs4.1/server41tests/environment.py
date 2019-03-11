@@ -208,6 +208,8 @@ class Environment(testmod.Environment):
         sess = self.c1.new_client_session("Environment.init_%i" % self.timestamp)
         clean_dir(sess, self.opts.home)
         sess.c.null()
+        self.clean_sessions()
+        self.clean_clients()
 
     def startUp(self):
         """Run before each test"""
