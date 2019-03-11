@@ -256,11 +256,13 @@ class Environment(testmod.Environment):
         """Destroy client name env.c1"""
         for sessionid in self.c1.sessions.keys():
             self.c1.compound([op.destroy_session(sessionid)])
+            del(self.c1.sessions[sessionid])
 
     def clean_clients(self):
         """Destroy client name env.c1"""
         for clientid in self.c1.clients.keys():
             self.c1.compound([op.destroy_clientid(clientid)])
+            del(self.c1.clients[clientid])
 
 #########################################
 debug_fail = False
