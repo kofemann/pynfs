@@ -38,10 +38,13 @@ def create_session(c, cred=None, flags=0):
                                         123, sec)], cred)
     return res
 
-def reclaim_complete(sess):
+def reclaim_complete(sess, dup=False):
     rc_op = op.reclaim_complete(FALSE)
     res = sess.compound([rc_op])
-    check(res, msg="reclaim_complete")
+    if not dup:
+        check(res, msg="reclaim_complete")
+    else:
+        check(res, NFS4ERR_COMPLETE_ALREADY, msg="Duplicate reclaim_complete")
 
 #####################################################
 
@@ -84,11 +87,12 @@ class State(object):
         self.sess = sess
         self.fh = fh
 
-def doTestOneClientGrace(t, env, state):
-    res = state.sess.compound([])
-    check(res, NFS4ERR_BADSESSION, "Bare sequence after reboot")
-    res = create_session(state.c)
-    check(res, NFS4ERR_STALE_CLIENTID, "Reclaim using old clientid")
+def doTestOneClientGrace(t, env, state, dup=False):
+    if not dup:
+        res = state.sess.compound([])
+        check(res, NFS4ERR_BADSESSION, "Bare sequence after reboot")
+        res = create_session(state.c)
+        check(res, NFS4ERR_STALE_CLIENTID, "Reclaim using old clientid")
     c = env.c1.new_client(state.name)
     state.c = c
     sess = c.create_session()
@@ -99,11 +103,15 @@ def doTestOneClientGrace(t, env, state):
                    access=OPEN4_SHARE_ACCESS_BOTH,
                    deny=OPEN4_SHARE_DENY_NONE,
                    deleg_type=OPEN_DELEGATE_NONE)
-    check(res, msg="Reclaim using newly created clientid")
-    fh = res.resarray[-1].object
-    stateid = res.resarray[-2].stateid
-    reclaim_complete(sess)
-    close_file(sess, fh, stateid=stateid)
+    if not dup:
+        check(res, msg="Reclaim using newly created clientid")
+        fh = res.resarray[-1].object
+        stateid = res.resarray[-2].stateid
+    else:
+        check(res, NFS4ERR_NO_GRACE, msg="Duplicate reclaim")
+    reclaim_complete(sess, dup)
+    if not dup:
+        close_file(sess, fh, stateid=stateid)
     res = open_file(sess, state.owner, claim_type=CLAIM_NULL,
                    access=OPEN4_SHARE_ACCESS_BOTH,
                    deny=OPEN4_SHARE_DENY_NONE,
@@ -149,7 +157,11 @@ def doTestAllClientsNoGrace(t, env, states):
             log.warn("server took approximately %d seconds to lift grace "
                         "after all clients reclaimed" % lift_time)
 
-def doTestRebootWithNClients(t, env, n=10, double_reboot=False):
+def doTestRebootWithNClients(t, env, n=10, double_reboot=False,
+                             double_reclaim=False):
+    if double_reboot and double_reclaim:
+        raise RuntimeError("double_reboot and double_reclaim cannot both be true")
+
     boot_time = int(time.time())
     lease_time = 90
     states = []
@@ -166,13 +178,21 @@ def doTestRebootWithNClients(t, env, n=10, double_reboot=False):
     boot_time = _waitForReboot(env)
 
     try:
-        if double_reboot:
+        if double_reboot or double_reclaim:
             for i in range(n/2):
                 lease_time = doTestOneClientGrace(t, env, states[i])
-            boot_time = _waitForReboot(env)
 
-        for i in range(n):
-            lease_time = doTestOneClientGrace(t, env, states[i])
+        if double_reboot:
+           boot_time = _waitForReboot(env)
+
+        if double_reclaim:
+            for i in range(n/2):
+                lease_time = doTestOneClientGrace(t, env, states[i], True)
+            for i in range(n/2, n):
+                lease_time = doTestOneClientGrace(t, env, states[i])
+        else:
+            for i in range(n):
+                lease_time = doTestOneClientGrace(t, env, states[i])
 
         # At this point, all clients should have recovered except for 'block'.
         # Recover that one now.
@@ -239,3 +259,27 @@ def testDoubleRebootWithManyManyManyClients(t, env):
     CODE: REBT3c
     """
     return doTestRebootWithNClients(t, env, 1000, True)
+
+def testRebootWithManyClientsDoubleReclaim(t, env):
+    """Reboot with many clients where half try to reclaim twice
+
+    FLAGS: reboot
+    CODE: REBT4a
+    """
+    return doTestRebootWithNClients(t, env, double_reclaim=True)
+
+def testRebootWithManyManyClientsDoubleReclaim(t, env):
+    """Reboot with many many clients where half try to reclaim twice
+
+    FLAGS: reboot
+    CODE: REBT4b
+    """
+    return doTestRebootWithNClients(t, env, 100, double_reclaim=True)
+
+def testRebootWithManyManyManyClientsDoubleReclaim(t, env):
+    """Reboot with many many many clients where half try to reclaim twice
+
+    FLAGS: reboot
+    CODE: REBT4c
+    """
+    return doTestRebootWithNClients(t, env, 1000, double_reclaim=True)
