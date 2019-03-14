@@ -283,3 +283,59 @@ def testRebootWithManyManyManyClientsDoubleReclaim(t, env):
     CODE: REBT4c
     """
     return doTestRebootWithNClients(t, env, 1000, double_reclaim=True)
+
+def testRebootWithLateReclaim(t, env):
+    """Reboot with client that starts reclaim near end of grace
+
+    FLAGS: reboot
+    CODE: REBT5
+    """
+    boot_time = int(time.time())
+    lease_time = 90
+    fh = []
+    stateid = []
+    name = "%s_client" % env.testname(t)
+    owner = "owner_%s" % name
+    c = env.c1.new_client(name)
+    sess = c.create_session()
+    reclaim_complete(sess)
+    N = 42
+    for i in range(N):
+        path = sess.c.homedir + ["%s_file_%i" % (owner, i)]
+        tmpfh, tmpstateid = create_confirm(sess, owner, path)
+        fh.append(tmpfh)
+    lease_time = _getleasetime(sess)
+    boot_time = _waitForReboot(env)
+    try:
+        sleep_time = lease_time - 5
+        env.sleep(sleep_time, "Delaying start of reclaim")
+        res = sess.compound([])
+        check(res, NFS4ERR_BADSESSION, "Bare sequence after reboot")
+        res = create_session(c)
+        check(res, NFS4ERR_STALE_CLIENTID, "Reclaim using old clientid")
+        c = env.c1.new_client(name)
+        sess = c.create_session()
+        lease_time = _getleasetime(sess)
+        # Reclaim open files, with a short delay between each open reclaim.
+        # This should put us at the end of the original grace period.  The
+        # server might keep extending the grace period by 1 second (up to
+        # an additional lease period in total) as long as we keep reclaming.
+        for i in range(N):
+            res = open_file(sess, owner, path=fh[i], claim_type=CLAIM_PREVIOUS,
+                           access=OPEN4_SHARE_ACCESS_BOTH,
+                           deny=OPEN4_SHARE_DENY_NONE,
+                           deleg_type=OPEN_DELEGATE_NONE)
+            check(res, msg="Reclaim using newly created clientid")
+            tmpstateid = res.resarray[-2].stateid
+            stateid.append(tmpstateid)
+            time.sleep(0.25)
+        reclaim_complete(sess)
+        for i in range(N):
+            close_file(sess, fh[i], stateid[i])
+    except:
+        grace_end_time = boot_time + lease_time + 5
+        now = int(time.time())
+        if now < grace_end_time:
+            sleep_time = grace_end_time - now
+            env.sleep(sleep_time, "Waiting for grace period to end")
+        raise
