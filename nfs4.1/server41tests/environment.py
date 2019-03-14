@@ -156,6 +156,8 @@ class Environment(testmod.Environment):
         # Make sure it is empty
         clean_dir(sess, self.opts.home)
         sess.c.null()
+        self.clean_sessions()
+        self.clean_clients()
 
     def _maketree(self, sess):
         """Make test tree"""
