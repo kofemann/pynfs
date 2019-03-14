@@ -149,7 +149,7 @@ def doTestAllClientsNoGrace(t, env, states):
             log.warn("server took approximately %d seconds to lift grace "
                         "after all clients reclaimed" % lift_time)
 
-def doTestRebootWithNClients(t, env, n=10):
+def doTestRebootWithNClients(t, env, n=10, double_reboot=False):
     boot_time = int(time.time())
     lease_time = 90
     states = []
@@ -166,6 +166,11 @@ def doTestRebootWithNClients(t, env, n=10):
     boot_time = _waitForReboot(env)
 
     try:
+        if double_reboot:
+            for i in range(n/2):
+                lease_time = doTestOneClientGrace(t, env, states[i])
+            boot_time = _waitForReboot(env)
+
         for i in range(n):
             lease_time = doTestOneClientGrace(t, env, states[i])
 
@@ -210,3 +215,27 @@ def testRebootWithManyManyManyClients(t, env):
     CODE: REBT2c
     """
     return doTestRebootWithNClients(t, env, 1000)
+
+def testDoubleRebootWithManyClients(t, env):
+    """Double reboot with many clients
+
+    FLAGS: reboot
+    CODE: REBT3a
+    """
+    return doTestRebootWithNClients(t, env, double_reboot=True)
+
+def testDoubleRebootWithManyManyClients(t, env):
+    """Double reboot with many many clients
+
+    FLAGS: reboot
+    CODE: REBT3b
+    """
+    return doTestRebootWithNClients(t, env, 100, True)
+
+def testDoubleRebootWithManyManyManyClients(t, env):
+    """Double reboot with many many many clients
+
+    FLAGS: reboot
+    CODE: REBT3c
+    """
+    return doTestRebootWithNClients(t, env, 1000, True)
