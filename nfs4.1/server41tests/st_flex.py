@@ -313,10 +313,10 @@ def testFlexLayoutTestAccess(t, env):
     gid_rd = ds.ffds_group
 
     if uid_rw == uid_rd:
-        fail("Expected uid_rd != %i, got %i" % (uid_rd, uid_rw))
+        fail("Expected uid_rd != %s, got %s" % (uid_rd, uid_rw))
 
     if gid_rw != gid_rd:
-        fail("Expected gid_rd == %i, got %i" % (gid_rd, gid_rw))
+        fail("Expected gid_rd == %s, got %s" % (gid_rd, gid_rw))
 
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
