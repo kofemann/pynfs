@@ -151,6 +151,15 @@ def scan_options(p):
                  help="Use FH for certain specialized tests")
     p.add_option_group(g)
 
+    g = OptionGroup(p, "Server workaround options",
+                    "Certain servers handle certain things in unexpected ways."
+                    " These options allow you to alter test behavior so that "
+                    "they will run.")
+    g.add_option("--secure", action="store_true", default=False,
+                 help="Try to use 'secure' port number <1024 for client [False]")
+    p.add_option_group(g)
+
+
     g = OptionGroup(p, "Server reboot script options",
                     "When running reboot scripts, these options determine "
                     "the scripts and arguments used to control how the "

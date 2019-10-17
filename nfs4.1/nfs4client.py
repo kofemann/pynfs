@@ -27,7 +27,7 @@ op4 = nfs_ops.NFS4ops()
 SHOW_TRAFFIC = 0
 
 class NFS4Client(rpc.Client, rpc.Server):
-    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None):
+    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None, secure=False):
         rpc.Client.__init__(self, 100003, 4)
         self.prog = 0x40000000
         self.versions = [1] # List of supported versions of prog
@@ -39,7 +39,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                                     nfs4lib.get_nfstime())
         self.verifier = struct.pack('>d', time.time())
         self.server_address = (host, port)
-        self.c1 = self.connect(self.server_address)
+        self.c1 = self.connect(self.server_address,secure=secure)
         self.sessions = {} # XXX Really, this should be per server
         self.clients = {} # XXX Really, this should be per server
         self.ctrl_proc = ctrl_proc
