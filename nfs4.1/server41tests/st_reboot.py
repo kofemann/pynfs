@@ -7,7 +7,7 @@ import time
 import logging
 import nfs_ops
 op = nfs_ops.NFS4ops()
-from rpc import RPCTimeout
+from rpc.rpc import RPCTimeout
 
 # NOTE - reboot tests are NOT part of the standard test suite
 

@@ -6,7 +6,7 @@ from xdrdef.nfs4_type import *
 import random
 import nfs4lib
 import threading
-from rpc import RPCAcceptError, GARBAGE_ARGS
+from rpc.rpc import RPCAcceptError, GARBAGE_ARGS
 
 def create_session(c, clientid, sequenceid, cred=None, flags=0):
     """Send a simple CREATE_SESSION"""

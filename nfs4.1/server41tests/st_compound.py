@@ -3,7 +3,7 @@ import nfs_ops
 op = nfs_ops.NFS4ops()
 from .environment import check, fail, get_invalid_utf8strings
 from xdrdef.nfs4_type import *
-from rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
+from rpc.rpc import RPCAcceptError, GARBAGE_ARGS, RPCTimeout
 from nfs4lib import NFS4Error, hash_oids, encrypt_oids, FancyNFS4Packer
 
 def _simple_ops(t, env):

@@ -1,4 +1,4 @@
-from st_create_session import create_session
+from .st_create_session import create_session
 from xdrdef.nfs4_const import *
 from .environment import check, fail, bad_sessionid, create_file
 from xdrdef.nfs4_type import channel_attrs4
