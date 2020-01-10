@@ -231,17 +231,14 @@ class Test(object):
             raise
         except TestException as e:
             self.result = Result(e.type, e, sys.exc_info())
-        except StandardError as e:
+        except Exception as e:
             if verbose:
                 print_exc()
-            self.result = Result(TEST_FAIL, '', sys.exc_info())
-            self.result.msg = self.result.tb[-1]
-        except Exception as e:
             self.result = Result(TEST_FAIL, e, sys.exc_info())
             self.result.msg = self.result.tb[-1]
         try:
             environment.shutDown()
-        except StandardError as e:
+        except Exception as e:
             self.result = Result(TEST_FAIL, '', sys.exc_info())
             self.result.msg = self.result.tb[-1]
 
