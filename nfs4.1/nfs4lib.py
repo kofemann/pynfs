@@ -248,8 +248,7 @@ def dict2fattr(dict):
     Returns a fattr4 object.  
     """
 
-    attrs = dict.keys()
-    attrs.sort()
+    attrs = sorted(dict.keys())
 
     packer = FancyNFS4Packer()
     attr_vals = ""

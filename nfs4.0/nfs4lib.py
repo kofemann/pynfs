@@ -979,8 +979,7 @@ def dict2fattr(dict):
     Returns a fattr4 object.  
     """
 
-    attrs = dict.keys()
-    attrs.sort()
+    attrs = sorted(dict.keys())
 
     attr_vals = ""
     packer = _cache_packer
