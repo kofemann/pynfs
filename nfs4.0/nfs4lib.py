@@ -1070,7 +1070,7 @@ def parse_nfs_url(url):
             port = (2049 if not port else int(port))
             server_list.append((host, port))
 
-        path = m.group('path')
+        path = os.fsencode(m.group('path'))
         return tuple(server_list), path
     else:
         raise ValueError("Error parsing NFS URL: %s" % url)
