@@ -28,14 +28,14 @@ class CredInfo(object):
     """Information needed to build CALL credential"""
     def _get__principle(self):
         if self.flavor == AUTH_NONE:
-            return "nobody"
+            return b"nobody"
         elif self.flavor == AUTH_SYS:
             # STUB
-            return "%s@%s" % (self.context.uid, self.context.machinename)
+            return b"%d@%s" % (self.context.uid, self.context.machinename)
         elif self.flavor == RPCSEC_GSS:
             c = self.sec._get_context(self.context)
             if c is None:
-                return "gss_nobody" # STUB
+                return b"gss_nobody" # STUB
             else:
                 return c.source_name.name
         else:
@@ -115,7 +115,7 @@ class AuthNone(object):
             raise SecError("Bad reply verifier - expected NULL verifier")
 
     def is_NULL(self, cred):
-        return cred.flavor == AUTH_NONE and cred.body == ''
+        return cred.flavor == AUTH_NONE and cred.body == b''
 
 class AuthSys(AuthNone):
     """Standard UNIX based security, defined in Appendix A of RFC 1831"""
@@ -145,7 +145,7 @@ class AuthSys(AuthNone):
         if gid is None:
             gid = 0
         if name is None:
-            name = "default machinename - STUB"
+            name = b"default machinename - STUB"
         if gids is None:
             gids = [3, 17, 100]
         return CredInfo(self, authsys_parms(stamp, name, uid, gid, gids))

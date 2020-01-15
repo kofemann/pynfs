@@ -37,7 +37,7 @@ CONTROL_PROCEDURE = 16 # default procedure number used to send sctrl.x commands
 # Create some needed reply strings
 def create_default_replays():
     # This only needs to be called once
-    tag = "auto-created replay response"
+    tag = b"auto-created replay response"
     p = nfs4lib.FancyNFS4Packer()
     res = encode_status_by_name("create_session", NFS4ERR_SEQ_MISORDERED)
     p.pack_COMPOUND4res(COMPOUND4res(NFS4ERR_SEQ_MISORDERED, tag, [res]))

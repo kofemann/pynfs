@@ -23,8 +23,8 @@ def testDestroyCIDWS(t, env):
     FLAGS: destroy_clientid all
     CODE: DESCID2
     """
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
+    c1 = env.c1.new_client(b"%s_1" % env.testname(t))
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
     sess = c1.create_session()
 
     res = sess.compound([op.destroy_clientid(c2.clientid)])

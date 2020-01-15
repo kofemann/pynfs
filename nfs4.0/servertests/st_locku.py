@@ -224,7 +224,7 @@ def testBadLockStateid(t, env):
     fh, stateid = c.create_confirm(t.word())
     res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
-    res2 = c.unlock_file(1, fh, stateid4(0, ''))
+    res2 = c.unlock_file(1, fh, stateid4(0, b''))
     check(res2, NFS4ERR_BAD_STATEID, "LOCKU with a bad stateid")
     
 def testStaleLockStateid(t, env):

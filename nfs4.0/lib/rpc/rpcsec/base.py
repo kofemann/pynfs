@@ -5,7 +5,7 @@ class SecError(Exception):
     pass
 
 class SecFlavor(object):
-    _none = opaque_auth(AUTH_NONE, '')
+    _none = opaque_auth(AUTH_NONE, b'')
     
     def initialize(self, client):
         pass

@@ -54,8 +54,8 @@ class Environment(testmod.Environment):
         AttrInfo('unique_handles', 'rm', False),
         AttrInfo('lease_time', 'rm', 0),
         AttrInfo('rdattr_error', 'rm', 0),
-        AttrInfo('filehandle', 'rm', 'nonsense'),
-        AttrInfo('acl', 'rw', [nfsace4(0,0,0,'EVERYONE@')]),
+        AttrInfo('filehandle', 'rm', b'nonsense'),
+        AttrInfo('acl', 'rw', [nfsace4(0,0,0,b'EVERYONE@')]),
         AttrInfo('aclsupport', 'r', 0),
         AttrInfo('archive', 'rw', False),
         AttrInfo('cansettime', 'r', False),
@@ -68,7 +68,8 @@ class Environment(testmod.Environment):
         AttrInfo('files_total', 'r', 0),
         # FRED - packer did not complain about missing [] about server
         AttrInfo('fs_locations', 'r',
-                 fs_locations4('root',[fs_location4(['server'],'path')])),
+                 fs_locations4([b'root'],
+                     [fs_location4([b'server'],[b'path'])])),
         AttrInfo('hidden', 'rw', False),
         AttrInfo('homogeneous', 'r', False),
         AttrInfo('maxfilesize', 'r', 0),
@@ -76,12 +77,12 @@ class Environment(testmod.Environment):
         AttrInfo('maxname', 'r', 0),
         AttrInfo('maxread', 'r', 0),
         AttrInfo('maxwrite', 'r', 0),
-        AttrInfo('mimetype', 'rw', 'nonsense'),
+        AttrInfo('mimetype', 'rw', b'nonsense'),
         AttrInfo('mode', 'rw', 0),
         AttrInfo('no_trunc', 'r', False),
         AttrInfo('numlinks', 'r', 0),
-        AttrInfo('owner', 'rw', 'nonsense'),
-        AttrInfo('owner_group', 'rw', 'nonsense'),
+        AttrInfo('owner', 'rw', b'nonsense'),
+        AttrInfo('owner_group', 'rw', b'nonsense'),
         AttrInfo('quota_avail_hard', 'r', 0),
         AttrInfo('quota_avail_soft', 'r', 0),
         AttrInfo('quota_used', 'r', 0),
@@ -106,20 +107,20 @@ class Environment(testmod.Environment):
         sec1, sec2 = self._get_security(opts)
 #        authsys1 = rpc.SecAuthSys(0, opts.machinename, opts.uid, opts.gid, [])
         authsys2 = rpc.SecAuthSys(0, opts.machinename, opts.uid+1, opts.gid+1, [])
-        self.c1 = NFS4Client('client1_pid%i' % os.getpid(),
+        self.c1 = NFS4Client(b'client1_pid%i' % os.getpid(),
                              opts.server, opts.port, opts.path,
                              sec_list=[sec1], opts=opts)
-        self.c2 = NFS4Client('client2_pid%i' % os.getpid(),
+        self.c2 = NFS4Client(b'client2_pid%i' % os.getpid(),
                              opts.server, opts.port, opts.path,
                              sec_list=[authsys2], opts=opts)
-        self.longname = "a"*512
+        self.longname = b"a"*512
         self.uid = 0
         self.gid = 0
         self.opts = opts
-        self.filedata = "This is the file test data."
-        self.linkdata = "/etc/X11"
-        self.stateid0 = stateid4(0, '')
-        self.stateid1 = stateid4(0xffffffff, '\xff'*12)
+        self.filedata = b"This is the file test data."
+        self.linkdata = b"/etc/X11"
+        self.stateid0 = stateid4(0, b'')
+        self.stateid1 = stateid4(0xffffffff, b'\xff'*12)
 
     def _get_security(self, opts):
         if opts.security == 'none':
@@ -144,7 +145,7 @@ class Environment(testmod.Environment):
             return
         # Make sure opts.path exists
         res = c.compound(c.use_obj(self.opts.path))
-        check(res, msg="Could not LOOKUP /%s," % '/'.join(self.opts.path))
+        check(res, msg="Could not LOOKUP /%s," % b'/'.join(self.opts.path))
         # Make sure it is empty
         c.clean_dir(self.opts.path)
         c.null()
@@ -158,40 +159,40 @@ class Environment(testmod.Environment):
             path.append(comp)
             res = c.compound(c.use_obj(path))
             check(res, [NFS4_OK, NFS4ERR_NOENT],
-                  "Could not LOOKUP /%s," % '/'.join(path))
+                  "Could not LOOKUP /%s," % (b'/'.join(path)))
             if res.status == NFS4ERR_NOENT:
                 res = c.create_obj(path)
-                check(res, msg="Trying to create /%s," % '/'.join(path))
+                check(res, msg="Trying to create /%s," % b'/'.join(path))
         # remove /tree/*
-        tree = self.opts.path[:-1] + ['tree']
+        tree = self.opts.path[:-1] + [b'tree']
         res = c.compound(c.use_obj(tree))
         check(res, [NFS4_OK, NFS4ERR_NOENT])
         if res.status == NFS4ERR_NOENT:
             res = c.create_obj(tree)
-            check(res, msg="Trying to create /%s," % '/'.join(tree))
+            check(res, msg="Trying to create /%s," % b'/'.join(tree))
         else:
             c.clean_dir(tree)
         
         # make objects in /tree
-        name = {NF4DIR: 'dir',
-                NF4SOCK: 'socket',
-                NF4FIFO: 'fifo',
-                NF4LNK: 'link',
-                NF4BLK: 'block',
-                NF4CHR: 'char'}
+        name = {NF4DIR: b'dir',
+                NF4SOCK: b'socket',
+                NF4FIFO: b'fifo',
+                NF4LNK: b'link',
+                NF4BLK: b'block',
+                NF4CHR: b'char'}
         for type in name:
             path = tree + [name[type]]
             res = c.create_obj(path, type)
             if res.status != NFS4_OK:
-                print("WARNING - could not create /%s" % '/'.join(path))
+                print("WARNING - could not create /%s" % b'/'.join(path))
         c.init_connection()
-        fh, stateid = c.create_confirm('maketree', tree + ['file'],
+        fh, stateid = c.create_confirm(b'maketree', tree + [b'file'],
                                        deny=OPEN4_SHARE_DENY_NONE)
         ops = [op.putfh(fh),
                op.write(stateid, 0, FILE_SYNC4, self.filedata)]
         res = c.compound(ops)
-        check(res, msg="Writing data to /%s/file" % '/'.join(tree))
-        res = c.close_file('maketree', fh, stateid )
+        check(res, msg="Writing data to /%s/file" % b'/'.join(tree))
+        res = c.close_file(b'maketree', fh, stateid )
         check(res)
             
     def finish(self):
@@ -218,14 +219,14 @@ class Environment(testmod.Environment):
         rebooting the server)"""
         if self.opts.serverhelper is None:
             print("Manual operation required on server:")
-            print(args + " and hit ENTER when done")
+            print(args.decode("utf8") + " and hit ENTER when done")
             sys.stdin.readline()
             print("Continuing with test")
         else:
-            cmd = self.opts.serverhelper
+            cmd = os.fsencode(self.opts.serverhelper)
             if self.opts.serverhelperarg:
-                cmd += ' ' + self.opts.serverhelperarg
-            cmd += ' ' + args
+                cmd += b' ' + os.fsencode(self.opts.serverhelperarg)
+            cmd += b' ' + args
             os.system(cmd);
 
     def clean_sessions(self):
@@ -291,32 +292,32 @@ def checkdict(expected, got, translate={}, failmsg=''):
 def get_invalid_utf8strings():
     """Return a list of invalid ISO10646-UTF-8 strings"""
     # FIXME: More invalid strings.
-    return ["\xc0\xc1", # starts two multibyte sequences
-            "\xe0\x8a", # terminates a multibyte sequence too early
-            "\xc0\xaf", # overlong character"
-            "\xfc\x80\x80\x80\x80\xaf", # overlong character
-            "\xfc\x80\x80\x80\x80\x80", # NULL
-            "\xed\xa0\x80", # UTF-16 surrogate
-            "\xed\xbf\xbf", # UTF-16 surrogate
-            "\xef\xbf\xbe", # Invalid character U+FFFE
-            "\xe3\xc0\xc0", # just mangled.
-            "\xc0\x90", # overlong character
+    return [b"\xc0\xc1", # starts two multibyte sequences
+            b"\xe0\x8a", # terminates a multibyte sequence too early
+            b"\xc0\xaf", # overlong character"
+            b"\xfc\x80\x80\x80\x80\xaf", # overlong character
+            b"\xfc\x80\x80\x80\x80\x80", # NULL
+            b"\xed\xa0\x80", # UTF-16 surrogate
+            b"\xed\xbf\xbf", # UTF-16 surrogate
+            b"\xef\xbf\xbe", # Invalid character U+FFFE
+            b"\xe3\xc0\xc0", # just mangled.
+            b"\xc0\x90", # overlong character
             # byte sequences that should never appear at start
-            "\x80",
-            "\xbf",
-            "\xfe",
-            "\xff",
+            b"\x80",
+            b"\xbf",
+            b"\xfe",
+            b"\xff",
             # starts with no ends
-            "\xc0 ",
-            "\xdf ",
-            "\xe0 ",
-            "\xef ",
-            "\xf0 ",
-            "\xf7 ",
-            "\xf8 ",
-            "\xfb ",
-            "\xfc ",
-            "\xfd "
+            b"\xc0 ",
+            b"\xdf ",
+            b"\xe0 ",
+            b"\xef ",
+            b"\xf0 ",
+            b"\xf7 ",
+            b"\xf8 ",
+            b"\xfb ",
+            b"\xfc ",
+            b"\xfd "
             ]
 
 def get_invalid_clientid():
@@ -336,8 +337,8 @@ def makeStaleId(stateid):
     # The first 4 bytes of the linux stateid correspond to a time.
     # Choose a value older than any reasonable time, without
     # risking the chance of conflict with the zero-stateid.
-    staletime = "\0\0\0\1"
-    stale = stateid4(stateid.seqid , staletime+"\0\0\0\0\0\0\0\0")
+    staletime = b"\0\0\0\1"
+    stale = stateid4(stateid.seqid , staletime+b"\0\0\0\0\0\0\0\0")
     return stale
 
 def makeBadID(stateid):
@@ -349,7 +350,7 @@ def makeBadID(stateid):
     """
 
     boottime = stateid.other[0:4]
-    bad = stateid4(stateid.seqid , boottime+"\07\07\07\07\07\07\07\07")
+    bad = stateid4(stateid.seqid , boottime+b"\07\07\07\07\07\07\07\07")
     return bad
 
 def makeBadIDganesha(stateid):
@@ -365,7 +366,7 @@ def makeBadIDganesha(stateid):
     # to simulate a bad stateid.
 
     clientid = stateid.other[0:8]
-    bad = stateid4(stateid.seqid , clientid+"\0\0\0\0")
+    bad = stateid4(stateid.seqid , clientid+b"\0\0\0\0")
     return bad
 
 def compareTimes(time1, time2):

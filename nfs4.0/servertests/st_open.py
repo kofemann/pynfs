@@ -78,18 +78,18 @@ def testCreatExclusiveFile(t, env):
     c = env.c1
     c.init_connection()
     # Create the file
-    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier='12345678', deny=OPEN4_SHARE_DENY_NONE)
+    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier=b'12345678', deny=OPEN4_SHARE_DENY_NONE)
     check(res, [NFS4_OK, NFS4ERR_NOTSUPP],
               "Trying to do exclusive create of file %s" % t.word())
     if res.status == NFS4ERR_NOTSUPP:
         c.fail_support("Exclusive OPEN not supported")
     fh, stateid = c.confirm(t.word(), res)
     # Create the file again, should return an error
-    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier='87654321', deny=OPEN4_SHARE_DENY_NONE)
+    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier=b'87654321', deny=OPEN4_SHARE_DENY_NONE)
     check(res, NFS4ERR_EXIST,
           "Trying to do exclusive recreate of file %s" % t.word())
     # Create with same verifier should return same object
-    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier='12345678', deny=OPEN4_SHARE_DENY_NONE)
+    res = c.create_file(t.word(), mode=EXCLUSIVE4, verifier=b'12345678', deny=OPEN4_SHARE_DENY_NONE)
     check(res, msg="Trying to do exclusive recreate of file %s" % t.word())
     newfh, stateid = c.confirm(t.word(), res)
     if fh != newfh:
@@ -117,7 +117,7 @@ def testOpenVaporFile(t, env):
     c.init_connection()
     res = c.create_obj(c.homedir + [t.word()])
     check(res)
-    res = c.open_file(t.word(), c.homedir + [t.word(), 'vapor'])
+    res = c.open_file(t.word(), c.homedir + [t.word(), b'vapor'])
     check(res, NFS4ERR_NOENT,
           "Trying to open nonexistant file %s/vapor" % t.word())
 
@@ -217,7 +217,7 @@ def testZeroLenName(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.word(), c.homedir + [''])
+    res = c.create_file(t.word(), c.homedir + [b''])
     check(res, NFS4ERR_INVAL, "OPEN with zero-length name")
 
 def testLongName(t, env):
@@ -241,7 +241,7 @@ def testNotDir(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.open_file(t.word(), env.opts.usefile + ['foo'])
+    res = c.open_file(t.word(), env.opts.usefile + [b'foo'])
     check(res, NFS4ERR_NOTDIR, "Trying to OPEN with cfh a file")
        
 def testInvalidUtf8(t, env):
@@ -437,7 +437,7 @@ def testDenyRead3(t, env):
     fh, stateid = c.create_confirm(t.word(),
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_READ)
-    res = c.write_file(fh, 'data', 0, stateid)
+    res = c.write_file(fh, b'data', 0, stateid)
     check(res)
     # Try to read file w/o opening
     res = c.read_file(fh)
@@ -457,7 +457,7 @@ def testDenyRead3a(t, env):
     fh, stateid = c.create_confirm(t.word(),
                                    access=OPEN4_SHARE_ACCESS_WRITE,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res = c.write_file(fh, 'data', 0, stateid)
+    res = c.write_file(fh, b'data', 0, stateid)
     check(res)
     # Try to read file 
     res2 = c.read_file(fh, stateid=stateid)
@@ -476,13 +476,13 @@ def testDenyRead4(t, env):
     fh1, stateid1 = c.create_confirm(t.word(1), file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_READ)
-    res = c.write_file(fh1, 'data', 0, stateid1)
+    res = c.write_file(fh1, b'data', 0, stateid1)
     check(res)
     # Try to write file
     fh2, stateid2 = c.open_confirm(t.word(2), file,
                                      access=OPEN4_SHARE_ACCESS_WRITE,
                                      deny=OPEN4_SHARE_DENY_NONE)
-    res2 = c.write_file(fh2, 'data', 0, stateid2)
+    res2 = c.write_file(fh2, b'data', 0, stateid2)
     check(res2, msg="WRITE a read-denied file")
 
 def testDenyWrite1(t, env):
@@ -538,10 +538,10 @@ def testDenyWrite3(t, env):
     fh, stateid = c.create_confirm(t.word(),
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_WRITE)
-    res = c.write_file(fh, 'data', 0, stateid)
+    res = c.write_file(fh, b'data', 0, stateid)
     check(res)
     # Try to write using stateid=0
-    res = c.write_file(fh, 'moredata')
+    res = c.write_file(fh, b'moredata')
     check(res, NFS4ERR_LOCKED, "Trying to WRITE a write-denied file")
 
 def testDenyWrite4(t, env):
@@ -557,7 +557,7 @@ def testDenyWrite4(t, env):
     fh1, stateid1 = c.create_confirm(t.word(1), file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_WRITE)
-    res = c.write_file(fh1, 'data', 0, stateid1)
+    res = c.write_file(fh1, b'data', 0, stateid1)
     check(res)
     # Try to read file
     fh2, stateid2 = c.open_confirm(t.word(2), file,
@@ -565,7 +565,7 @@ def testDenyWrite4(t, env):
                                      deny=OPEN4_SHARE_DENY_NONE)
     res2 = c.read_file(fh2, stateid=stateid2)
     check(res2, msg="READ a write-denied file")
-    if res2.eof != TRUE or res2.data != 'data':
+    if res2.eof != TRUE or res2.data != b'data':
         t.fail("READ returned %s, expected 'data'" % repr(res2.data))
 
 

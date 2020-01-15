@@ -311,10 +311,10 @@ def makeStaleId(stateid):
     """
     boottime = stateid.other[0:4]
     if ord(boottime[0]):
-        staletime = "\0" + boottime[1:4]
+        staletime = b"\0" + boottime[1:4]
     else:
-        staletime = "a" + boottime[1:4]
-    stale = stateid4(stateid.seqid , staletime+"\0\0\0\0\0\0\0\0")
+        staletime = b"a" + boottime[1:4]
+    stale = stateid4(stateid.seqid , staletime+b"\0\0\0\0\0\0\0\0")
     return stale
 
 def makeBadID(stateid):
@@ -326,7 +326,7 @@ def makeBadID(stateid):
     """
 
     boottime = stateid.other[0:4]
-    bad = stateid4(stateid.seqid , boottime+"\0\0\0\0\0\0\0\0")
+    bad = stateid4(stateid.seqid , boottime+b"\0\0\0\0\0\0\0\0")
     return bad
 
 def compareTimes(time1, time2):
@@ -351,7 +351,7 @@ def compareTimes(time1, time2):
 #############################################
 
 # Of course, there is no guarantee that this is not a valid session id, but...
-bad_sessionid = "Bad Session Id"
+bad_sessionid = b"Bad Session Id"
 
 
 

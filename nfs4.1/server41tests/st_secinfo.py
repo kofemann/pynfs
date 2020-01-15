@@ -16,7 +16,7 @@ def testSupported(t, env):
     sess = env.c1.new_client_session(env.testname(t))
 
     # Create a tmpfile for testing
-    owner = "owner_%s" % name
+    owner = b"owner_%s" % name
     path = sess.c.homedir + [name]
     res = create_file(sess, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
     check(res)
@@ -47,7 +47,7 @@ def testSupported2(t, env):
     sess = env.c1.new_client_session(env.testname(t))
 
     # Create a tmpfile for testing
-    owner = "owner_%s" % name
+    owner = b"owner_%s" % name
     path = sess.c.homedir + [name]
     res = create_file(sess, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
     check(res)

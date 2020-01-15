@@ -61,10 +61,10 @@ def unixpath2comps(str, pathcomps=None):
         pathcomps = []
     else:
         pathcomps = pathcomps[:]
-    for component in str.split('/'):
-        if (component == '') or (component == '.'):
+    for component in str.split(b'/'):
+        if (component == b'') or (component == b'.'):
             pass
-        elif component == '..':
+        elif component == b'..':
             pathcomps = pathcomps[:-1]
         else:
             pathcomps.append(component)
@@ -289,13 +289,14 @@ def main():
             path = getattr(opt, attr)
             #print(attr, path)
             if path is None:
-                path = opt.path + ['tree', attr[3:]]
+                path = opt.path + [b'tree', os.fsencode(attr[3:])]
             else:
+                path = os.fsencode(path)
                 # FIXME - have funct that checks path validity
-                if path[0] != '/':
+                if path[0] != b'/':
                     p.error("Need to use absolute path for --%s" % attr)
                 # print(path)
-                if path[-1] == '/' and attr != 'usedir':
+                if path[-1] == b'/' and attr != 'usedir':
                     p.error("Can't use dir for --%s" %attr)
                 try:
                     path = unixpath2comps(path)
@@ -303,7 +304,7 @@ def main():
                     p.error(e)
             setattr(opt, attr, [comp for comp in path if comp])
 
-    opt.path += ['tmp']
+    opt.path += [b'tmp']
 
     # Check that --security option is valid
     # sets --flavor to a rpc.SecAuth* class, and sets flags for its options

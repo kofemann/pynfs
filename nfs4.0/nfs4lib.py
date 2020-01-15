@@ -145,9 +145,9 @@ class CBServer(rpc.RPCServer):
         rpc.RPCServer.__init__(self, prog=self.prog, vers=1, port=self.port)
         packed = struct.pack('>H', self.port)
         try:     #for python2
-            self.dotport = '.%s.%s' % (ord(packed[0]), ord(packed[1]))
+            self.dotport = b'.%s.%s' % (ord(packed[0]), ord(packed[1]))
         except:  #for python3
-            self.dotport = '.%s.%s' % ((packed[0]), (packed[1]))
+            self.dotport = b'.%d.%d' % ((packed[0]), (packed[1]))
         self.nfs4packer = FancyNFS4Packer()
         self.nfs4unpacker = FancyNFS4Unpacker('')
         self.recall_lock = threading.Lock()
@@ -205,10 +205,10 @@ class CBServer(rpc.RPCServer):
 
     def handle_0(self, data, cred):
         #print("*****CB received NULL******")
-        if data != '':
-            return rpc.GARBAGE_ARGS, ''
+        if data != b'':
+            return rpc.GARBAGE_ARGS, b''
         else:
-            return rpc.SUCCESS, ''
+            return rpc.SUCCESS, b''
     
     def handle_1(self, data, cred):
         """Deal with CB_COMPOUND"""
@@ -218,14 +218,14 @@ class CBServer(rpc.RPCServer):
         try:
             self.nfs4unpacker.done()
         except XDRError:
-            return rpc.GARBAGE_ARGS, ''
+            return rpc.GARBAGE_ARGS, b''
         cmp4res = CB_COMPOUND4res(ok, tag, results)
         self.nfs4packer.reset()
         self.nfs4packer.pack_CB_COMPOUND4res(cmp4res)
         return rpc.SUCCESS, self.nfs4packer.get_buffer()
             
     def O_CB_Compound(self):
-        tag = ''
+        tag = b''
         try:
             cmp4args = self.nfs4unpacker.unpack_CB_COMPOUND4args()
             tag = cmp4args.tag
@@ -277,7 +277,7 @@ class CBServer(rpc.RPCServer):
 AuthSys = rpc.SecAuthSys(0,b'jupiter',103558,100,[])
 
 class NFS4Client(rpc.RPCClient):
-    def __init__(self, id, host='localhost', port=2049, homedir=['pynfs'],
+    def __init__(self, id, host=b'localhost', port=2049, homedir=[b'pynfs'],
                  sec_list=[AuthSys], opts=None):
         self._start_cb_server("cb_server_%s" % id)
         self.nfs4packer = FancyNFS4Packer()
@@ -309,16 +309,17 @@ class NFS4Client(rpc.RPCClient):
                 print("Waiting for Callback server to start")
 
     def cb_command(self, comm):
-        self.cb_control.sendall('\x80\x00\x00\x04\x00\x00\x00%s' % chr(comm))
+        self.cb_control.sendall(b'\x80\x00\x00\x04\x00\x00\x00%s' %
+                                                            bytes([comm]))
         res = self.cb_control.recv(1024)
 
     def null(self):
         """Make NULL procedure call"""
-        res = self.call(NFSPROC4_NULL, '')
+        res = self.call(NFSPROC4_NULL, b'')
         self.nfs4unpacker.reset(res)
         self.nfs4unpacker.done()
 
-    def compound(self, argarray, tag='', minorversion=0):
+    def compound(self, argarray, tag=b'', minorversion=0):
         """Make COMPOUND procedure call"""
         if type(argarray) is not list:
             raise "Need list for argarray"
@@ -416,14 +417,14 @@ class NFS4Client(rpc.RPCClient):
         if verifier is None: verifier = self.verifier
         if cb_ident is None:
             # Don't use callbacks
-            r_addr = "0.0.0.0.0.0"
+            r_addr = b"0.0.0.0.0.0"
             cb_ident = 0
         else:
             if cb_ident == 0:
                 cb_ident = self.get_cbid()
             r_addr = self.ipaddress + self.cb_server.dotport
         client_id = nfs_client_id4(verifier, id)
-        cb_location = clientaddr4('tcp', r_addr)
+        cb_location = clientaddr4(b'tcp', r_addr)
         callback = cb_client4(self.cb_server.prog, cb_location)
 
         return op4.setclientid(client_id, callback, cb_ident)
@@ -452,13 +453,13 @@ class NFS4Client(rpc.RPCClient):
         # The argument to GETATTR4args is a list of integers.
         return op4.getattr(list2bitmap(attrlist))
 
-    def readdir(self, cookie=0, cookieverf='', dircount=0, maxcount=4096,
+    def readdir(self, cookie=0, cookieverf=b'', dircount=0, maxcount=4096,
                 attr_request=[]):
         attrs = list2bitmap(attr_request)
         return op4.readdir(cookie, cookieverf, dircount, maxcount, attrs)
 
     def setattr(self, attrdict, stateid=None):
-        if stateid is None: stateid = stateid4(0, "")
+        if stateid is None: stateid = stateid4(0, b"")
         return op4.setattr(stateid, attrdict)
 
     def link(self, old, new):
@@ -527,14 +528,14 @@ class NFS4Client(rpc.RPCClient):
         check_result(res)
         return res.resarray[-1].switch.switch.object
     
-    def do_readdir(self, file, cookie=0, cookieverf = '', attr_request=[],
+    def do_readdir(self, file, cookie=0, cookieverf = b'', attr_request=[],
                    dircount=4096, maxcount=4096):
         # Since we may not get whole directory listing in one readdir request,
         # loop until we do. For each request result, create a flat list
         # with <entry4> objects. 
         attrs = list2bitmap(attr_request)
         cookie = 0
-        cookieverf = ''
+        cookieverf = b''
         entries = []
         baseops = self.use_obj(file)
         count = 0
@@ -567,7 +568,7 @@ class NFS4Client(rpc.RPCClient):
         return entries
 
     def clean_dir(self, path):
-        stateid = stateid4(0, "")
+        stateid = stateid4(0, b"")
         fh = self.do_getfh(path)
         entries = self.do_readdir(fh)
         for e in entries:
@@ -595,7 +596,7 @@ class NFS4Client(rpc.RPCClient):
         return d[FATTR4_LEASE_TIME]
 
     def create_obj(self, path, type=NF4DIR, attrs={FATTR4_MODE:0o755},
-                   linkdata="/etc/X11"):
+                   linkdata=b"/etc/X11"):
         if __builtins__['type'](path) is bytes:
             path = self.homedir + [path]
         ops = [op4.putrootfh()] + self.lookup_path(path[:-1])
@@ -768,7 +769,7 @@ class NFS4Client(rpc.RPCClient):
             res.stateid = res.resarray[-1].switch.switch.open_stateid
         return res
 
-    def write_file(self, file, data, offset=0, stateid=stateid4(0, ''),
+    def write_file(self, file, data, offset=0, stateid=stateid4(0, b''),
                    how=FILE_SYNC4):
         ops = self.use_obj(file)
         ops += [op4.write(stateid, offset, how, data)]
@@ -778,7 +779,7 @@ class NFS4Client(rpc.RPCClient):
             res.committed = res.resarray[-1].switch.switch.committed
         return res
     
-    def read_file(self, file, offset=0, count=2048, stateid=stateid4(0, '')):
+    def read_file(self, file, offset=0, count=2048, stateid=stateid4(0, b'')):
         ops =  self.use_obj(file)
         ops += [op4.read(stateid, offset, count)]
         res = self.compound(ops)
@@ -795,7 +796,7 @@ class NFS4Client(rpc.RPCClient):
         file can be either a fh or a path"""
         
         if lockowner is None:
-            lockowner = "lockowner_%f" % time.time()
+            lockowner = b"lockowner_%f" % time.time()
         if openseqid is None: openseqid = self.get_seqid(openowner)
         ops = self.use_obj(file)
         nfs4_lock_owner = lock_owner4(self.clientid, lockowner)
@@ -832,7 +833,7 @@ class NFS4Client(rpc.RPCClient):
         return res
 
     def lock_test(self, file, offset=0, len=0xffffffffffffffff, type=WRITE_LT,
-                  tester="tester"):
+                  tester=b"tester"):
         ops = self.use_obj(file)
         test_owner = lock_owner4(self.clientid, tester)
         ops += [op4.lockt(type, offset, len, test_owner)]
@@ -877,7 +878,7 @@ def _getname(owner, path):
     if path is None:
         return owner
     else:
-        return '/' + '/'.join(path)
+        return b'/' + b'/'.join(path)
 
 def check_result(res, msg=None):
     """Verify that a COMPOUND call was successful,
@@ -981,7 +982,7 @@ def dict2fattr(dict):
 
     attrs = sorted(dict.keys())
 
-    attr_vals = ""
+    attr_vals = b""
     packer = _cache_packer
     attrpackers = _cache_attrpackers
 

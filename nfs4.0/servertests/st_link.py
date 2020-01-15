@@ -10,7 +10,7 @@ def _basictest(t, c, path, error=NFS4_OK):
         oldcount = d[FATTR4_NUMLINKS]
     res = c.link(path, c.homedir + [t.word()])
     check(res, error,
-          "Creating hard link %s to /%s" % (t.word(), '/'.join(path)))
+          "Creating hard link %s to /%s" % (t.word(), b'/'.join(path)))
     if d and res.status==NFS4_OK:
         newcount = c.do_getattrdict(path, [FATTR4_NUMLINKS])[FATTR4_NUMLINKS]
         if newcount - 1 != oldcount:
@@ -199,7 +199,7 @@ def testZeroLenName(t, env):
     CODE: LINK6
     """
     c = env.c1
-    res = c.link(env.opts.usefile, c.homedir + [''])
+    res = c.link(env.opts.usefile, c.homedir + [b''])
     check(res, NFS4ERR_INVAL, "LINK with zero length name")
 
 def testLongName(t, env):
@@ -239,10 +239,10 @@ def testDots(t, env):
     dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
-    res1 = c.link(env.opts.usefile, dir + ['.'])
+    res1 = c.link(env.opts.usefile, dir + [b'.'])
     check(res1, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to make a hardlink named '.'")
-    res2 = c.link(env.opts.usefile, dir + ['..'])
+    res2 = c.link(env.opts.usefile, dir + [b'..'])
     check(res2, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to make a hardlink named '..'")
     if res1.status == NFS4_OK or res2.status == NFS4_OK:

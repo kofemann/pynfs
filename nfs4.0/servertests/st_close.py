@@ -188,7 +188,7 @@ def testReplaySeqid2(t, env):
     """
     c = env.c1
     c.init_connection()
-    path2 = c.homedir + [t.word() + '-2']
+    path2 = c.homedir + [t.word() + b'-2']
     fh, stateid = c.create_confirm(t.word())
     fh2, stateid2 = c.create_confirm(t.word(), path=path2);
     seqid = c.get_seqid(t.word())

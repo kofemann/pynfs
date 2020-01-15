@@ -74,7 +74,7 @@ def testBadStateid(t, env):
     res = c.create_file(t.word())
     check(res)
     fh = res.resarray[-1].switch.switch.object
-    res = _confirm(t, c, fh, stateid4(0, ''))
+    res = _confirm(t, c, fh, stateid4(0, b''))
     check(res, NFS4ERR_BAD_STATEID, "OPEN_CONFIRM with a bad state")
 
 def testStaleStateid(t, env):

@@ -73,7 +73,7 @@ def testAttr1b(t, env):
     path = env.opts.usespecial[:-1]
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE, FATTR4_FSID]
     ops = c.use_obj(path)
-    ops += [op.readdir(0, '', 4096, 4096, list2bitmap(attrlist))]
+    ops += [op.readdir(0, b'', 4096, 4096, list2bitmap(attrlist))]
     res = c.compound(ops)
     check(res, NFS4ERR_MOVED, "READDIR w/o FSLOC or RDATTR_ERROR")
 

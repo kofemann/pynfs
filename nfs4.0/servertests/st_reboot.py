@@ -12,7 +12,7 @@ def _waitForReboot(c, env):
     Returns an estimate of how long grace period will last.
     """
     oldleasetime = c.getLeaseTime()
-    env.serverhelper("reboot")
+    env.serverhelper(b"reboot")
     # Wait until the server is back up.
     # c.null() blocks until it gets a response,
     # which happens when the server comes back up.
@@ -53,14 +53,14 @@ def testManyClaims(t, env):
     """
     c = env.c1
     clientcount = 5
-    pid = str(os.getpid())
+    pid = str(os.getpid()).encode()
     basedir = c.homedir + [t.word()]
     res = c.create_obj(basedir)
     check(res, msg="Creating test directory %s" % t.word())
     # Make lots of client ids
     fhdict = {}
-    idlist = ['pynfs%s%06i' % (pid, x) for x in range(clientcount)]
-    badids = ['badpynfs%s%06i' % (pid, x) for x in range(clientcount)]
+    idlist = [b'pynfs%s%06i' % (pid, x) for x in range(clientcount)]
+    badids = [b'badpynfs%s%06i' % (pid, x) for x in range(clientcount)]
     for id in idlist:
         c.init_connection(id)
         fh, stateid = c.create_confirm(t.word(), basedir + [id])
@@ -214,8 +214,8 @@ def testRootSquash(t, env):
     
     # See if we are using root squashing
     oldowner = c.do_getattr(FATTR4_OWNER, c.homedir + [t.word()])
-    oldname = oldowner.split('@')[0]
-    if oldname == 'root':
+    oldname = oldowner.split(b'@')[0]
+    if oldname == b'root':
         t.fail_support("No root squashing detected")
     print("Detected root squashing: root -> %s" % oldname)
     
@@ -223,7 +223,7 @@ def testRootSquash(t, env):
     _waitForReboot(c, env)
     c.init_connection()
     while 1:
-        res = c.create_file(t.word(), c.homedir + [t.word(), 'file'])
+        res = c.create_file(t.word(), c.homedir + [t.word(), b'file'])
         check(res, [NFS4_OK, NFS4ERR_GRACE], "Creating file")
         if res.status == NFS4ERR_GRACE:
             env.sleep(1, "Waiting for grace period to *just* finish")
@@ -242,9 +242,9 @@ def testValidDeleg(t, env):
     DEPEND: MKFILE
     CODE: REBT8
     """
-    from st_delegation import _get_deleg
+    from .st_delegation import _get_deleg
     c = env.c1
-    id = 'pynfs%i_%s' % (os.getpid(), t.word())
+    id = b'pynfs%i_%s' % (os.getpid(), t.word())
     c.init_connection(id, cb_ident=0)
     deleg_info, fh, stateid =_get_deleg(t, c, c.homedir + [t.word()],
                                         None, NFS4_OK)

@@ -35,7 +35,7 @@ def testReclaimAfterRECC(t, env):
     res = sess.compound([op.reclaim_complete(FALSE)])
     check(res)
 
-    owner = "owner_%s" % name
+    owner = b"owner_%s" % name
     path = sess.c.homedir + [name]
     fh, stateid = create_confirm(sess, owner)
 
@@ -63,7 +63,7 @@ def testOpenBeforeRECC(t, env):
     c = env.c1.new_client(name)
     sess = c.create_session()
 
-    fname = "owner_%s" % name
+    fname = b"owner_%s" % name
     path = sess.c.homedir + [name]
 
     res = create_file(sess, fname, path, access=OPEN4_SHARE_ACCESS_BOTH)

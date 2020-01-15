@@ -67,7 +67,7 @@ def testRequestTooBig(t, env):
     attrs = channel_attrs4(0, 512, 8192, 8192, 128, 8, [])
     sess1 = c1.create_session(fore_attrs = attrs)
     # Send a lookup request with a very long filename
-    res = sess1.compound([op.putrootfh(), op.lookup("12345"*100)])
+    res = sess1.compound([op.putrootfh(), op.lookup(b"12345"*100)])
     # FIXME - NAME_TOO_BIG is valid, don't want it to be
     check(res, NFS4ERR_REQ_TOO_BIG)
 
@@ -117,7 +117,7 @@ def testReplayCache001(t, env):
     check(res1)
     res2 = sess1.compound([op.putrootfh()], cache_this=True, seq_delta=0)
     check(res2)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -128,18 +128,18 @@ def testReplayCache002(t, env):
     CODE: SEQ9b
     """
     sess1 = env.c1.new_client_session(env.testname(t))
-    res = create_file(sess1, "%s_1" % env.testname(t))
+    res = create_file(sess1, b"%s_1" % env.testname(t))
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
 
     check(res)
     ops = env.home + [op.savefh(),\
-          op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
+          op.rename(b"%s_1" % env.testname(t), b"%s_2" % env.testname(t))]
     res1 = sess1.compound(ops, cache_this=True)
     check(res1)
     res2 = sess1.compound(ops, cache_this=True, seq_delta=0)
     check(res2)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -156,11 +156,11 @@ def testReplayCache003(t, env):
     """
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
-    res1 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True)
+    res1 = sess1.compound([op.putrootfh(), op.lookup(b"")], cache_this=True)
     check(res1, NFS4ERR_INVAL)
-    res2 = sess1.compound([op.putrootfh(), op.lookup("")], cache_this=True, seq_delta=0)
+    res2 = sess1.compound([op.putrootfh(), op.lookup(b"")], cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -173,12 +173,12 @@ def testReplayCache004(t, env):
     c1 = env.c1.new_client(env.testname(t))
     sess1 = c1.create_session()
     ops = env.home
-    ops += [op.savefh(), op.rename("", "foo")]
+    ops += [op.savefh(), op.rename(b"", b"foo")]
     res1 = sess1.compound(ops, cache_this=True)
     check(res1, NFS4ERR_INVAL)
     res2 = sess1.compound(ops, cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_INVAL)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -194,7 +194,7 @@ def testReplayCache005(t, env):
     check(res1, NFS4ERR_OP_ILLEGAL)
     res2 = sess1.compound([op.illegal()], cache_this=True, seq_delta=0)
     check(res2, NFS4ERR_OP_ILLEGAL)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -210,7 +210,7 @@ def testReplayCache006(t, env):
     check(res1)
     res2 = sess.compound([], cache_this=True, seq_delta=0)
     check(res2)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -221,12 +221,12 @@ def testReplayCache007(t, env):
     CODE: SEQ10b
     """
     sess1 = env.c1.new_client_session(env.testname(t))
-    res = create_file(sess1, "%s_1" % env.testname(t))
+    res = create_file(sess1, b"%s_1" % env.testname(t))
     check(res)
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
     ops = env.home + [op.savefh(),\
-          op.rename("%s_1" % env.testname(t), "%s_2" % env.testname(t))]
+          op.rename(b"%s_1" % env.testname(t), b"%s_2" % env.testname(t))]
     res1 = sess1.compound(ops, cache_this=False)
     check(res1, NFS4_OK)
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)

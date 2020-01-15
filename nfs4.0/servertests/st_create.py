@@ -38,7 +38,7 @@ def testDir(t, env):
     FLAGS: create dir all
     CODE: MKDIR
     """
-    _test_create(t, env, NF4DIR, 'directory')
+    _test_create(t, env, NF4DIR, b'directory')
 
 #FRED - test with existant vs nonexistant file
 #       (sec 14.2.25 says shouldn't matter)
@@ -48,7 +48,7 @@ def testLink(t, env):
     FLAGS: create symlink all
     CODE: MKLINK
     """
-    _test_create(t, env, NF4LNK, 'link', **{'linkdata':'/etc/X11'})
+    _test_create(t, env, NF4LNK, 'link', **{'linkdata':b'/etc/X11'})
      
 def testBlock(t, env):
     """CREATE a block device
@@ -160,7 +160,7 @@ def testZeroLength(t, env):
     CODE: CR9
     """
     c = env.c1
-    res = c.create_obj(c.homedir + [''])
+    res = c.create_obj(c.homedir + [b''])
     check(res, NFS4ERR_INVAL, "CREATE with zero-length name")
 
 def testZeroLengthForLNK(t, env):
@@ -171,7 +171,7 @@ def testZeroLengthForLNK(t, env):
     """
     c = env.c1
     ops = c.go_home()
-    objtype = createtype4(NF4LNK, **{'linkdata':''})
+    objtype = createtype4(NF4LNK, **{'linkdata':b''})
     ops += [op.create(objtype, t.word(), getDefaultAttr(c))]
     res = c.compound(ops)
     check(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
@@ -229,10 +229,10 @@ def testDots(t, env):
     CODE: CR13
     """
     c = env.c1
-    res = c.create_obj(c.homedir + ['.'])
+    res = c.create_obj(c.homedir + [b'.'])
     check(res, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to CREATE a dir named '.'")
-    res2 = c.create_obj(c.homedir + ['..'])
+    res2 = c.create_obj(c.homedir + [b'..'])
     check(res2, [NFS4_OK, NFS4ERR_BADNAME],
                   "Trying to CREATE a dir named '..'")
     if res.status == NFS4_OK or res2.status == NFS4_OK:
@@ -254,10 +254,10 @@ def testSlash(t, env):
     c = env.c1
     res = c.create_obj(c.homedir + [t.word()])
     check(res)
-    res = c.create_obj(c.homedir + [t.word(), 'foo'])
+    res = c.create_obj(c.homedir + [t.word(), b'foo'])
     check(res)
     # Test
-    res = c.create_obj(c.homedir + [t.word() + '/foo'])
+    res = c.create_obj(c.homedir + [t.word() + b'/foo'])
     if res.status == NFS4_OK:
         t.pass_warn("Allowed creation of dir named '%s/foo'" % t.word())
     check(res, [NFS4ERR_BADNAME, NFS4ERR_BADCHAR],

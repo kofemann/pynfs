@@ -57,9 +57,9 @@ def testSupported2(t, env):
     FLAGS: exchange_id all
     CODE: EID1b
     """
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
+    c1 = env.c1.new_client(b"%s_1" % env.testname(t))
     sess1 = c1.create_session()
-    owner = client_owner4(sess1.c.verifier, "%s_2" % env.testname(t))
+    owner = client_owner4(sess1.c.verifier, b"%s_2" % env.testname(t))
     protect = state_protect4_a(SP4_NONE)
     res = sess1.compound([op.exchange_id(owner, EXCHGID4_FLAG_USE_PNFS_DS, protect, [sess1.c.impl_id])])
     check(res)
@@ -82,7 +82,7 @@ def testSSV(t, env):
     oplists = state_protect_ops4(enforce, allow)
     ssv_parms = ssv_sp_parms4(oplists,
                               [hash_oids["sha256"], hash_oids["sha1"]],
-                              ["giberrish_oid", encrypt_oids["aes256-CBC"]],
+                              [b"giberrish_oid", encrypt_oids["aes256-CBC"]],
                               4, 2)
     protect = state_protect4_a(SP4_SSV, spa_ssv_parms=ssv_parms)
     c = env.c1.new_client(env.testname(t), protect=protect)
@@ -90,7 +90,7 @@ def testSSV(t, env):
     sess = c.create_session() # Can we use ssv cred for cb_sec here?
     # This should fail if not using GSS?  What about E_ID?
 
-    res = sess.set_ssv('\x5a' * c.protect.context.ssv_len)
+    res = sess.set_ssv(b'\x5a' * c.protect.context.ssv_len)
     print(res)
     
 def testNoImplId(t, env):
@@ -487,11 +487,11 @@ def testLeasePeriod(t, env):
     FLAGS: exchange_id all
     CODE: EID9
     """
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
+    c1 = env.c1.new_client(b"%s_1" % env.testname(t))
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
 
     # Get server's lease time
-    c3 = env.c1.new_client("%s_3" % env.testname(t))
+    c3 = env.c1.new_client(b"%s_3" % env.testname(t))
     sess = c3.create_session()
     lease = _getleasetime(sess)
 

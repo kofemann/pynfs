@@ -11,7 +11,7 @@ op = nfs_ops.NFS4ops()
 import threading
 
 
-current_stateid = stateid4(1, '\0' * 12)
+current_stateid = stateid4(1, b'\0' * 12)
 
 def testOpenAndClose(t, env):
     """test current state id processing by having OPEN and CLOSE
@@ -40,7 +40,7 @@ def testLockLockU(t, env):
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
 
-    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, "lock1"))
+    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, b"lock1"))
     lock_owner = locker4(open_owner=open_to_lock_owner, new_lock_owner=True)
     lock_ops = [ op.lock(WRITE_LT, False, 0, NFS4_UINT64_MAX, lock_owner),
         op.locku(WRITE_LT, 0, current_stateid, 0, NFS4_UINT64_MAX) ]
@@ -58,7 +58,7 @@ def testOpenWriteClose(t, env):
     """
     sess1 = env.c1.new_client_session(env.testname(t))
 
-    data = "write test data"
+    data = b"write test data"
     open_op = open_create_file_op(sess1, env.testname(t), open_create=OPEN4_CREATE)
     res = sess1.compound(open_op + [op.write(current_stateid, 5, FILE_SYNC4, data),
         op.close(0, current_stateid)])
@@ -78,8 +78,8 @@ def testLockWriteLocku(t, env):
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
 
-    data = "write test data"
-    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, "lock1"))
+    data = b"write test data"
+    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, b"lock1"))
     lock_owner = locker4(open_owner=open_to_lock_owner, new_lock_owner=True)
     lock_ops = [ op.lock(WRITE_LT, False, 0, NFS4_UINT64_MAX, lock_owner),
         op.write(current_stateid, 5, FILE_SYNC4, data),

@@ -33,7 +33,7 @@ def testACL(t, env):
 
     fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
-    acl = [nfsace4(0, 0, 0,"123")]
+    acl = [nfsace4(0, 0, 0, b"123")]
     ops += [c.setattr({FATTR4_ACL: acl})]
     res = c.compound(ops)
     check(res)
@@ -57,7 +57,7 @@ def testLargeACL(t, env):
     acl = []
     # using larger id's just to try for a larger reply:
     for i in range(20):
-        acl += [nfsace4(0, 0, 0, "%d" % (i + 10000))]
+        acl += [nfsace4(0, 0, 0, b"%d" % (i + 10000))]
     ops += [c.setattr({FATTR4_ACL: acl})]
     res = c.compound(ops)
     check(res)

@@ -85,7 +85,7 @@ def testBadHandle(t, env):
     CODE: PUTFH2
     """
     c = env.c1
-    res = c.compound([op.putfh('abc')])
+    res = c.compound([op.putfh(b'abc')])
     check(res, NFS4ERR_BADHANDLE, "PUTFH with bad filehandle='abc'")
 
 def testStaleHandle(t, env):

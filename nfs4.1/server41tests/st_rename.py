@@ -13,8 +13,9 @@ def testValidDir(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1', ['foo']], ['dir2']])
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    maketree(sess, [name, [b'dir1', [b'foo']], [b'dir2']])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of directory %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -27,8 +28,9 @@ def testValidFile(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1', 'foo'], ['dir2']])
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    maketree(sess, [name, [b'dir1', b'foo'], [b'dir2']])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of file %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -41,10 +43,12 @@ def testValidLink(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2']])
-    res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4LNK, linkdata=env.linkdata))
+    maketree(sess, [name, [b'dir1'], [b'dir2']])
+    res = create_obj(sess, basedir + [b'dir1', b'foo'],
+                           createtype4(NF4LNK, linkdata=env.linkdata))
     check(res)
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of symlink %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -57,10 +61,12 @@ def testValidBlock(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2']])
-    res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4BLK, devdata=specdata4(1, 2)))
+    maketree(sess, [name, [b'dir1'], [b'dir2']])
+    res = create_obj(sess, basedir + [b'dir1', b'foo'],
+                           createtype4(NF4BLK, devdata=specdata4(1, 2)))
     check(res)
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of block device %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -73,10 +79,12 @@ def testValidChar(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2']])
-    res = create_obj(sess, basedir + ['dir1', 'foo'], createtype4(NF4BLK, devdata=specdata4(1, 2)))
+    maketree(sess, [name, [b'dir1'], [b'dir2']])
+    res = create_obj(sess, basedir + [b'dir1', b'foo'],
+                           createtype4(NF4BLK, devdata=specdata4(1, 2)))
     check(res)
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of character device %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -89,10 +97,11 @@ def testValidFifo(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2']])
-    res = create_obj(sess, basedir + ['dir1', 'foo'], NF4FIFO)
+    maketree(sess, [name, [b'dir1'], [b'dir2']])
+    res = create_obj(sess, basedir + [b'dir1', b'foo'], NF4FIFO)
     check(res)
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of fifo %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -105,10 +114,11 @@ def testValidSocket(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2']])
-    res = create_obj(sess, basedir + ['dir1', 'foo'], NF4SOCK)
+    maketree(sess, [name, [b'dir1'], [b'dir2']])
+    res = create_obj(sess, basedir + [b'dir1', b'foo'], NF4SOCK)
     check(res)
-    res = rename_obj(sess, basedir + ['dir1', 'foo'], basedir + ['dir2', 'bar'])
+    res = rename_obj(sess, basedir + [b'dir1', b'foo'],
+                           basedir + [b'dir2', b'bar'])
     check(res, msg="RENAME of socket %s/dir1/foo to %s/dir2/bar" %
           (name, name))
 
@@ -282,7 +292,7 @@ def testNonExistent(t, env):
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
-    res = rename_obj(sess, basedir + ['foo'], basedir + ['bar'])
+    res = rename_obj(sess, basedir + [b'foo'], basedir + [b'bar'])
     check(res, NFS4ERR_NOENT, "RENAME on non-existing object %s/foo" % name)
 
 def testZeroLengthOldname(t, env):
@@ -296,7 +306,7 @@ def testZeroLengthOldname(t, env):
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
-    res = rename_obj(sess, basedir + [''], basedir + ['bar'])
+    res = rename_obj(sess, basedir + [b''], basedir + [b'bar'])
     check(res, NFS4ERR_INVAL, "RENAME with zero length oldname")
 
 def testZeroLengthNewname(t, env):
@@ -310,7 +320,7 @@ def testZeroLengthNewname(t, env):
     basedir = env.c1.homedir + [name]
     res = create_obj(sess, basedir)
     check(res)
-    res = rename_obj(sess, basedir + ['foo'], basedir + [''])
+    res = rename_obj(sess, basedir + [b'foo'], basedir + [b''])
     check(res, NFS4ERR_INVAL, "RENAME with zero length newname")
 
 def testBadutf8Oldname(t, env):
@@ -354,10 +364,10 @@ def testDotsOldname(t, env):
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, [name]])
-    res = rename_obj(sess, basedir + ['.'], basedir + [name])
+    res = rename_obj(sess, basedir + [b'.'], basedir + [name])
     check(res, NFS4ERR_BADNAME, "RENAME from nonexistant '.'",
           [NFS4ERR_NOENT])
-    res = rename_obj(sess, basedir + ['..'], basedir + [name])
+    res = rename_obj(sess, basedir + [b'..'], basedir + [name])
     check(res, NFS4ERR_BADNAME, "RENAME from nonexistant '..'",
           [NFS4ERR_NOENT])
 
@@ -371,10 +381,10 @@ def testDotsNewname(t, env):
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
     maketree(sess, [name, [name]])
-    res = rename_obj(sess, basedir + [name], basedir + ['.'])
+    res = rename_obj(sess, basedir + [name], basedir + [b'.'])
     check(res, NFS4ERR_BADNAME, "RENAME into '.'",
           [NFS4_OK])
-    res = rename_obj(sess, basedir + [name], basedir + ['..'])
+    res = rename_obj(sess, basedir + [name], basedir + [b'..'])
     check(res, NFS4ERR_BADNAME, "RENAME into '..'",
           [NFS4_OK])
 
@@ -387,8 +397,8 @@ def testDirToObj(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir'], 'file'])
-    res = rename_obj(sess, basedir + ['dir'], basedir + ['file'])
+    maketree(sess, [name, [b'dir'], b'file'])
+    res = rename_obj(sess, basedir + [b'dir'], basedir + [b'file'])
     # note rfc 3530 and 1813 specify EXIST, but posix specifies NOTDIR
     check(res, [NFS4ERR_EXIST, NFS4ERR_NOTDIR], "RENAME dir into existing file")
 
@@ -401,8 +411,8 @@ def testDirToDir(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1', ['foo']], ['dir2']])
-    res = rename_obj(sess, basedir + ['dir1'], basedir + ['dir2'])
+    maketree(sess, [name, [b'dir1', [b'foo']], [b'dir2']])
+    res = rename_obj(sess, basedir + [b'dir1'], basedir + [b'dir2'])
     check(res, msg="RENAME dir1 into existing, empty dir2")
 
 def testFileToDir(t, env):
@@ -414,8 +424,8 @@ def testFileToDir(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir'], 'file'])
-    res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
+    maketree(sess, [name, [b'dir'], b'file'])
+    res = rename_obj(sess, basedir + [b'file'], basedir + [b'dir'])
     # note rfc 3530 and 1813 specify EXIST, but posix specifies ISDIR
     check(res, [NFS4ERR_EXIST, NFS4ERR_ISDIR], "RENAME file into existing dir")
 
@@ -428,8 +438,8 @@ def testFileToFile(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, 'file1', 'file2'])
-    res = rename_obj(sess, basedir + ['file1'], basedir + ['file2'])
+    maketree(sess, [name, b'file1', b'file2'])
+    res = rename_obj(sess, basedir + [b'file1'], basedir + [b'file2'])
     check(res, msg="RENAME file1 into existing file2")
 
 def testDirToFullDir(t, env):
@@ -441,8 +451,8 @@ def testDirToFullDir(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, ['dir1'], ['dir2', ['foo']]])
-    res = rename_obj(sess, basedir + ['dir1'], basedir + ['dir2'])
+    maketree(sess, [name, [b'dir1'], [b'dir2', [b'foo']]])
+    res = rename_obj(sess, basedir + [b'dir1'], basedir + [b'dir2'])
     check(res, [NFS4ERR_EXIST, NFS4ERR_NOTEMPTY], "RENAME dir1 into existing, nonempty dir2")
 
 def testFileToFullDir(t, env):
@@ -454,8 +464,8 @@ def testFileToFullDir(t, env):
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
     basedir = env.c1.homedir + [name]
-    maketree(sess, [name, 'file', ['dir', ['foo']]])
-    res = rename_obj(sess, basedir + ['file'], basedir + ['dir'])
+    maketree(sess, [name, b'file', [b'dir', [b'foo']]])
+    res = rename_obj(sess, basedir + [b'file'], basedir + [b'dir'])
     # note rfc 3530 and 1813 specify EXIST, but posix specifies ISDIR
     check(res, [NFS4ERR_EXIST, NFS4ERR_ISDIR], "RENAME file into existing, nonempty dir")
 
@@ -508,11 +518,11 @@ def testLinkRename(t, env):
     """
     name = env.testname(t)
     sess = env.c1.new_client_session(name)
-    maketree(sess, [name, 'file'])
+    maketree(sess, [name, b'file'])
     basedir = env.c1.homedir + [name]
-    res = link(sess, basedir + ['file'], basedir + ['link'])
+    res = link(sess, basedir + [b'file'], basedir + [b'link'])
     check(res)
-    res = rename_obj(sess, basedir + ['file'], basedir + ['link'])
+    res = rename_obj(sess, basedir + [b'file'], basedir + [b'link'])
     check(res, msg="RENAME of file into its hard link")
     scinfo = res.resarray[-1].source_cinfo
     tcinfo = res.resarray[-1].target_cinfo

@@ -4,7 +4,7 @@ from rpc_type import *
 import logging
 log = logging.getLogger("rpc.lib")
 
-NULL_CRED = opaque_auth(AUTH_NONE, '')
+NULL_CRED = opaque_auth(AUTH_NONE, b'')
 
 class RPCFlowContol(Exception):
     """Used to initiate unusual flow control changes.
@@ -36,7 +36,7 @@ class RPCDeniedReply(RPCFlowContol):
         except Exception as e:
             log.critical("Oops, encountered bug", exc_info=True)
             rreply = rejected_reply(AUTH_ERROR, astat=AUTH_FAILED)
-        return reply_body(MSG_DENIED, rreply=rreply), ''
+        return reply_body(MSG_DENIED, rreply=rreply), b''
 
 class RPCUnsuccessfulReply(RPCFlowContol):
     """Stop processing incoming record and send a reply."""
@@ -56,16 +56,16 @@ class RPCUnsuccessfulReply(RPCFlowContol):
             log.critical("Oops, encountered bug", exc_info=True)
             data = rpc_reply_data(SYSTEM_ERR)
         areply = accepted_reply(NULL_CRED, data)
-        return reply_body(MSG_ACCEPTED, areply=areply), ''
+        return reply_body(MSG_ACCEPTED, areply=areply), b''
 
 class RPCSuccessfulReply(RPCFlowContol):
     """Stop processing incoming record and send a reply."""
-    def __init__(self, verf, msgdata=''):
+    def __init__(self, verf, msgdata=b''):
         self.msgdata = msgdata
         self.verf = verf
 
     def body(self):
-        args={"results": ""} # Note msg_data must be appended later
-        data = rpc_reply_data(SUCCESS, results="")
+        args={"results": b""} # Note msg_data must be appended later
+        data = rpc_reply_data(SUCCESS, results=b"")
         areply = accepted_reply(self.verf, data)
         return reply_body(MSG_ACCEPTED, areply=areply), self.msgdata

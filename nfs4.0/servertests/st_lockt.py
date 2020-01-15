@@ -141,7 +141,7 @@ def testOverlap(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.word())
-    lockowner = "lockowner_LKTOVER"
+    lockowner = b"lockowner_LKTOVER"
     res = c.lock_file(t.word(), fh, stateid, 100, 50, lockowner=lockowner)
     check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh, 100, 50, tester=lockowner)

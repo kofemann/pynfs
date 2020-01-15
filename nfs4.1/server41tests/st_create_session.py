@@ -53,8 +53,8 @@ def testSupported2b(t, env):
     FLAGS: create_session all
     CODE: CSESS2b
     """
-    c1 = env.c1.new_client("%s_1" % env.testname(t))
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
+    c1 = env.c1.new_client(b"%s_1" % env.testname(t))
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
     sess1 = c1.create_session()
     # Create second session
     chan_attrs = channel_attrs4(0,8192,8192,8192,128,8,[])
@@ -107,7 +107,7 @@ def testReplay1(t, env):
     res2 = create_session(c.c, c.clientid, c.seqid)
     check(res2)
     # Test results are equal (ignoring tags)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -132,7 +132,7 @@ def testReplay1a(t, env):
     res2 = sess1.compound([cs_op])
     check(res2)
     # Test results are equal (ignoring tags)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -157,7 +157,7 @@ def testReplay1b(t, env):
     res2 = create_session(c.c, c.clientid, c.seqid)
     check(res2)
     # Test results are equal (ignoring tags)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -175,7 +175,7 @@ def testReplay2(t, env):
     res2 = create_session(c.c, c.clientid, c.seqid, cred=env.cred2)
     check(res2, NFS4ERR_CLID_INUSE)
     # Test results are equal (ignoring tags)
-    res1.tag = res2.tag = ""
+    res1.tag = res2.tag = b""
     if not nfs4lib.test_equal(res1, res2):
         fail("Replay results not equal")
 
@@ -250,8 +250,8 @@ def testCbSecParms(t, env):
     CODE: CSESS16
     """
     sec = [callback_sec_parms4(AUTH_NONE),
-           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, "Random machine name", 7, 11, [13, 17, 19, 23, 29])),
-           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, "Handle from server", "Client handle")),
+           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, b"Random machine name", 7, 11, [13, 17, 19, 23, 29])),
+           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, b"Handle from server", b"Client handle")),
            ]
                                
     c1 = env.c1.new_client(env.testname(t))
@@ -266,8 +266,8 @@ def testCbSecParmsDec(t, env):
     CODE: CSESS16a
     """
     sec = [callback_sec_parms4(AUTH_NONE),
-           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, "Handle from server", "Client handle")),
-           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, "Random machine name", 7, 11, [])),
+           callback_sec_parms4(RPCSEC_GSS, cbsp_gss_handles=gss_cb_handles4(RPC_GSS_SVC_PRIVACY, b"Handle from server", b"Client handle")),
+           callback_sec_parms4(AUTH_SYS, cbsp_sys_cred=authsys_parms(5, b"Random machine name", 7, 11, [])),
            ]
 
     c1 = env.c1.new_client(env.testname(t))
@@ -327,7 +327,7 @@ def testManyClients(t, env):
     """
     N = 10 # number of clients to create
     for i in range(N):
-        c = env.c1.new_client("%s_Client_%i" % (env.testname(t), i))
+        c = env.c1.new_client(b"%s_Client_%i" % (env.testname(t), i))
         sess = c.create_session()
         
 def testCallbackProgram(t, env):

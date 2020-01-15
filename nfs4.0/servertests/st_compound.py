@@ -24,7 +24,7 @@ def testGoodTag(t, env):
     CODE: COMP2
     """
     c = env.c1
-    tag = 'tag test'
+    tag = b'tag test'
     res = c.compound([op.putrootfh()], tag)
     check(res)
     if res.tag != tag:

@@ -52,14 +52,14 @@ def _cause_recall(t, env):
         # need lock around this to prevent _recall from
         # calling c.unpacker.reset while open is still unpacking
         _lock.acquire()
-        res = c.open_file('newowner', c.homedir + [t.word()],
+        res = c.open_file(b'newowner', c.homedir + [t.word()],
                           access=OPEN4_SHARE_ACCESS_WRITE,
                           deny=OPEN4_SHARE_DENY_NONE)
         _lock.release()
         if res.status == NFS4_OK: break
         check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
-    return c.confirm('newowner', res)
+    return c.confirm(b'newowner', res)
 
 def _verify_cb_occurred(t, c, count):
     newcount = c.cb_server.opcounts[OP_CB_RECALL]
@@ -109,7 +109,7 @@ def _read_deleg(t, env, funct=None, response=NFS4_OK):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], funct, response)
     _cause_recall(t, env)
     _verify_cb_occurred(t, c, count)
@@ -121,7 +121,7 @@ def _write_deleg(t, env, funct=None, response=NFS4_OK):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], funct, response, write=True)
     _cause_recall(t, env)
     _verify_cb_occurred(t, c, count)
@@ -218,7 +218,7 @@ def testCloseDeleg(t, env, funct=_recall, response=NFS4_OK):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     
     deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.word()],
                                          funct, response)
@@ -241,12 +241,12 @@ def testManyReaddeleg(t, env, funct=_recall, response=NFS4_OK):
     # XXX needs to use _get_deleg
     count = 100 # Number of read delegations to grab
     c = env.c1
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     cbids = []
     fh, stateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                    deny=OPEN4_SHARE_DENY_NONE)
     for i in range(count):
-        c.init_connection('pynfs%i_%s_%i' % (os.getpid(), t.word(), i), cb_ident=0)
+        c.init_connection(b'pynfs%i_%s_%i' % (os.getpid(), t.word(), i), cb_ident=0)
         fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                      deny=OPEN4_SHARE_DENY_NONE)
             
@@ -283,7 +283,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
     CODE: DELEG6
     """
     c = env.c1
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     lease = c.getLeaseTime()
     _get_deleg(t, c, c.homedir + [t.word()], funct, response)
     c2 = env.c2
@@ -292,7 +292,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
         c.cb_command(0) # Shut off callback server
         noticed = False
         for i in range(4):
-            res = c2.open_file('newowner', c.homedir + [t.word()],
+            res = c2.open_file(b'newowner', c.homedir + [t.word()],
                               access=OPEN4_SHARE_ACCESS_WRITE)
             env.sleep(lease / 2, "Waiting to send RENEW")
             res = c.compound([op.renew(c.clientid)])
@@ -319,7 +319,7 @@ def testIgnoreDeleg(t, env, funct=_recall, response=NFS4_OK):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     path = c.homedir + [t.word()]
     deleg_info, fh, stateid = _get_deleg(t, c, path, funct, response)
 
@@ -328,10 +328,10 @@ def testIgnoreDeleg(t, env, funct=_recall, response=NFS4_OK):
     check(res, msg="Closing a file with a delegation held")
 
     # Play with file some more
-    fh, stateid = c.open_confirm("NaughtyOwner", path,
+    fh, stateid = c.open_confirm(b"NaughtyOwner", path,
                                  access=OPEN4_SHARE_ACCESS_READ,
                                  deny=OPEN4_SHARE_DENY_NONE)
-    res = c.lock_file("NaughtyOwner", fh, stateid, type=READ_LT)
+    res = c.lock_file(b"NaughtyOwner", fh, stateid, type=READ_LT)
     check(res)
     fh2, stateid2 = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                    deny=OPEN4_SHARE_DENY_NONE)
@@ -353,7 +353,7 @@ def testDelegShare(t, env, funct=_recall, response=NFS4_OK):
     CODE: DELEG8
     """
     c = env.c1
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], funct, response,
                deny=OPEN4_SHARE_DENY_WRITE)
 
@@ -363,7 +363,7 @@ def testDelegShare(t, env, funct=_recall, response=NFS4_OK):
         # need lock around this to prevent _recall from
         # calling c.unpacker.reset while open is still unpacking
         _lock.acquire()
-        res = c.open_file('newowner', c.homedir + [t.word()],
+        res = c.open_file(b'newowner', c.homedir + [t.word()],
                           access=OPEN4_SHARE_ACCESS_WRITE)
         _lock.release()
         if res.status in  [NFS4_OK, NFS4ERR_SHARE_DENIED]: break
@@ -384,7 +384,7 @@ def testDelegShare(t, env, funct=_recall, response=NFS4_OK):
 def _set_clientid(c, id, server):
     client_id = nfs_client_id4(c.verifier, id)
     r_addr = c.ipaddress + server.dotport
-    cb_location = clientaddr4('tcp', r_addr)
+    cb_location = clientaddr4(b'tcp', r_addr)
     callback = cb_client4(server.prog, cb_location)
     return op.setclientid(client_id, callback, 1)
 
@@ -397,7 +397,7 @@ def testChangeDeleg(t, env, funct=_recall):
     """
     from nfs4lib import CBServer
     c = env.c1
-    id = 'pynfs%i_%s' % (os.getpid(), t.word())
+    id = b'pynfs%i_%s' % (os.getpid(), t.word())
     c.init_connection(id, cb_ident=0)
     deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.word()], funct, NFS4_OK)
     # Create new callback server
@@ -516,7 +516,7 @@ def testClaimCur(t, env):
     CODE: DELEG14
     """
     c = env.c1
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     
     deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.word()],
                                          None, NFS4_OK)
@@ -526,7 +526,7 @@ def testClaimCur(t, env):
     # it gets the DELEGRETURN
     c2 = env.c2
     c2.init_connection()
-    res = c2.open_file('newowner', c.homedir + [t.word()],
+    res = c2.open_file(b'newowner', c.homedir + [t.word()],
                       access=OPEN4_SHARE_ACCESS_WRITE,
                       deny=OPEN4_SHARE_DENY_NONE)
     check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
@@ -534,7 +534,7 @@ def testClaimCur(t, env):
 
     # Now send some opens
     path = c.homedir + [t.word()]
-    res = c.open_file('owner1', path, access=OPEN4_SHARE_ACCESS_READ,
+    res = c.open_file(b'owner1', path, access=OPEN4_SHARE_ACCESS_READ,
                             claim_type=CLAIM_DELEGATE_CUR,
                             deleg_stateid=deleg_info.read.stateid)
     check(res)
@@ -563,7 +563,7 @@ def testRemove(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [op.remove(t.word())]
     _retry_conflicting_op(env, c, ops, "remove")
@@ -580,10 +580,10 @@ def testLink(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir + [t.word()]) + [op.savefh()];
-    ops += c.use_obj(c.homedir) + [op.link(t.word() + '.link')];
+    ops += c.use_obj(c.homedir) + [op.link(t.word() + b'.link')];
     _retry_conflicting_op(env, c, ops, "link")
     _verify_cb_occurred(t, c, count)
 
@@ -598,10 +598,10 @@ def testRename(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [op.savefh()];
-    ops += c.use_obj(c.homedir) + [op.rename(t.word(), t.word() + '.rename')]
+    ops += c.use_obj(c.homedir) + [op.rename(t.word(), t.word() + b'.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 
@@ -616,16 +616,16 @@ def testRenameOver(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     res = c.create_file(t.word(), c.homedir + [t.word()])
-    _get_deleg(t, c, c.homedir + [t.word() + '.rename'], _recall, NFS4_OK)
+    _get_deleg(t, c, c.homedir + [t.word() + b'.rename'], _recall, NFS4_OK)
     ops = c.use_obj(c.homedir) + [op.savefh()];
-    ops += c.use_obj(c.homedir) + [op.rename(t.word(), t.word() + '.rename')]
+    ops += c.use_obj(c.homedir) + [op.rename(t.word(), t.word() + b'.rename')]
     _retry_conflicting_op(env, c, ops, "rename")
     _verify_cb_occurred(t, c, count)
 
 def _listToPath(components):
-    return '/'+'/'.join(components)
+    return b'/'+b'/'.join(components)
 
 def testServerRemove(t, env):
     """DELEGATION test
@@ -638,9 +638,9 @@ def testServerRemove(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
-    env.serverhelper("unlink " + _listToPath(c.homedir + [t.word()]))
+    env.serverhelper(b"unlink " + _listToPath(c.homedir + [t.word()]))
     _verify_cb_occurred(t, c, count)
 
 def testServerRenameSource(t, env):
@@ -654,10 +654,10 @@ def testServerRenameSource(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
-    env.serverhelper("rename " + _listToPath(c.homedir + [t.word()]) + " "
-                               + _listToPath(c.homedir + [t.word() + "-2"]))
+    env.serverhelper(b"rename " + _listToPath(c.homedir + [t.word()]) + b" "
+                               + _listToPath(c.homedir + [t.word() + b"-2"]))
     _verify_cb_occurred(t, c, count)
 
 
@@ -672,11 +672,12 @@ def testServerRenameTarget(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
-    c.create_confirm(t.word(), path=c.homedir + [t.word() + '-2'])
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.create_confirm(t.word(), path=c.homedir + [t.word() + b'-2'])
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
-    env.serverhelper("rename " + _listToPath(c.homedir + [t.word() + "-2"]) + " "
-                               + _listToPath(c.homedir + [t.word()]))
+    env.serverhelper(b"rename " + _listToPath(c.homedir + [t.word() + b"-2"])
+                                + b" "
+                                + _listToPath(c.homedir + [t.word()]))
     _verify_cb_occurred(t, c, count)
 
 def testServerLink(t, env):
@@ -690,11 +691,11 @@ def testServerLink(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
-    c.create_confirm(t.word(), path=c.homedir + [t.word() + '-2'])
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.create_confirm(t.word(), path=c.homedir + [t.word() + b'-2'])
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
-    env.serverhelper("link " + _listToPath(c.homedir + [t.word()]) + " "
-                               + _listToPath(c.homedir + [t.word() + "-link"]))
+    env.serverhelper(b"link " + _listToPath(c.homedir + [t.word()]) + b" "
+                               + _listToPath(c.homedir + [t.word() + b"-link"]))
     _verify_cb_occurred(t, c, count)
 
 def testServerChmod(t, env):
@@ -708,10 +709,10 @@ def testServerChmod(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
-    c.create_confirm(t.word(), path=c.homedir + [t.word() + '-2'])
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.create_confirm(t.word(), path=c.homedir + [t.word() + b'-2'])
     _get_deleg(t, c, c.homedir + [t.word()], _recall, NFS4_OK)
-    env.serverhelper("chmod 0777 " + _listToPath(c.homedir + [t.word()]))
+    env.serverhelper(b"chmod 0777 " + _listToPath(c.homedir + [t.word()]))
     _verify_cb_occurred(t, c, count)
 
 def testServerSelfConflict(t, env):
@@ -725,7 +726,7 @@ def testServerSelfConflict(t, env):
     """
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
-    c.init_connection('pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     _get_deleg(t, c, c.homedir + [t.word()], None, NFS4_OK)
 
     sleeptime = 1
@@ -733,14 +734,14 @@ def testServerSelfConflict(t, env):
         # need lock around this to prevent _recall from
         # calling c.unpacker.reset while open is still unpacking
         _lock.acquire()
-        res = c.open_file('newowner', c.homedir + [t.word()],
+        res = c.open_file(b'newowner', c.homedir + [t.word()],
                           access=OPEN4_SHARE_ACCESS_WRITE,
                           deny=OPEN4_SHARE_DENY_NONE)
         _lock.release()
         if res.status == NFS4_OK: break
         check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
-    return c.confirm('newowner', res)
+    return c.confirm(b'newowner', res)
     newcount = c.cb_server.opcounts[OP_CB_RECALL]
     if newcount > count:
         t.fail("Unnecessary delegation recall" % c.cbid)

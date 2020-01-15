@@ -35,7 +35,7 @@ def testSimpleRead(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.usefile)
-    check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
     _compare(t, res, env.filedata, True)
 
 def testStateidOnes(t, env):
@@ -47,7 +47,7 @@ def testStateidOnes(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.usefile, 2, 2, env.stateid1)
-    check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
     _compare(t, res, env.filedata[2:4], False)
 
 def testWithOpen(t, env):
@@ -61,7 +61,7 @@ def testWithOpen(t, env):
     c.init_connection()
     fh, stateid = c.open_confirm(t.word(), env.opts.usefile)
     res = c.read_file(fh, 5, 1000, stateid)
-    check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
     _compare(t, res, env.filedata[5:1005], True)
     
 def testLargeCount(t, env):
@@ -77,7 +77,7 @@ def testLargeCount(t, env):
                                                   FATTR4_MODE: 0o644})
     res = c.read_file(fh, 0, 9000000, stateid)
     check(res, msg="Reading file %s" % t.word())
-    _compare(t, res, '\x00'*9000000, False)
+    _compare(t, res, b'\x00'*9000000, False)
 
 def testLargeOffset(t, env):
     """READ with offset outside file
@@ -88,8 +88,8 @@ def testLargeOffset(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.usefile, 1000, 10)
-    check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
-    _compare(t, res, '', True)
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
+    _compare(t, res, b'', True)
 
 def testZeroCount(t, env):
     """READ with count=0
@@ -100,8 +100,8 @@ def testZeroCount(t, env):
     """
     c = env.c1
     res = c.read_file(env.opts.usefile, 5, 0)
-    check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
-    _compare(t, res, '', False)
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
+    _compare(t, res, b'', False)
 
 def testDir(t, env):
     """READ with non-file objects

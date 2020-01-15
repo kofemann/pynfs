@@ -93,5 +93,5 @@ def testBadHandle(t, env):
     """
     c = env.c1.new_client(env.testname(t))
     sess = c.create_session()
-    res = sess.compound([op.putfh('abc')])
+    res = sess.compound([op.putfh(b'abc')])
     check(res, NFS4ERR_BADHANDLE, "PUTFH with bad filehandle='abc'")

@@ -342,7 +342,7 @@ def testBadStateid(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.word())
-    res = c.lock_file(t.word(), fh, stateid4(0, ''))
+    res = c.lock_file(t.word(), fh, stateid4(0, b''))
     check(res, NFS4ERR_BAD_STATEID, "LOCK with a bad stateid")
 
 def testBadStateidganesha(t, env):
@@ -427,25 +427,25 @@ def testGrabLock1(t, env):
     c.init_connection()
     file = c.homedir + [t.word()]
     # owner1 creates a file
-    fh1, stateid1 = c.create_confirm('owner1', file,
+    fh1, stateid1 = c.create_confirm(b'owner1', file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_WRITE)
     # owner2 opens the file
-    fh2, stateid2 = c.open_confirm('owner2', file,
+    fh2, stateid2 = c.open_confirm(b'owner2', file,
                                    access=OPEN4_SHARE_ACCESS_READ,
                                    deny=OPEN4_SHARE_DENY_NONE)
     # owner1 locks the file
-    res1 = c.lock_file('owner1', fh1, stateid1, type=WRITE_LT)
+    res1 = c.lock_file(b'owner1', fh1, stateid1, type=WRITE_LT)
     check(res1)
     # owner2 tries to lock the file, should fail
-    res2 = c.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2, NFS4ERR_DENIED,
           "Getting read lock when another owner has write lock")
     # owner1 unlocks the file
     res1 = c.unlock_file(1, fh1, res1.lockid)
     check(res1)
     # owner2 tries to lock the file, should work now
-    res2 = c.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2,
           msg="Getting read lock after another owner has released write lock")
 
@@ -462,25 +462,25 @@ def testGrabLock2(t, env):
     c2.init_connection()
     file = c1.homedir + [t.word()]
     # Client1 creates a file
-    fh1, stateid1 = c1.create_confirm('owner1', file,
+    fh1, stateid1 = c1.create_confirm(b'owner1', file,
                                       access=OPEN4_SHARE_ACCESS_BOTH,
                                       deny=OPEN4_SHARE_DENY_WRITE)
     # Client2 opens the file
-    fh2, stateid2 = c2.open_confirm('owner2', file,
+    fh2, stateid2 = c2.open_confirm(b'owner2', file,
                                     access=OPEN4_SHARE_ACCESS_READ,
                                     deny=OPEN4_SHARE_DENY_NONE)
     # Client1 locks the file
-    res1 = c1.lock_file('owner1', fh1, stateid1, type=WRITE_LT)
+    res1 = c1.lock_file(b'owner1', fh1, stateid1, type=WRITE_LT)
     check(res1)
     # Client2 tries to lock the file, should fail
-    res2 = c2.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c2.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2, NFS4ERR_DENIED,
           "Getting read lock when another owner has write lock")
     # Client1 unlocks the file
     res1 = c1.unlock_file(1, fh1, res1.lockid)
     check(res1)
     # Client2 tries to lock the file, should work now
-    res2 = c2.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c2.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2,
           msg="Getting read lock after another owner has released write lock")
 
@@ -495,18 +495,18 @@ def testReadLocks1(t, env):
     c.init_connection()
     file = c.homedir + [t.word()]
     # owner1 creates a file
-    fh1, stateid1 = c.create_confirm('owner1', file,
+    fh1, stateid1 = c.create_confirm(b'owner1', file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
                                      deny=OPEN4_SHARE_DENY_NONE)
     # owner2 opens the file
-    fh2, stateid2 = c.open_confirm('owner2', file,
+    fh2, stateid2 = c.open_confirm(b'owner2', file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
     # owner1 read locks the file
-    res1 = c.lock_file('owner1', fh1, stateid1, type=READ_LT)
+    res1 = c.lock_file(b'owner1', fh1, stateid1, type=READ_LT)
     check(res1)
     # owner2 read locks the file
-    res2 = c.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2, msg="Getting read lock when another owner has read lock")
     # owner1 write locks the file, should fail
     res1 = c.unlock_file(1, fh1, res1.lockid)
@@ -528,19 +528,19 @@ def testReadLocks2(t, env):
     c2.init_connection()
     file = c1.homedir + [t.word()]
     # Client1 creates a file
-    fh1, stateid1 = c1.create_confirm('owner1', file,
+    fh1, stateid1 = c1.create_confirm(b'owner1', file,
                                       attrs={FATTR4_MODE: 0o666},
                                       access=OPEN4_SHARE_ACCESS_BOTH,
                                       deny=OPEN4_SHARE_DENY_NONE)
     # Client2 opens the file
-    fh2, stateid2 = c2.open_confirm('owner2', file,
+    fh2, stateid2 = c2.open_confirm(b'owner2', file,
                                     access=OPEN4_SHARE_ACCESS_BOTH,
                                     deny=OPEN4_SHARE_DENY_NONE)
     # Client1 read locks the file
-    res1 = c1.lock_file('owner1', fh1, stateid1, type=READ_LT)
+    res1 = c1.lock_file(b'owner1', fh1, stateid1, type=READ_LT)
     check(res1)
     # Client2 read locks the file
-    res2 = c2.lock_file('owner2', fh2, stateid2, type=READ_LT)
+    res2 = c2.lock_file(b'owner2', fh2, stateid2, type=READ_LT)
     check(res2, msg="Getting read lock when another owner has read lock")
     # Client1 write locks the file, should fail
     res1 = c1.unlock_file(1, fh1, res1.lockid)
@@ -651,11 +651,11 @@ def testBlockTimeout(t, env):
     check(res1, msg="Locking file %s" % t.word())
     # Second owner is denied a blocking lock
     file = c.homedir + [t.word()]
-    fh2, stateid2 = c.open_confirm("owner2", file,
+    fh2, stateid2 = c.open_confirm(b"owner2", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res2 = c.lock_file("owner2", fh2, stateid2,
-                       type=WRITEW_LT, lockowner="lockowner2_LOCK20")
+    res2 = c.lock_file(b"owner2", fh2, stateid2,
+                       type=WRITEW_LT, lockowner=b"lockowner2_LOCK20")
     check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     sleeptime = c.getLeaseTime() // 2
     # Wait for queued lock to timeout
@@ -669,11 +669,11 @@ def testBlockTimeout(t, env):
     # Third owner tries to butt in and steal lock second owner is waiting for
     # Should work, since second owner let his turn expire
     file = c.homedir + [t.word()]
-    fh3, stateid3 = c.open_confirm("owner3", file,
+    fh3, stateid3 = c.open_confirm(b"owner3", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res3 = c.lock_file("owner3", fh3, stateid3,
-                       type=WRITEW_LT, lockowner="lockowner3_LOCK20")
+    res3 = c.lock_file(b"owner3", fh3, stateid3,
+                       type=WRITEW_LT, lockowner=b"lockowner3_LOCK20")
     check(res3, msg="Grabbing lock after another owner let his 'turn' expire")
 
 def testBlockingQueue(t, env):
@@ -916,7 +916,7 @@ def testOpenUpgradeLock(t, env):
     """
     c= env.c1
     c.init_connection()
-    os = open_sequence(c, t.word(), lockowner="lockowner_LOCK24")
+    os = open_sequence(c, t.word(), lockowner=b"lockowner_LOCK24")
     os.open(OPEN4_SHARE_ACCESS_READ)
     os.lock(READ_LT)
     os.open(OPEN4_SHARE_ACCESS_WRITE)

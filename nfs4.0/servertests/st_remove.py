@@ -190,7 +190,7 @@ def testZeroLengthTarget(t, env):
     CODE: RM4
     """
     c = env.c1
-    ops = c.use_obj(c.homedir) + [op.remove('')]
+    ops = c.use_obj(c.homedir) + [op.remove(b'')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "REMOVE with zero length target")
 
@@ -233,10 +233,10 @@ def testDots(t, env):
     basedir = c.homedir + [t.word()]
     res = c.create_obj(basedir)
     check(res)
-    ops =  c.use_obj(basedir) + [op.remove('.')]
+    ops =  c.use_obj(basedir) + [op.remove(b'.')]
     res = c.compound(ops)
     check(res, NFS4ERR_BADNAME, "REMOVE nonexistant '.'", [NFS4ERR_NOENT])
-    ops =  c.use_obj(basedir) + [op.remove('..')]
+    ops =  c.use_obj(basedir) + [op.remove(b'..')]
     res = c.compound(ops)
     check(res, NFS4ERR_BADNAME, "REMOVE nonexistant '..'", [NFS4ERR_NOENT])
     

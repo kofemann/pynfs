@@ -64,7 +64,7 @@ class %(CompoundArgResults)s(object):
     size = property(lambda s: s._base_len + nfs4lib.xdrlen(s._env.tag))
     tag = property(lambda s: s.prefix + s._env.tag)
     
-    def __init__(self, env, prefix=""):
+    def __init__(self, env, prefix=b""):
         self.status = NFS4_OK # Generally == self.results[-1].status
         self.results = [] # Array of nfs_resop4 structures
         self.packed = [] # Corresponding XDR encoded nfs_resop4 structures
@@ -93,7 +93,7 @@ class %(PairedResults)s(object):
     def __init__(self, env):
         self.env = env
         self.reply = %(CompoundArgResults)s(env)
-        self.cache = %(CompoundArgResults)s(env, prefix="[REPLAY] ")
+        self.cache = %(CompoundArgResults)s(env, prefix=b"[REPLAY] ")
 
     def append(self, result):
         if hasattr(result, "tag"):

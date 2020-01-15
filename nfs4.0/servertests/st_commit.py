@@ -1,7 +1,7 @@
 from xdrdef.nfs4_const import *
 from .environment import check
 
-_text = "Random data to write"
+_text = b"Random data to write"
 
 def _commit(t, c, offset=0, count=0, statlist=[NFS4_OK]):
     """COMMIT

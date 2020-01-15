@@ -47,9 +47,9 @@ def testFirst(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.word(), 'file', ['dir']])
+    c.maketree([t.word(), b'file', [b'dir']])
     entries = c.do_readdir(c.homedir + [t.word()], maxcount=4096)
-    _compare(t, entries, ['file', 'dir'])
+    _compare(t, entries, [b'file', b'dir'])
 
 def testAttr(t, env):
     """READDIR with attributes
@@ -60,11 +60,11 @@ def testAttr(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.word(), 'file', ['dir']])
+    c.maketree([t.word(), b'file', [b'dir']])
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE]
     entries = c.do_readdir(c.homedir + [t.word()],
                            attr_request=attrlist)
-    _compare(t, entries, ['file', 'dir'], attrlist)
+    _compare(t, entries, [b'file', b'dir'], attrlist)
 
 def testSubsequent(t, env):
     """READDIR with cookie from previous call
@@ -75,7 +75,7 @@ def testSubsequent(t, env):
     """
     c = env.c1
     c.init_connection()
-    expected = ["dir%02i"%i for i in range(100)]
+    expected = [b"dir%02i"%i for i in range(100)]
     c.maketree([t.word()] + [[name] for name in expected])
     split = False
     count = 400
@@ -197,7 +197,7 @@ def testDircountVarious(t, env):
     c = env.c1
     # remember, dircount doesn't include attr data, so we need pretty long
     # names if we're going to hit dircount limit first.
-    expected = ["prettylongdirnamelongenoughhowaboutnowohormaybealittlelonger%02i"%i for i in range(100)]
+    expected = [b"prettylongdirnamelongenoughhowaboutnowohormaybealittlelonger%02i"%i for i in range(100)]
     c.maketree([t.word()] + [[name] for name in expected])
     path = c.homedir + [t.word()]
     attrlist = [attr.bitnum for attr in env.attr_info if attr.mandatory]
@@ -215,7 +215,7 @@ def testWriteOnlyAttributes(t, env):
     CODE: RDDR9
     """
     c = env.c1
-    c.maketree([t.word(), ['dir']])
+    c.maketree([t.word(), [b'dir']])
     baseops = c.use_obj(c.homedir + [t.word()])
     for attr in [attr for attr in env.attr_info if attr.writeonly]:
         ops = baseops + [c.readdir(attr_request=[attr.bitnum])]
@@ -245,7 +245,7 @@ def testUnaccessibleDir(t, env):
     """
     c = env.c1
     path = c.homedir + [t.word()]
-    c.maketree([t.word(), ['hidden']])
+    c.maketree([t.word(), [b'hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
     check(res, msg="Setting mode=0 on directory %s" % t.word())
@@ -265,7 +265,7 @@ def testUnaccessibleDirAttrs(t, env):
     """
     c = env.c1
     path = c.homedir + [t.word()]
-    c.maketree([t.word(), ['hidden']])
+    c.maketree([t.word(), [b'hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
     check(res, msg="Setting mode=0 on directory %s" % t.word())

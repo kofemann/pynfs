@@ -141,7 +141,7 @@ class RPCDeniedError(RPCError):
 
 def _recv_all(self, n):
     """Receive n bytes, or raise an error"""
-    data = ""
+    data = b""
     while n > 0:
         newdata = self.recv(n)
         count = len(newdata)
@@ -154,7 +154,7 @@ def _recv_all(self, n):
 def _recv_record(self):
     """Receive data sent using record marking standard"""
     last = False
-    data = ""
+    data = b""
     while not last:
         rec_mark = self.recv_all(4)
         count = struct.unpack('>L', rec_mark)[0]
@@ -313,7 +313,7 @@ class RPCClient(object):
         self.lock.release()
         return out
         
-    def send(self, procedure, data='', program=None, version=None):
+    def send(self, procedure, data=b'', program=None, version=None):
         """Send an RPC call to the server
 
         Takes as input packed arguments
@@ -402,7 +402,7 @@ class RPCClient(object):
         self.check_reply(out)
         return rdata
 
-    def call(self, procedure, data='', program=None, version=None):
+    def call(self, procedure, data=b'', program=None, version=None):
         """Make an RPC call to the server
 
         Takes as input packed arguments
@@ -540,8 +540,8 @@ class RPCServer(Server):
                   (csock.getpeername(), csock.fileno()))
         self.p.register(csock, _readmask)
         cfd = csock.fileno()
-        self.readbufs[cfd] = ''
-        self.writebufs[cfd] = ''
+        self.readbufs[cfd] = b''
+        self.writebufs[cfd] = b''
         self.packetbufs[cfd] = []
         self.recordbufs[cfd] = []
         self.sockets[cfd] = csock
@@ -568,7 +568,7 @@ class RPCServer(Server):
                         loop = True # We've received data past last 
                     if last:
                         if debug: print("SERVER: Received record from %i" % fd)
-                        recv_data = ''.join(self.packetbufs[fd])
+                        recv_data = b''.join(self.packetbufs[fd])
                         self.packetbufs[fd] = []
                         if len(recv_data) == 4:
                             reply = self.event_command(fd, struct.unpack('>L', recv_data)[0])
@@ -610,10 +610,10 @@ class RPCServer(Server):
             print("SERVER: command = %i, cfd = %i" % (comm, cfd))
         if comm == 0: # Turn off server
             self.compute_reply = lambda x: None
-            return '\0'*4
+            return b'\0'*4
         elif comm == 1: # Turn server on
             self.compute_reply = self.__compute_reply_orig
-            return '\0'*4
+            return b'\0'*4
 
     def event_close(self, fd, debug=0):
         if debug:
@@ -649,7 +649,7 @@ class RPCServer(Server):
         #print(call)
         reply_stat = MSG_ACCEPTED
         areply = rreply = None
-        proc_response = ''
+        proc_response = b''
         if call.rpcvers != RPCVERSION:
             rreply = rejected_reply(RPC_MISMATCH,
                                     rpc_mismatch_info(RPCVERSION, RPCVERSION))
@@ -683,7 +683,7 @@ class RPCServer(Server):
             verf = self.security[flavor].make_reply_verf(cred, a_stat)
             if a_stat == SUCCESS:
                 proc_response = self.security[flavor].secure_data(proc_response, cred)
-            areply = accepted_reply(verf, rpc_reply_data(a_stat, ''))
+            areply = accepted_reply(verf, rpc_reply_data(a_stat, b''))
         # Build reply
         body = reply_body(reply_stat, areply, rreply)
         msg = rpc_msg(recv_msg.xid, rpc_msg_body(REPLY, rbody=body))

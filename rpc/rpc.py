@@ -240,8 +240,8 @@ class Pipe(object):
         # looked at by the main thread, so no locking is required.
         self._write_queue = Deque() # Records waiting to be sent out
         self._alarm = write_alarm # Way to notify we have data to write
-        self._write_buf = '' # Raw outgoing data
-        self._read_buf = '' # Raw incoming data
+        self._write_buf = b'' # Raw outgoing data
+        self._read_buf = b'' # Raw incoming data
         self._packet_buf = [] # Store packets read until have a whole record
 
     def __getattr__(self, attr):
@@ -277,7 +277,7 @@ class Pipe(object):
             if last:
                 # We have a full RPC record.  Note this does not imply that
                 # self._read_buf is empty.
-                record = ''.join(self._packet_buf)
+                record = b''.join(self._packet_buf)
                 self._packet_buf = []
                 out.append(record)
         return out
@@ -292,7 +292,7 @@ class Pipe(object):
         # However, deque is thread safe, so all is good
         self._write_queue.appendleft(record)
         # Notify ConnectionHandler that there is data to write
-        self._alarm.buzz('\x00', self)
+        self._alarm.buzz(b'\x00', self)
 
     def pop_record(self, count):
         """Pulls record off stack and places in write buffer.
@@ -306,7 +306,7 @@ class Pipe(object):
             """Given a record, convert it to actual stream to send over TCP"""
             dlen = len(record)
             i = last = 0
-            out = '' # FRED - use stringio here?
+            out = b'' # FRED - use stringio here?
             while not last:
                 chunk = record[i: i + count]
                 i += count
@@ -377,7 +377,7 @@ class RpcPipe(Pipe):
         del self._pending[xid]
         return reply
 
-    def rpc_send(self, rpc_msg, data=''):
+    def rpc_send(self, rpc_msg, data=b''):
         """Send raw data over pipe using given rpc_msg"""
         p = FancyRPCPacker()
         p.pack_rpc_msg(rpc_msg)
@@ -498,9 +498,9 @@ class ConnectionHandler(object):
         self._stopped = True
 
     def start(self):
-        switch = {'\x00' : self._buzz_write_ready,
-                  '\x01' : self._buzz_new_socket,
-                  '\x02' : self._buzz_stop,
+        switch = {0 : self._buzz_write_ready,
+                  1 : self._buzz_new_socket,
+                  2 : self._buzz_stop,
                   }
         while not self._stopped:
             log_p.debug("Calling select")
@@ -543,7 +543,7 @@ class ConnectionHandler(object):
             s.close()
 
     def stop(self):
-        self._alarm.buzz('\x02', None)
+        self._alarm.buzz(b'\x02', None)
 
     def _event_connect_incoming(self, fd, internal=False):
         """Someone else is trying to connect to us (we act like server)."""
@@ -692,8 +692,8 @@ class ConnectionHandler(object):
             else:
                 status, result, notify = tuple
             if result is None:
-                result = ''
-            if not isinstance(result, basestring):
+                result = b''
+            if not isinstance(result, bytes):
                 raise TypeError("Expected string")
             # status, result = method(msg_data, call_info)
             log_t.debug("Called method, got %r, %r" % (status, result))
@@ -710,7 +710,7 @@ class ConnectionHandler(object):
             try:
                 data = sec.secure_data(msg.body.cred, result)
                 verf = sec.make_reply_verf(msg.body.cred, status)
-                areply = accepted_reply(verf, rpc_reply_data(status, ''))
+                areply = accepted_reply(verf, rpc_reply_data(status, b''))
                 body = reply_body(MSG_ACCEPTED, areply=areply)
             except Exception:
                 body, data = rpclib.RPCUnsuccessfulReply(SYSTEM_ERR).body()
@@ -820,7 +820,7 @@ class ConnectionHandler(object):
         pipe = RpcPipe(s, self._alarm)
         # Tell polling loop about the new socket
         defer = DeferredData()
-        self._alarm.buzz('\x01', (pipe, defer))
+        self._alarm.buzz(b'\x01', (pipe, defer))
         # Wait until polling loop knows about new socket
         defer.wait()
         return pipe
@@ -926,7 +926,7 @@ class Client(ConnectionHandler):
         t.setDaemon(True)
         t.start()
 
-    def send_call(self, pipe, procedure, data='', credinfo=None,
+    def send_call(self, pipe, procedure, data=b'', credinfo=None,
                   program=None, version=None):
         if program is None: program = self.default_prog
         if version is None: version = self.default_vers

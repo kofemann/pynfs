@@ -43,7 +43,7 @@ import pickle
 VERSION="0.2" # How/when update this?
 
 # Auth_sys defaults
-HOST = socket.gethostname()
+HOST = os.fsencode(socket.gethostname())
 if not hasattr(os, "getuid"):
     UID = 4321
 else:
@@ -268,13 +268,13 @@ def main():
             path = getattr(opt, attr)
             #print(attr, path)
             if path is None:
-                path = opt.path + ['tree', attr[3:]]
+                path = opt.path + [b'tree', os.fsencode(attr[3:])]
             else:
                 # FIXME - have funct that checks path validity
-                if path[0] != '/':
+                if path[0] != b'/':
                     p.error("Need to use absolute path for --%s" % attr)
                 # print(path)
-                if path[-1] == '/' and attr != 'usedir':
+                if path[-1] == b'/' and attr != 'usedir':
                     p.error("Can't use dir for --%s" %attr)
                 try:
                     path = nfs4lib.path_components(path)

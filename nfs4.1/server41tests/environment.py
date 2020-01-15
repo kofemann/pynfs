@@ -128,18 +128,18 @@ class Environment(testmod.Environment):
             krb5_cred.service = opts.service
             self.cred1 = krb5_cred
         self.c1.set_cred(self.cred1)
-        self.cred2 = AuthSys().init_cred(uid=1111, gid=37, name="shampoo")
+        self.cred2 = AuthSys().init_cred(uid=1111, gid=37, name=b"shampoo")
 
-        opts.home = opts.path + ['tmp']
+        opts.home = opts.path + [b'tmp']
         self.c1.homedir = opts.home
         # Put this after client creation, to ensure _last_verf bigger than
         # any natural client verifiers
         self.timestamp = int(time.time())
         self._last_verf = self.timestamp + 1
-        self.filedata = "This is the file test data."
-        self.linkdata = "/etc/X11"
-        self.stateid0 = stateid4(0, '')
-        self.stateid1 = stateid4(0xffffffff, '\xff'*12)
+        self.filedata = b"This is the file test data."
+        self.linkdata = b"/etc/X11"
+        self.stateid0 = stateid4(0, b'')
+        self.stateid1 = stateid4(0xffffffff, b'\xff'*12)
 
         log.info("Created client to %s, %i" % (opts.server, opts.port))
 
@@ -147,12 +147,13 @@ class Environment(testmod.Environment):
         """Run once before any test is run"""
         if self.opts.noinit:
             return
-        sess = self.c1.new_client_session("Environment.init_%i" % self.timestamp)
+        sess = self.c1.new_client_session(b"Environment.init_%i" %
+                                                    self.timestamp)
         if self.opts.maketree:
             self._maketree(sess)
         # Make sure opts.home exists
         res = sess.compound(use_obj(self.opts.home))
-        check(res, msg="Could not LOOKUP /%s," % '/'.join(self.opts.home))
+        check(res, msg="Could not LOOKUP /%s," % b'/'.join(self.opts.home))
         # Make sure it is empty
         clean_dir(sess, self.opts.home)
         sess.c.null()
@@ -167,39 +168,39 @@ class Environment(testmod.Environment):
             path.append(comp)
             res = sess.compound(use_obj(path))
             check(res, [NFS4_OK, NFS4ERR_NOENT],
-                      "LOOKUP /%s," % '/'.join(path))
+                      "LOOKUP /%s," % b'/'.join(path))
             if res.status == NFS4ERR_NOENT:
                 res = create_obj(sess, path, NF4DIR)
-                check(res, msg="Trying to create /%s," % '/'.join(path))
+                check(res, msg="Trying to create /%s," % b'/'.join(path))
         # ensure /tree exists and is empty
-        tree = self.opts.path + ['tree']
+        tree = self.opts.path + [b'tree']
         res = sess.compound(use_obj(tree))
         check(res, [NFS4_OK, NFS4ERR_NOENT])
         if res.status == NFS4ERR_NOENT:
             res = create_obj(sess, tree, NF4DIR)
-            check(res, msg="Trying to create /%s," % '/'.join(tree))
+            check(res, msg="Trying to create /%s," % b'/'.join(tree))
         else:
             clean_dir(sess, tree)
 
         # make non-file objects in /tree
-        d = {'dir': NF4DIR,
-             'socket': NF4SOCK,
-             'fifo':  NF4FIFO,
-             'link':  createtype4(NF4LNK, linkdata=self.linkdata),
-             'block': createtype4(NF4BLK, devdata=specdata4(1, 2)),
-             'char': createtype4(NF4CHR, devdata=specdata4(1, 2)),
+        d = {b'dir': NF4DIR,
+             b'socket': NF4SOCK,
+             b'fifo':  NF4FIFO,
+             b'link':  createtype4(NF4LNK, linkdata=self.linkdata),
+             b'block': createtype4(NF4BLK, devdata=specdata4(1, 2)),
+             b'char': createtype4(NF4CHR, devdata=specdata4(1, 2)),
              }
         for name, kind in d.items():
             path = tree + [name]
             res = create_obj(sess, path, kind)
             if res.status != NFS4_OK:
-                log.warning("could not create /%s" % '/'.join(path))
+                log.warning("could not create /%s" % b'/'.join(path))
         # Make file-object in /tree
-        fh, stateid = create_confirm(sess, 'maketree', tree + ['file'])
+        fh, stateid = create_confirm(sess, b'maketree', tree + [b'file'])
         ops = [op.putfh(fh),
                op.write(stateid, 0, FILE_SYNC4, self.filedata)]
         res = sess.compound(ops)
-        check(res, msg="Writing data to /%s/file" % '/'.join(tree))
+        check(res, msg="Writing data to /%s/file" % b'/'.join(tree))
         res = close_file(sess, fh, stateid)
         check(res)
             
@@ -207,7 +208,7 @@ class Environment(testmod.Environment):
         """Run once after all tests are run"""
         if self.opts.nocleanup:
             return
-        sess = self.c1.new_client_session("Environment.init_%i" % self.timestamp)
+        sess = self.c1.new_client_session(b"Environment.init_%i" % self.timestamp)
         clean_dir(sess, self.opts.home)
         sess.c.null()
         self.clean_sessions()
@@ -254,7 +255,7 @@ class Environment(testmod.Environment):
 
     def testname(self, t):
         """Returns a name for the test that is unique between runs"""
-        return "%s_%i" % (t.code, self.timestamp)
+        return b"%s_%i" % (os.fsencode(t.code), self.timestamp)
 
     def clean_sessions(self):
         """Destroy client name env.c1"""
@@ -331,32 +332,32 @@ def checkdict(expected, got, translate={}, failmsg=''):
 def get_invalid_utf8strings():
     """Return a list of invalid ISO10646-UTF-8 strings"""
     # FIXME: More invalid strings.
-    return ["\xc0\xc1", # starts two multibyte sequences
-            "\xe0\x8a", # terminates a multibyte sequence too early
-            "\xc0\xaf", # overlong character"
-            "\xfc\x80\x80\x80\x80\xaf", # overlong character
-            "\xfc\x80\x80\x80\x80\x80", # NULL
-            "\xed\xa0\x80", # UTF-16 surrogate
-            "\xed\xbf\xbf", # UTF-16 surrogate
-            "\xef\xbf\xbe", # Invalid character U+FFFE
-            "\xe3\xc0\xc0", # just mangled.
-            "\xc0\x90", # overlong character
+    return [b"\xc0\xc1", # starts two multibyte sequences
+            b"\xe0\x8a", # terminates a multibyte sequence too early
+            b"\xc0\xaf", # overlong character"
+            b"\xfc\x80\x80\x80\x80\xaf", # overlong character
+            b"\xfc\x80\x80\x80\x80\x80", # NULL
+            b"\xed\xa0\x80", # UTF-16 surrogate
+            b"\xed\xbf\xbf", # UTF-16 surrogate
+            b"\xef\xbf\xbe", # Invalid character U+FFFE
+            b"\xe3\xc0\xc0", # just mangled.
+            b"\xc0\x90", # overlong character
             # byte sequences that should never appear at start
-            "\x80",
-            "\xbf",
-            "\xfe",
-            "\xff",
+            b"\x80",
+            b"\xbf",
+            b"\xfe",
+            b"\xff",
             # starts with no ends
-            "\xc0 ",
-            "\xdf ",
-            "\xe0 ",
-            "\xef ",
-            "\xf0 ",
-            "\xf7 ",
-            "\xf8 ",
-            "\xfb ",
-            "\xfc ",
-            "\xfd "
+            b"\xc0 ",
+            b"\xdf ",
+            b"\xe0 ",
+            b"\xef ",
+            b"\xf0 ",
+            b"\xf7 ",
+            b"\xf8 ",
+            b"\xfb ",
+            b"\xfc ",
+            b"\xfd "
             ]
 
 def get_invalid_clientid():
@@ -413,7 +414,7 @@ def compareTimes(time1, time2):
 #############################################
 
 # Of course, there is no guarantee that this is not a valid session id, but...
-bad_sessionid = "Bad Session Id"
+bad_sessionid = b"Bad Session Id"
 
 
 
@@ -435,7 +436,7 @@ def clean_dir(sess, path):
             res = sess.compound(ops)
         check(res, msg="Trying to remove %s" % repr(e.name))
 
-def do_readdir(sess, file, cookie=0, cookieverf='', attrs=0,
+def do_readdir(sess, file, cookie=0, cookieverf=b'', attrs=0,
                dircount=4096, maxcount=4096):
     # Since we may not get whole directory listing in one readdir request,
     # loop until we do. For each request result, create a flat list

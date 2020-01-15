@@ -56,7 +56,7 @@ def testRebootValid(t, env):
     CODE: REBT1
     """
     name = env.testname(t)
-    owner = "owner_%s" % name
+    owner = b"owner_%s" % name
     c = env.c1.new_client(env.testname(t))
     sess = c.create_session()
     reclaim_complete(sess)
@@ -165,10 +165,10 @@ def doTestRebootWithNClients(t, env, n=10, double_reboot=False,
     boot_time = int(time.time())
     lease_time = 90
     states = []
-    block = env.c1.new_client_session("%s_block" % env.testname(t))
+    block = env.c1.new_client_session(b"%s_block" % env.testname(t))
     for i in range(n):
-        name = "%s_client_%i" % (env.testname(t), i)
-        owner = "owner_%s" % name
+        name = b"%s_client_%i" % (env.testname(t), i)
+        owner = b"owner_%s" % name
         c = env.c1.new_client(name)
         sess = c.create_session()
         reclaim_complete(sess)
@@ -196,7 +196,7 @@ def doTestRebootWithNClients(t, env, n=10, double_reboot=False,
 
         # At this point, all clients should have recovered except for 'block'.
         # Recover that one now.
-        block = env.c1.new_client_session("%s_block" % env.testname(t))
+        block = env.c1.new_client_session(b"%s_block" % env.testname(t))
 
         # The server may have lifted the grace period early.  Test it.
         doTestAllClientsNoGrace(t, env, states)
@@ -294,14 +294,14 @@ def testRebootWithLateReclaim(t, env):
     lease_time = 90
     fh = []
     stateid = []
-    name = "%s_client" % env.testname(t)
-    owner = "owner_%s" % name
+    name = b"%s_client" % env.testname(t)
+    owner = b"owner_%s" % name
     c = env.c1.new_client(name)
     sess = c.create_session()
     reclaim_complete(sess)
     N = 42
     for i in range(N):
-        path = sess.c.homedir + ["%s_file_%i" % (owner, i)]
+        path = sess.c.homedir + [b"%s_file_%i" % (owner, i)]
         tmpfh, tmpstateid = create_confirm(sess, owner, path)
         fh.append(tmpfh)
     lease_time = _getleasetime(sess)

@@ -61,7 +61,7 @@ def testReplayState1(t, env):
     c.init_connection()
     c.maketree([t.word()])
     ops = c.use_obj(c.homedir + [t.word()])
-    ops += [c.open(t.word(), 'vapor'), op.getfh()]
+    ops += [c.open(t.word(), b'vapor'), op.getfh()]
     _replay(env, c, ops, NFS4ERR_NOENT)
     
 def testReplayState2(t, env):
@@ -87,7 +87,7 @@ def testReplayNonState(t, env):
     """
     c = env.c1
     c.maketree([t.word()])
-    ops = c.use_obj(c.homedir + [t.word(), 'vapor'])
+    ops = c.use_obj(c.homedir + [t.word(), b'vapor'])
     _replay(env, c, ops, NFS4ERR_NOENT)
 
 def testLock(t, env):

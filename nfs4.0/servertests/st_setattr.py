@@ -37,7 +37,7 @@ def _set_size(t, c, file, stateid=None, msg=" using stateid=0"):
 def _set_mixed(t, c, file, stateid=None, msg=" using stateid=0"):
     startsize = c.do_getattr(FATTR4_SIZE, file)
     newsize = startsize + 10
-    owner = "65534" # nobody
+    owner = b"65534" # nobody
 
     dict = {FATTR4_SIZE: newsize, FATTR4_OWNER: owner}
     ops = c.use_obj(file) + [c.setattr(dict, stateid)]
@@ -212,10 +212,10 @@ def testUselessStateid3(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.word(), 'file'])
+    c.maketree([t.word(), b'file'])
     path = c.homedir + [t.word(), t.word()]
     fh, stateid = c.create_confirm(t.word(), path)
-    _set_mode(t, c, c.homedir + [t.word(), 'file'], stateid,
+    _set_mode(t, c, c.homedir + [t.word(), b'file'], stateid,
               " using bad openstateid", [NFS4ERR_BAD_STATEID])
 
 # FRED - redo first 2 tests with _DENY_WRITE
@@ -264,10 +264,10 @@ def testResizeFile3(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.word(), 'file'])
+    c.maketree([t.word(), b'file'])
     path = c.homedir + [t.word(), t.word()]
     fh, stateid = c.create_confirm(t.word(), path)
-    ops = c.use_obj(c.homedir + [t.word(), 'file'])
+    ops = c.use_obj(c.homedir + [t.word(), b'file'])
     ops += [c.setattr({FATTR4_SIZE: 10}, stateid)]
     res = c.compound(ops)
     check(res, NFS4ERR_BAD_STATEID, "SETATTR(_SIZE) with wrong openstateid")
@@ -400,7 +400,7 @@ def testInvalidAttr1(t, env):
     res = c.create_obj(path)
     check(res)
     badattr = dict2fattr({FATTR4_MODE: 0o644})
-    badattr.attr_vals = ''
+    badattr.attr_vals = b''
     res = c.compound(c.use_obj(path) + [op.setattr(env.stateid0, badattr)])
     check(res, NFS4ERR_BADXDR, "SETATTR(FATTR4_MODE) with no data")
 
@@ -419,7 +419,7 @@ def testInvalidAttr2(t, env):
     res = c.create_obj(path)
     check(res)
     badattr = dict2fattr({FATTR4_MODE: 0o644})
-    badattr.attr_vals += 'Garbage data'
+    badattr.attr_vals += b'Garbage data'
     res = c.compound(c.use_obj(path) + [op.setattr(env.stateid0, badattr)])
     check(res, NFS4ERR_BADXDR,
           "SETATTR(FATTR4_MODE) with extraneous attribute data appended")
@@ -670,12 +670,12 @@ def testInodeLocking(t, env):
     basedir = c.homedir + [t.word()]
     res = c.create_obj(basedir)
     check(res)
-    fh, stateid = c.create_confirm(t.word(), basedir + ['file'])
+    fh, stateid = c.create_confirm(t.word(), basedir + [b'file'])
     
     # In a single compound statement, setattr on dir and then
     # do a state operation on a file in dir (like write or remove)
     ops = c.use_obj(basedir) + [c.setattr({FATTR4_MODE:0o754})]
-    ops += [op.lookup('file'), op.write(stateid, 0, 0, 'blahblah')]
+    ops += [op.lookup(b'file'), op.write(stateid, 0, 0, b'blahblah')]
     res = c.compound(ops)
     check(res, msg="SETATTR on dir and state operation on file in dir")
 
@@ -732,7 +732,7 @@ def testEmptyPrincipal(t, env):
     path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
-    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER: ''})]
+    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER: b''})]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "Setting empty owner")
 
@@ -748,7 +748,7 @@ def testEmptyGroupPrincipal(t, env):
     path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
-    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER_GROUP: ''})]
+    ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER_GROUP: b''})]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "Setting empty owner_group")
 

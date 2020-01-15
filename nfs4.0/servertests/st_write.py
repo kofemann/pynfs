@@ -6,7 +6,7 @@ import rpc.rpc as rpc
 import nfs_ops
 op = nfs_ops.NFS4ops()
 
-_text = 'write data' # len=10
+_text = b'write data' # len=10
 
 def _compare(t, res, expect, eof=True):
     check(res, msg="READ after WRITE")
@@ -44,7 +44,7 @@ def testSimpleWrite(t, env):
     res = c.write_file(fh, _text, how=UNSTABLE4)
     check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
     res = c.read_file(fh, 0, 20)
-    _compare(t, res, _text + '\0'*(20-len(_text)), False)
+    _compare(t, res, _text + b'\0'*(20-len(_text)), False)
 
 def testSimpleWrite2(t, env):
     """WRITE with stateid=zeros changing size
@@ -61,7 +61,7 @@ def testSimpleWrite2(t, env):
     res = c.write_file(fh, _text, 30)
     check(res, msg="WRITE with stateid=zeros changing size")
     res = c.read_file(fh, 25, 20)
-    _compare(t, res, '\0'*5 + _text, True)
+    _compare(t, res, b'\0'*5 + _text, True)
 
 def testStateidOne(t, env):
     """WRITE with stateid=ones and DATA_SYNC4
@@ -80,7 +80,7 @@ def testStateidOne(t, env):
     if res.committed == UNSTABLE4:
         t.fail("WRITE asked for DATA_SYNC4, got UNSTABLE4")
     res = c.read_file(fh, 0, 20)
-    _compare(t, res, '\0'*5 + _text + '\0'*(20-5-len(_text)), False)
+    _compare(t, res, b'\0'*5 + _text + b'\0'*(20-5-len(_text)), False)
     
 def testWithOpen(t, env):
     """WRITE with openstateid and FILE_SYNC4
@@ -98,7 +98,7 @@ def testWithOpen(t, env):
     if res.committed != FILE_SYNC4:
         t.fail("WRITE asked for FILE_SYNC4, did not get it")
     res = c.read_file(fh, 0, 100)
-    _compare(t, res, '\0'*50 + _text, True)
+    _compare(t, res, b'\0'*50 + _text, True)
     
 def testNoData(t, env):
     """WRITE with no data
@@ -113,7 +113,7 @@ def testNoData(t, env):
     fh, stateid = c.create_confirm(t.word(), attrs=attrs)
     time_prior = c.do_getattr(FATTR4_TIME_MODIFY, fh)
     env.sleep(1)
-    res = c.write_file(fh, '', 5, stateid)
+    res = c.write_file(fh, b'', 5, stateid)
     check(res, msg="WRITE with no data")
     if res.count:
         t.fail("WRITE with no data returned count=%i" % res.count)
@@ -136,8 +136,8 @@ def testMaximumData(t, env):
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
     maxio = min(maxread, maxwrite)
     fh, stateid = c.create_confirm(t.word())
-    pattern="abcdefghijklmnop"
-    data = pattern * (maxio // len(pattern)) + "q" * (maxio % len(pattern))
+    pattern=b"abcdefghijklmnop"
+    data = pattern * (maxio // len(pattern)) + b"q" * (maxio % len(pattern))
     # Write the data
     pos = 0
     while pos < len(data):
@@ -148,7 +148,7 @@ def testMaximumData(t, env):
             t.fail("WRITE with a large amount of data returned count=0")
     # Read the data back in
     eof = False
-    newdata = ''
+    newdata = b''
     while not eof:
         res = c.read_file(fh, len(newdata), len(data) - len(newdata), stateid)
         check(res, msg="READ with large amount of data")
@@ -360,11 +360,11 @@ def testDoubleWrite(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     ops = c.use_obj(fh)
-    ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, 'one')]
-    ops += [op.write(stateid4(0, ''), 3, UNSTABLE4, 'two')]
+    ops += [op.write(stateid4(0, b''), 0, UNSTABLE4, b'one')]
+    ops += [op.write(stateid4(0, b''), 3, UNSTABLE4, b'two')]
     res = c.compound(ops)
     res = c.read_file(fh, 0, 6)
-    _compare(t, res, 'onetwo', True)
+    _compare(t, res, b'onetwo', True)
 
 def _get_iosize(t, c, path):
     d = c.do_getattrdict(path, [FATTR4_MAXREAD, FATTR4_MAXWRITE])
@@ -386,7 +386,7 @@ def testLargeWrite(t, env):
     c.init_connection()
     fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
-    res = c.write_file(fh, 'A'*maxwrite, how=UNSTABLE4)
+    res = c.write_file(fh, b'A'*maxwrite, how=UNSTABLE4)
     check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
 
 def testSizes(t, env):
@@ -399,7 +399,7 @@ def testSizes(t, env):
 
     min = 0;
     max = 8192;
-    buf = ""
+    buf = b""
     # I've found it helpful when tracking down decoding errors to know
     # where in the packet a given word or data came from; this helps:
     for i in range(0, (max+3)//4):
@@ -409,7 +409,7 @@ def testSizes(t, env):
     fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     for i in range(0, max):
         ops = c.use_obj(fh)
-        ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
+        ops += [op.write(stateid4(0, b''), 0, UNSTABLE4, buf[0:i])]
         ops += [c.getattr([FATTR4_SIZE]), c.getattr([FATTR4_SIZE])]
         res = c.compound(ops)
         check(res, msg="length %d WRITE" % i)
@@ -427,7 +427,7 @@ def testLargeReadWrite(t, env):
     # linux server really should be able to handle (maxread, maxwrite)
     # but can't:
     size = min(maxread/4, maxwrite/4)
-    writedata = 'A'*size
+    writedata = b'A'*size
     attrs = {FATTR4_SIZE: size}
     fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                     deny=OPEN4_SHARE_DENY_NONE)
@@ -440,7 +440,7 @@ def testLargeReadWrite(t, env):
     if len(data) != len(writedata):
         t.fail("READ returned %d bytes, expected %d" %
                            (len(data), len(writedata)))
-    if (data != '\0'*size):
+    if (data != b'\0'*size):
         t.fail("READ returned unexpected data")
     res = c.read_file(fh, 0, size)
     _compare(t, res, writedata, True)
@@ -523,7 +523,7 @@ def testStolenStateid(t, env):
     res = c.create_file(t.word(), attrs={FATTR4_MODE: 0o600})
     fh, stateid = c.confirm(t.word(), res)
     security=c.security
-    c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
+    c.security=rpc.SecAuthSys(0, b"whatever", 3912, 2422, [])
     res = c.write_file(fh, _text, stateid=stateid)
     c.security=security
     check(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "WRITE with stolen stateid")

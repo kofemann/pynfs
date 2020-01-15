@@ -10,6 +10,7 @@ import hmac
 import struct
 import random
 import re
+import os
 from locking import Lock
 try:
     from Crypto.Cipher import AES
@@ -24,9 +25,9 @@ except ImportError:
             raise NotImplementedError("could not import Crypto.Cipher")
 
 # Special stateids
-state00 = xdrdef.nfs4_type.stateid4(0, "\0" * 12)
-state11 = xdrdef.nfs4_type.stateid4(0xffffffff, "\xff" * 12)
-state01 = xdrdef.nfs4_type.stateid4(1, "\0" * 12)
+state00 = xdrdef.nfs4_type.stateid4(0, b"\0" * 12)
+state11 = xdrdef.nfs4_type.stateid4(0xffffffff, b"\xff" * 12)
+state01 = xdrdef.nfs4_type.stateid4(1, b"\0" * 12)
 
 import hashlib # Note this requires 2.7 or higher
 
@@ -41,11 +42,11 @@ op4 = nfs_ops.NFS4ops()
 # sha384 : 2.16.840.1.101.3.4.2.4.2
 # sha512 : 2.16.840.1.101.3.4.2.4.3
 # sha224 : 2.16.840.1.101.3.4.2.4.4
-hash_oids = {"sha1"   : '\x06\x05\x2b\x0e\x03\x02\x1a',
-             "sha256" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01',
-             "sha384" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02',
-             "sha512" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03',
-             "sha224" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04',
+hash_oids = {"sha1"   : b'\x06\x05\x2b\x0e\x03\x02\x1a',
+             "sha256" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01',
+             "sha384" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02',
+             "sha512" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03',
+             "sha224" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04',
              }
 hash_algs = {hash_oids["sha1"]   : hashlib.sha1,
              hash_oids["sha256"] : hashlib.sha256,
@@ -77,9 +78,9 @@ class _e_wrap(object):
 # aes128-CBC : 2.16.840.1.101.3.4.1.2
 # aes192-CBC : 2.16.840.1.101.3.4.1.22
 # aes256-CBC : 2.16.840.1.101.3.4.1.42
-encrypt_oids = {"aes128-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x02',
-                "aes192-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x16',
-                "aes256-CBC" : '\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x2a',
+encrypt_oids = {"aes128-CBC" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x02',
+                "aes192-CBC" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x16',
+                "aes256-CBC" : b'\x06\x09\x60\x86\x48\x01\x65\x03\x04\x01\x2a',
                 }
 encrypt_algs = {encrypt_oids["aes128-CBC"] : _e_wrap(AES, 16, 16, AES.MODE_CBC),
                 encrypt_oids["aes192-CBC"] : _e_wrap(AES, 24, 16, AES.MODE_CBC),
@@ -251,7 +252,7 @@ def dict2fattr(dict):
     attrs = sorted(dict.keys())
 
     packer = FancyNFS4Packer()
-    attr_vals = ""
+    attr_vals = b""
     for bitnum in attrs:
         value = dict[bitnum]
         packer.reset()
@@ -538,7 +539,7 @@ def parse_nfs_url(url):
             port = (2049 if not port else int(port))
             server_list.append((host, port))
 
-        path = m.group('path')
+        path = os.fsencode(m.group('path'))
         path = (path_components(path) if path else [])
 
         return tuple(server_list), path
@@ -548,12 +549,12 @@ def parse_nfs_url(url):
 def path_components(path, use_dots=True):
     """Convert a string '/a/b/c' into an array ['a', 'b', 'c']"""
     out = []
-    for c in path.split('/'):
-        if c == '':
+    for c in path.split(b'/'):
+        if c == b'':
             pass
-        elif use_dots and c == '.':
+        elif use_dots and c == b'.':
             pass
-        elif use_dots and c == '..':
+        elif use_dots and c == b'..':
             del out[-1]
         else:
             out.append(c)

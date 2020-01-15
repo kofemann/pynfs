@@ -38,15 +38,15 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
         env.notify = recall.set # This is called after compound sent to queue
     def post_hook(arg, env, res):
         return res
-    sess1 = env.c1.new_client_session("%s_1" % env.testname(t), sec = sec)
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t), sec = sec)
     sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
     sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
     if sec2:
         sess1.compound([op.backchannel_ctl(env.c1.prog, sec2)])
     fh = _create_file_with_deleg(sess1, env.testname(t), openaccess | want)
-    sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
+    sess2 = env.c1.new_client_session(b"%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
+    owner = open_owner4(0, b"My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, breakaccess, OPEN4_SHARE_DENY_NONE, owner, how, claim)
     slot = sess2.compound_async(env.home + [open_op])
@@ -95,7 +95,7 @@ def testNoDeleg(t, env):
     FLAGS: open deleg
     CODE: DELEG4
     """
-    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
     res = create_file(sess1, env.testname(t),
                       access=OPEN4_SHARE_ACCESS_READ |
                       OPEN4_SHARE_ACCESS_WANT_NO_DELEG)
@@ -118,7 +118,7 @@ def testCBSecParms(t, env):
     """
     uid = 17
     gid = 19
-    sys_cred = authsys_parms(13, "fake name", uid, gid, [])
+    sys_cred = authsys_parms(13, b"fake name", uid, gid, [])
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
         OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
         sec = [callback_sec_parms4(AUTH_SYS, sys_cred)])
@@ -147,10 +147,10 @@ def testCBSecParmsChange(t, env):
     """
     uid1 = 17
     gid1 = 19
-    sys_cred1 = cbsp_sy_cred = authsys_parms(13, "fake name", uid1, gid1, [])
+    sys_cred1 = cbsp_sy_cred = authsys_parms(13, b"fake name", uid1, gid1, [])
     uid2 = 29
     gid2 = 31
-    sys_cred2 = cbsp_sy_cred = authsys_parms(13, "fake name", uid2, gid2, [])
+    sys_cred2 = cbsp_sy_cred = authsys_parms(13, b"fake name", uid2, gid2, [])
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
         OPEN4_SHARE_ACCESS_WANT_READ_DELEG, OPEN4_SHARE_ACCESS_BOTH,
         sec  = [callback_sec_parms4(AUTH_SYS, sys_cred1)],
@@ -167,13 +167,13 @@ def testDelegRevocation(t, env):
     CODE: DELEG8
     """
 
-    sess1 = env.c1.new_client_session("%s_1" % env.testname(t))
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
     fh, deleg = __create_file_with_deleg(sess1, env.testname(t),
             OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
     delegstateid = deleg.read.stateid
-    sess2 = env.c1.new_client_session("%s_2" % env.testname(t))
+    sess2 = env.c1.new_client_session(b"%s_2" % env.testname(t))
     claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
+    owner = open_owner4(0, b"My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_WRITE, OPEN4_SHARE_DENY_NONE,
                         owner, how, claim)

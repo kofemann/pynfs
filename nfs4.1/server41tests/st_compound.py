@@ -30,7 +30,7 @@ def testGoodTag(t, env):
     CODE: COMP2
     """
     c = env.c1
-    tag = 'tag test'
+    tag = b'tag test'
     res = c.compound(_simple_ops(t, env), tag=tag)
     check(res)
     if res.tag != tag:

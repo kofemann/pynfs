@@ -13,7 +13,7 @@ def testDir(t, env):
     c = env.c1
     path = env.opts.usedir
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testFile(t, env):
     """LOOKUP testtree file
@@ -24,7 +24,7 @@ def testFile(t, env):
     c = env.c1
     path = env.opts.usefile
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testLink(t, env):
     """LOOKUP testtree symlink
@@ -35,7 +35,7 @@ def testLink(t, env):
     c = env.c1
     path = env.opts.uselink
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testBlock(t, env):
     """LOOKUP testtree block device
@@ -46,7 +46,7 @@ def testBlock(t, env):
     c = env.c1
     path = env.opts.useblock
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testChar(t, env):
     """LOOKUP testtree character device
@@ -57,7 +57,7 @@ def testChar(t, env):
     c = env.c1
     path = env.opts.usechar
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testSocket(t, env):
     """LOOKUP testtree socket
@@ -68,7 +68,7 @@ def testSocket(t, env):
     c = env.c1
     path = env.opts.usesocket
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testFifo(t, env):
     """LOOKUP testtree fifo
@@ -79,7 +79,7 @@ def testFifo(t, env):
     c = env.c1
     path = env.opts.usefifo
     res = c.compound(c.use_obj(path))
-    check(res, msg="LOOKUP of /%s"%'/'.join(path))
+    check(res, msg="LOOKUP of /%s"%b'/'.join(path))
 
 def testNoFh(t, env):
     """LOOKUP should fail with NFS4ERR_NOFILEHANDLE if no (cfh)
@@ -88,7 +88,7 @@ def testNoFh(t, env):
     CODE: LOOK1
     """
     c = env.c1
-    ops = [op.lookup('foo')]
+    ops = [op.lookup(b'foo')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LOOKUP with no <cfh>")
 
@@ -112,7 +112,7 @@ def testZeroLength(t, env):
     CODE: LOOK3
     """
     c = env.c1
-    ops = [op.putrootfh(), op.lookup('')]
+    ops = [op.putrootfh(), op.lookup(b'')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "LOOKUP with no zero-length component")
 
@@ -135,7 +135,7 @@ def testFileNotDir(t, env):
     CODE: LOOK5r
     """
     c = env.c1
-    path = env.opts.usefile + ['foo']
+    path = env.opts.usefile + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_NOTDIR, "LOOKUP using file for cfh")
 
@@ -147,7 +147,7 @@ def testBlockNotDir(t, env):
     CODE: LOOK5b
     """
     c = env.c1
-    path = env.opts.useblock + ['foo']
+    path = env.opts.useblock + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_NOTDIR, "LOOKUP using block device for cfh")
 
@@ -159,7 +159,7 @@ def testCharNotDir(t, env):
     CODE: LOOK5c
     """
     c = env.c1
-    path = env.opts.usechar + ['foo']
+    path = env.opts.usechar + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_NOTDIR, "LOOKUP using character device for cfh")
 
@@ -171,7 +171,7 @@ def testSocketNotDir(t, env):
     CODE: LOOK5s
     """
     c = env.c1
-    path = env.opts.usesocket + ['foo']
+    path = env.opts.usesocket + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_NOTDIR, "LOOKUP using socket for cfh")
 
@@ -183,7 +183,7 @@ def testSymlinkNotDir(t, env):
     CODE: LOOK5a
     """
     c = env.c1
-    path = env.opts.uselink + ['foo']
+    path = env.opts.uselink + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_SYMLINK, "LOOKUP using symlink for cfh")
 
@@ -195,7 +195,7 @@ def testFifoNotDir(t, env):
     CODE: LOOK5f
     """
     c = env.c1
-    path = env.opts.usefifo + ['foo']
+    path = env.opts.usefifo + [b'foo']
     res = c.compound(c.use_obj(path))
     check(res, NFS4ERR_NOTDIR, "LOOKUP using fifo for cfh")
 
@@ -211,14 +211,14 @@ def testNonAccessable(t, env):
     dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
-    res = c.create_obj(dir + ['foo'])
+    res = c.create_obj(dir + [b'foo'])
     check(res)
     res = c.compound(c.use_obj(dir) + [c.setattr({FATTR4_MODE:0})])
     check(res)
     # Now try to lookup foo
     res = c.compound(c.use_obj(dir))
     check(res)
-    res = c.compound(c.use_obj(dir + ['foo']))
+    res = c.compound(c.use_obj(dir + [b'foo']))
     if env.opts.uid == 0:
         check(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP object in a dir with mode=0o000")
     else:
@@ -252,19 +252,19 @@ def testDots(t, env):
     dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
-    res = c.create_obj(dir + ['foo'])
+    res = c.create_obj(dir + [b'foo'])
     check(res)
     # Run tests
-    res1 = c.compound(c.use_obj(dir + ['.']))
+    res1 = c.compound(c.use_obj(dir + [b'.']))
     check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '.'")
-    res2 = c.compound(c.use_obj(dir + ['..']))
+    res2 = c.compound(c.use_obj(dir + [b'..']))
     check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '..'")
-    res1 = c.compound(c.use_obj(dir + ['.', 'foo']))
+    res1 = c.compound(c.use_obj(dir + [b'.', b'foo']))
     check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '.'")
-    res2 = c.compound(c.use_obj(dir + ['..', t.word()]))
+    res2 = c.compound(c.use_obj(dir + [b'..', t.word()]))
     check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '..'")
 
@@ -277,11 +277,11 @@ def testUnaccessibleDir(t, env):
     """
     c = env.c1
     path = c.homedir + [t.word()]
-    c.maketree([t.word(), ['hidden']])
+    c.maketree([t.word(), [b'hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
     check(res, msg="Setting mode=0 on directory %s" % t.word())
-    res = c.compound(c.use_obj(path + ['hidden']))
+    res = c.compound(c.use_obj(path + [b'hidden']))
     if env.opts.uid == 0:
         check(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP off of dir with mode=0o000")
     else:
@@ -294,14 +294,14 @@ def testBadOpaque(t, env):
     CODE: LOOK10
     """
     def bad_opaque(data):
-        if data.startswith("setlength="):
+        if data.startswith(b"setlength="):
             countstr = data[10:]
             base = 10
-            if countstr.startswith("0x"):
+            if countstr.startswith(b"0x"):
                 base = 16
             count = int(countstr, base)
             p.pack_uint(count)
-            p.pack_fstring(30, "This is a BUGGY path component")
+            p.pack_fstring(30, b"This is a BUGGY path component")
         else:
             p.pack_string(data)
     c = env.c1
@@ -309,7 +309,7 @@ def testBadOpaque(t, env):
         p = c.nfs4packer
         orig = p.pack_opaque
         p.pack_opaque = bad_opaque
-        res = c.compound([op.putrootfh(), op.lookup("setlength=0xcccccccc")])
+        res = c.compound([op.putrootfh(), op.lookup(b"setlength=0xcccccccc")])
         e = "operation erroneously suceeding"
         check(res, NFS4ERR_BADXDR)
     except rpc.RPCAcceptError as e:

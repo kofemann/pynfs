@@ -27,15 +27,15 @@ op4 = nfs_ops.NFS4ops()
 SHOW_TRAFFIC = 0
 
 class NFS4Client(rpc.Client, rpc.Server):
-    def __init__(self, host='localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None, secure=False):
+    def __init__(self, host=b'localhost', port=2049, minorversion=1, ctrl_proc=16, summary=None, secure=False):
         rpc.Client.__init__(self, 100003, 4)
         self.prog = 0x40000000
         self.versions = [1] # List of supported versions of prog
 
         self.minorversion = minorversion
         self.minor_versions = [minorversion]
-        self.tag = "default tag"
-        self.impl_id = nfs_impl_id4("citi.umich.edu", "pynfs X.X",
+        self.tag = b"default tag"
+        self.impl_id = nfs_impl_id4(b"citi.umich.edu", b"pynfs X.X",
                                     nfs4lib.get_nfstime())
         self.verifier = struct.pack('>d', time.time())
         self.server_address = (host, port)
@@ -62,7 +62,7 @@ class NFS4Client(rpc.Client, rpc.Server):
             data = p.unpack_CTRLres()
         return data
 
-    def null_async(self, data=""):
+    def null_async(self, data=b""):
         return self.send_call(self.c1, 0, data)
 
     def null(self, *args, **kwargs):
@@ -343,7 +343,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         while current_module == inspect.getmodule(current_stack[stackid][0]):
               stackid = stackid + 1
         test_name = '%s:%s' % (basename(current_stack[stackid][1]), current_stack[stackid][3])
-        return test_name
+        return os.fsencode(test_name)
 
 class ClientStateProtection(object):
     def __init__(self, p_res, p_arg):

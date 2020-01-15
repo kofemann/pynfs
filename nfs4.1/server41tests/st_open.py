@@ -48,7 +48,7 @@ def testServerStateSeqid(t, env):
     """
     name = env.testname(t)
     sess1 = env.c1.new_client_session(name)
-    owner = "owner_%s" % name
+    owner = b"owner_%s" % name
     path = sess1.c.homedir + [name]
     res = create_file(sess1, owner, path, access=OPEN4_SHARE_ACCESS_WRITE)
     check(res)
@@ -71,21 +71,21 @@ def testReadWrite(t, env):
     CODE: OPEN30
     """
     sess1 = env.c1.new_client_session(env.testname(t))
-    owner = open_owner4(0, "My Open Owner")
+    owner = open_owner4(0, b"My Open Owner")
     res = create_file(sess1, env.testname(t))
     check(res)
     expect(res, seqid=1)
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
     stateid.seqid = 0
-    data = "write test data"
+    data = b"write test data"
     res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, data)])
     check(res)
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
     check(res)
     if not res.resarray[-1].eof:
         fail("EOF not set on read")
-    desired = "\0"*5 + data
+    desired = b"\0"*5 + data
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 
@@ -99,12 +99,12 @@ def testAnonReadWrite(t, env):
     CODE: OPEN31
     """
     sess1 = env.c1.new_client_session(env.testname(t))
-    owner = open_owner4(0, "My Open Owner")
+    owner = open_owner4(0, b"My Open Owner")
     res = create_file(sess1, env.testname(t))
     check(res)
     expect(res, seqid=1)
     fh = res.resarray[-1].object
-    data = "write test data"
+    data = b"write test data"
     stateid = res.resarray[-2].stateid
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
@@ -114,7 +114,7 @@ def testAnonReadWrite(t, env):
     check(res)
     if not res.resarray[-1].eof:
         fail("EOF not set on read")
-    desired = "\0"*5 + data
+    desired = b"\0"*5 + data
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 
@@ -134,7 +134,7 @@ def testEXCLUSIVE4AtNameAttribute(t, env):
     stateid = res.resarray[-2].stateid
 
     res = create_file(sess1, env.testname(t), mode=EXCLUSIVE4_1,
-                        verifier = "Justtest")
+                        verifier = b"Justtest")
     check(res, NFS4ERR_EXIST)
 
     res = close_file(sess1, fh, stateid=stateid)
@@ -157,7 +157,7 @@ def testOPENClaimFH(t, env):
 
     claim = open_claim4(CLAIM_FH)
     how = openflag4(OPEN4_NOCREATE)
-    oowner = open_owner4(0, "My Open Owner 2")
+    oowner = open_owner4(0, b"My Open Owner 2")
     access = OPEN4_SHARE_ACCESS_BOTH|OPEN4_SHARE_ACCESS_WANT_NO_DELEG
 
     open_op = op.open(0, access, OPEN4_SHARE_DENY_NONE,
@@ -167,14 +167,14 @@ def testOPENClaimFH(t, env):
 
     stateid = res.resarray[-1].stateid
     stateid.seqid = 0
-    data = "write test data"
+    data = b"write test data"
     res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, data)])
     check(res)
     res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
     check(res)
     if not res.resarray[-1].eof:
         fail("EOF not set on read")
-    desired = "\0"*5 + data
+    desired = b"\0"*5 + data
     if res.resarray[-1].data != desired:
         fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
 

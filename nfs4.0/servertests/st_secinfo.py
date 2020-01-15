@@ -31,7 +31,7 @@ def testNotDir(t, env):
     """
     c = env.c1
     ops = c.use_obj(env.opts.usefile)
-    ops += [op.secinfo('foo')]
+    ops += [op.secinfo(b'foo')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOTDIR, "SECINFO with cfh a file")
 
@@ -47,7 +47,7 @@ def testVaporFile(t, env):
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
-    ops += [op.secinfo('vapor')]
+    ops += [op.secinfo(b'vapor')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOENT, "SECINFO on nonexistant file %s/vapor" % t.word())
 
@@ -59,7 +59,7 @@ def testNoFh(t, env):
     CODE: SEC4
     """
     c = env.c1
-    ops = [op.secinfo('vapor')]
+    ops = [op.secinfo(b'vapor')]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "SECINFO with no <cfh>")
 
@@ -75,7 +75,7 @@ def testZeroLenName(t, env):
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
-    ops += [op.secinfo('')]
+    ops += [op.secinfo(b'')]
     res = c.compound(ops)
     check(res, NFS4ERR_INVAL, "SECINFO with zero-length name")
 

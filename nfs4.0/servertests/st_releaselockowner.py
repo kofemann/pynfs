@@ -14,13 +14,13 @@ def testFile(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.word())
-    res = c.lock_file(t.word(), fh, stateid, lockowner="lockowner_RLOWN1")
+    res = c.lock_file(t.word(), fh, stateid, lockowner=b"lockowner_RLOWN1")
     check(res)
     res = c.unlock_file(1, fh, res.lockid)
     check(res)
     
 
     # Release lockowner
-    owner = lock_owner4(c.clientid, "lockowner_RLOWN1")
+    owner = lock_owner4(c.clientid, b"lockowner_RLOWN1")
     res = c.compound([op.release_lockowner(owner)])
     check(res)

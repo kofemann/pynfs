@@ -16,7 +16,7 @@ def _try_type(env, path, type):
     c = env.c1
     ops = c.use_obj(path) + [op.verify({FATTR4_TYPE:type})] + c.use_obj(path)
     res = c.compound(ops)
-    check(res, msg="Verifying type of /%s" % '/'.join(path))
+    check(res, msg="Verifying type of /%s" % b'/'.join(path))
 
 def _try_changed_size(env, path):
     c = env.c1
