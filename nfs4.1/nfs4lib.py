@@ -216,11 +216,11 @@ class FancyNFS4Packer(NFS4Packer):
 
 class FancyNFS4Unpacker(NFS4Unpacker):
     def filter_bitmap4(self, data):
-        """Put bitmap into single long, instead of array of 32bit chunks"""
+        """Put bitmap into single integer, instead of array of 32bit chunks"""
         out = 0
         shift = 0
         for i in data:
-            out |= (long(i) << shift)
+            out |= (i << shift)
             shift += 32
         return out
 

@@ -1490,7 +1490,7 @@ class NFS4Server(rpc.Server):
     def get_attributes(self, obj, attrs, ignore=True):
         # XXX This really should be a FSObject method, but having trouble
         # figuring how to deal with server-wide attributes.
-        if type(attrs) in (int, long):
+        if type(attrs) == int:
             attrs = nfs4lib.bitmap2list(attrs)
         ret_dict = {}
         info = nfs4lib.attr_info

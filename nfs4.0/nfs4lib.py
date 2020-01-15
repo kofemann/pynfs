@@ -113,7 +113,7 @@ class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
         out = 0
         shift = 0
         for i in data:
-            out |= (long(i) << shift)
+            out |= (int(i) << shift)
             shift += 32
         return out
 
