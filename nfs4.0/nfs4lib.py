@@ -274,7 +274,7 @@ class CBServer(rpc.RPCServer):
         return res
             
 # STUB
-AuthSys = rpc.SecAuthSys(0,'jupiter',103558,100,[])
+AuthSys = rpc.SecAuthSys(0,b'jupiter',103558,100,[])
 
 class NFS4Client(rpc.RPCClient):
     def __init__(self, id, host='localhost', port=2049, homedir=['pynfs'],

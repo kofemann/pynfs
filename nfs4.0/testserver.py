@@ -239,6 +239,8 @@ def main():
     opt, args = scan_options(p)
     nfs4lib.SHOW_TRAFFIC = opt.showtraffic
 
+    opt.machinename = os.fsencode(opt.machinename)
+
     # Create test database
     tests, fdict, cdict = testmod.createtests('servertests')
 

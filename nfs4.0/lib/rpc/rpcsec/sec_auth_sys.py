@@ -5,7 +5,7 @@ from xdrlib import Packer, Error
 
 class SecAuthSys(SecFlavor):
     # XXX need better defaults
-    def __init__(self, stamp=0, machinename='', uid=0, gid=0, gids=[]):
+    def __init__(self, stamp=0, machinename=b'', uid=0, gid=0, gids=[]):
         if len(machinename) > 255:
             raise SecError("machinename %s is too long" % machinename)
         if len(gids) > 16:
@@ -13,10 +13,7 @@ class SecAuthSys(SecFlavor):
         try:
             p = Packer()
             p.pack_int(stamp)
-            try:    # for python2
-                p.pack_string(machinename)
-            except: # for python3
-                p.pack_string(bytes(machinename, 'utf-8'))
+            p.pack_string(machinename)
             p.pack_uint(uid)
             p.pack_uint(gid)
             p.pack_array(gids, p.pack_uint)
