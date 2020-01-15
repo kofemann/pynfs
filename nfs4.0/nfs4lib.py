@@ -351,8 +351,8 @@ class NFS4Client(rpc.RPCClient):
         # An exception to the above is if an illegal op was sent, in
         # which case it should be changed to OP_ILLEGAL in recv_ops.
         sent_ops = [op.argop for op in argarray]
-        sent_ops = map(lambda x: (x in nfs_opnum4) and x or OP_ILLEGAL,
-                       sent_ops)
+        sent_ops = list(map(lambda x: (x in nfs_opnum4) and x or OP_ILLEGAL,
+                       sent_ops))
         recv_ops = [op.resop for op in res.resarray]
         if res.status == NFS4_OK and len(recv_ops) < len(sent_ops):
             raise InvalidCompoundRes("Truncated response list.")
