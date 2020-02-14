@@ -21,24 +21,9 @@ import pickle
 import testmod
 from optparse import OptionParser
 
-class MyUnpickler(pickle.Unpickler):
-    class Unknown(object):
-        def __init__(self, name):
-            self.name = name
-    
-    def find_class(self, module, name):
-        # Handle function renames gracefully
-        __import__(module)
-        mod = sys.modules[module]
-        try:
-            klass = getattr(mod, name)
-            return klass
-        except:
-            return self.Unknown(name)
-
 def show(filename, opt):
     fd = open(filename, 'rb')
-    p = MyUnpickler(fd)
+    p = pickle.Unpickler(fd)
     tests = p.load()
     testmod.printresults(tests, opt)
 
