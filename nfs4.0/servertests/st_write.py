@@ -137,7 +137,7 @@ def testMaximumData(t, env):
     maxio = min(maxread, maxwrite)
     fh, stateid = c.create_confirm(t.code)
     pattern="abcdefghijklmnop"
-    data = pattern * (maxio / len(pattern)) + "q" * (maxio % len(pattern))
+    data = pattern * (maxio // len(pattern)) + "q" * (maxio % len(pattern))
     # Write the data
     pos = 0
     while pos < len(data):
@@ -402,7 +402,7 @@ def testSizes(t, env):
     buf = ""
     # I've found it helpful when tracking down decoding errors to know
     # where in the packet a given word or data came from; this helps:
-    for i in range(0, (max+3)/4):
+    for i in range(0, (max+3)//4):
         buf += struct.pack('>L', i);
     c = env.c1
     c.init_connection()

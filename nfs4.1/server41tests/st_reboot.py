@@ -179,16 +179,16 @@ def doTestRebootWithNClients(t, env, n=10, double_reboot=False,
 
     try:
         if double_reboot or double_reclaim:
-            for i in range(n/2):
+            for i in range(n//2):
                 lease_time = doTestOneClientGrace(t, env, states[i])
 
         if double_reboot:
            boot_time = _waitForReboot(env)
 
         if double_reclaim:
-            for i in range(n/2):
+            for i in range(n//2):
                 lease_time = doTestOneClientGrace(t, env, states[i], True)
-            for i in range(n/2, n):
+            for i in range(n//2, n):
                 lease_time = doTestOneClientGrace(t, env, states[i])
         else:
             for i in range(n):
