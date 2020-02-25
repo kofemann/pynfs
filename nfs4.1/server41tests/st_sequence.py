@@ -83,7 +83,7 @@ def testTooManyOps(t, env):
     sess1 = c1.create_session(fore_attrs = attrs)
     # Send the max number of ops allowed by the server
     lots_of_ops = [op.putrootfh(), op.getfh()]
-    lots_of_ops += [op.getattr(0) for num in xrange(sess1.fore_channel.maxoperations-3)]
+    lots_of_ops += [op.getattr(0) for num in range(sess1.fore_channel.maxoperations-3)]
     res = sess1.compound(lots_of_ops)
     check(res)
     # Add one more op to exceed the maximum

@@ -310,7 +310,7 @@ def str_xor(a, b):
 
 def random_string(size):
     """Returns a random string of given length."""
-    return "".join([chr(random.randint(0, 255)) for i in xrange(size)])
+    return "".join([chr(random.randint(0, 255)) for i in range(size)])
 
 class SSVContext(object):
     """Holds algorithms and keys needed for SSV encryption and hashing"""

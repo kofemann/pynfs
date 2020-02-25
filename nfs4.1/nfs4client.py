@@ -393,7 +393,7 @@ class ClientRecord(object):
             sec= [callback_sec_parms4(0)]
         if prog is None:
             prog = self.c.prog
-        for item in xrange(max_retries):
+        for item in range(max_retries):
             res = self.c.compound([op4.create_session(self.clientid, self.seqid,
                                                  flags,
                                                  fore_attrs, back_attrs,
@@ -452,7 +452,7 @@ class SendChannel(object):
         s.maxresponsesize_cached = attrs.ca_maxresponsesize_cached
         s.maxoperations = attrs.ca_maxoperations
         s.maxrequests = attrs.ca_maxrequests
-        s.slots = [Slot(i) for i in xrange(s.maxrequests)]
+        s.slots = [Slot(i) for i in range(s.maxrequests)]
 
     def choose_slot(self):
         self.lock.acquire()
@@ -534,7 +534,7 @@ class SessionRecord(object):
         handle_state_errors = kwargs.pop("handle_state_errors", True)
         saved_kwargs = kwargs
         slot, seq_op = self._prepare_compound(kwargs)
-        for item in xrange(max_retries):
+        for item in range(max_retries):
             res = self.c.compound([seq_op] + ops, **kwargs)
             res = self.update_seq_state(res, slot)
             if res.status != NFS4ERR_DELAY or not handle_state_errors:
