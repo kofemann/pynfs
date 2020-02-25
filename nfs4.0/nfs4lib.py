@@ -388,7 +388,7 @@ class NFS4Client(rpc.RPCClient):
         while current_module == inspect.getmodule(current_stack[stackid][0]):
               stackid = stackid + 1
         test_name = '%s:%s' % (basename(current_stack[stackid][1]), current_stack[stackid][3])
-        return test_name
+        return test_name.encode('utf8')
 
     def init_connection(self, id=None, verifier=None, cb_ident=None):
         """Do setclientid/setclientidconfirm combination"""
