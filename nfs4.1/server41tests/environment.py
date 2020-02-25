@@ -259,13 +259,13 @@ class Environment(testmod.Environment):
 
     def clean_sessions(self):
         """Destroy client name env.c1"""
-        for sessionid in self.c1.sessions.keys():
+        for sessionid in list(self.c1.sessions):
             self.c1.compound([op.destroy_session(sessionid)])
             del(self.c1.sessions[sessionid])
 
     def clean_clients(self):
         """Destroy client name env.c1"""
-        for clientid in self.c1.clients.keys():
+        for clientid in list(self.c1.clients):
             self.c1.compound([op.destroy_clientid(clientid)])
             del(self.c1.clients[clientid])
 
