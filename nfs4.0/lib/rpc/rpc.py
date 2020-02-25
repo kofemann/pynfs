@@ -198,7 +198,7 @@ class RPCClient(object):
         self.uselowport = uselowport
         self._socket = {}
         self.getsocket() # init socket, is this needed here?
-        self.ipaddress = self.socket.getsockname()[0]
+        self.ipaddress = os.fsencode(self.socket.getsockname()[0])
         self._rpcpacker = {t : rpc_pack.RPCPacker()}
         self._rpcunpacker = {t : rpc_pack.RPCUnpacker('')}
         self.default_prog = program
