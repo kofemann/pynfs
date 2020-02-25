@@ -357,9 +357,10 @@ def main():
         env.finish()
     except Exception as e:
         fail = True
+        err = str(e)
     testmod.printresults(tests, opt)
     if fail:
-        print("\nWARNING: could not clean testdir due to:\n%s\n" % str(e))
+        print("\nWARNING: could not clean testdir due to:\n%s\n" % err)
 
     if opt.xmlout is not None:
         testmod.xml_printresults(tests, opt.xmlout)
