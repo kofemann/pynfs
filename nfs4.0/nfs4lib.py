@@ -596,7 +596,7 @@ class NFS4Client(rpc.RPCClient):
 
     def create_obj(self, path, type=NF4DIR, attrs={FATTR4_MODE:0o755},
                    linkdata="/etc/X11"):
-        if __builtins__['type'](path) is str:
+        if __builtins__['type'](path) is bytes:
             path = self.homedir + [path]
         ops = [op4.putrootfh()] + self.lookup_path(path[:-1])
         if type in [NF4DIR, NF4SOCK, NF4FIFO, NF4REG]:
