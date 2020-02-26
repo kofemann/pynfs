@@ -10,11 +10,11 @@ def testRegularOpen(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+    c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                      deny=OPEN4_SHARE_DENY_NONE)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                  deny=OPEN4_SHARE_DENY_NONE)
-    res = c.downgrade_file(t.code, fh, stateid, OPEN4_SHARE_ACCESS_READ,
+    res = c.downgrade_file(t.word(), fh, stateid, OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
     check(res, msg="OPENDOWNGRADE on regular file")
 
@@ -27,9 +27,9 @@ def testNewState1(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res = c.downgrade_file(t.code, fh, stateid, OPEN4_SHARE_ACCESS_READ,
+    res = c.downgrade_file(t.word(), fh, stateid, OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
     check(res, NFS4ERR_INVAL, "OPENDOWNGRADE to never opened mode")
 
@@ -42,11 +42,11 @@ def testNewState2(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE,
+    c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_WRITE,
                      deny=OPEN4_SHARE_DENY_NONE)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                  deny=OPEN4_SHARE_DENY_NONE)
-    res = c.downgrade_file(t.code, fh, stateid, OPEN4_SHARE_ACCESS_READ,
+    res = c.downgrade_file(t.word(), fh, stateid, OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
     check(res, NFS4ERR_INVAL, "OPENDOWNGRADE to never opened mode")
 
@@ -59,8 +59,8 @@ def testBadSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, fh, stateid, seqid=50)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.downgrade_file(t.word(), fh, stateid, seqid=50)
     check(res, NFS4ERR_BAD_SEQID, "OPENDOWNGRADE with bad seqid=50")
     
 def testBadStateid(t, env):
@@ -72,8 +72,8 @@ def testBadStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, fh, env.stateid0)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.downgrade_file(t.word(), fh, env.stateid0)
     check(res, NFS4ERR_BAD_STATEID, "OPENDOWNGRADE with bad stateid")
 
 def testStaleStateid(t, env):
@@ -85,8 +85,8 @@ def testStaleStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, fh, makeStaleId(stateid))
+    fh, stateid = c.create_confirm(t.word())
+    res = c.downgrade_file(t.word(), fh, makeStaleId(stateid))
     check(res, NFS4ERR_STALE_STATEID, "OPENDOWNGRADE with stale stateid")
 
 def testOldStateid(t, env):
@@ -98,11 +98,11 @@ def testOldStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
-    check(res, msg="Creating file %s" % t.code)
+    res = c.create_file(t.word())
+    check(res, msg="Creating file %s" % t.word())
     oldstateid = res.resarray[-2].switch.switch.stateid
-    fh, stateid = c.confirm(t.code, res)
-    res = c.downgrade_file(t.code, fh, oldstateid)
+    fh, stateid = c.confirm(t.word(), res)
+    res = c.downgrade_file(t.word(), fh, oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "OPENDOWNGRADE with old stateid")
 
 def testNoFh(t, env):
@@ -114,8 +114,8 @@ def testNoFh(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.downgrade_file(t.code, None, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.downgrade_file(t.word(), None, stateid)
     check(res, NFS4ERR_NOFILEHANDLE, "OPENDOWNGRADE with no <cfh>")
 
 # NOTE: retired test codes, please do not reuse:
@@ -155,7 +155,7 @@ def testOpenDowngradeSequence(t, env):
     """
     c = env.c1
     c.init_connection()
-    os = open_sequence(c, t.code)
+    os = open_sequence(c, t.word())
     os.open(     OPEN4_SHARE_ACCESS_READ)
     os.open(     OPEN4_SHARE_ACCESS_WRITE)
     os.downgrade(OPEN4_SHARE_ACCESS_READ)
@@ -174,7 +174,7 @@ def testOpenDowngradeLock(t, env):
     """
     c= env.c1
     c.init_connection()
-    os = open_sequence(c, t.code)
+    os = open_sequence(c, t.word())
     os.open(OPEN4_SHARE_ACCESS_BOTH)
     os.lock(READ_LT)
     os.open(OPEN4_SHARE_ACCESS_READ)

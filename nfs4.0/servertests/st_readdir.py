@@ -34,8 +34,8 @@ def testEmptyDir(t, env):
     CODE: RDDR1
     """
     c = env.c1
-    c.maketree([t.code])
-    entries = c.do_readdir(c.homedir + [t.code])
+    c.maketree([t.word()])
+    entries = c.do_readdir(c.homedir + [t.word()])
     _compare(t, entries, [])
 
 def testFirst(t, env):
@@ -47,8 +47,8 @@ def testFirst(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code, 'file', ['dir']])
-    entries = c.do_readdir(c.homedir + [t.code], maxcount=4096)
+    c.maketree([t.word(), 'file', ['dir']])
+    entries = c.do_readdir(c.homedir + [t.word()], maxcount=4096)
     _compare(t, entries, ['file', 'dir'])
 
 def testAttr(t, env):
@@ -60,9 +60,9 @@ def testAttr(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code, 'file', ['dir']])
+    c.maketree([t.word(), 'file', ['dir']])
     attrlist = [FATTR4_SIZE, FATTR4_FILEHANDLE]
-    entries = c.do_readdir(c.homedir + [t.code],
+    entries = c.do_readdir(c.homedir + [t.word()],
                            attr_request=attrlist)
     _compare(t, entries, ['file', 'dir'], attrlist)
 
@@ -76,11 +76,11 @@ def testSubsequent(t, env):
     c = env.c1
     c.init_connection()
     expected = ["dir%02i"%i for i in range(100)]
-    c.maketree([t.code] + [[name] for name in expected])
+    c.maketree([t.word()] + [[name] for name in expected])
     split = False
     count = 400
     while not split:
-        entries = c.do_readdir(c.homedir + [t.code], maxcount=count)
+        entries = c.do_readdir(c.homedir + [t.word()], maxcount=count)
         count -= 50
         _compare(t, entries, expected)
         # Note: _compare returning guarantees that len(entries)==100
@@ -178,8 +178,8 @@ def testMaxcountSmall(t, env):
     CODE: RDDR8
     """
     c = env.c1
-    c.maketree([t.code])
-    path = c.homedir + [t.code]
+    c.maketree([t.word()])
+    path = c.homedir + [t.word()]
     ops = c.use_obj(path) + [c.readdir(maxcount=15)]
     res = c.compound(ops)
     check(res, NFS4ERR_TOOSMALL, "READDIR of empty dir with maxcount=15")
@@ -198,8 +198,8 @@ def testDircountVarious(t, env):
     # remember, dircount doesn't include attr data, so we need pretty long
     # names if we're going to hit dircount limit first.
     expected = ["prettylongdirnamelongenoughhowaboutnowohormaybealittlelonger%02i"%i for i in range(100)]
-    c.maketree([t.code] + [[name] for name in expected])
-    path = c.homedir + [t.code]
+    c.maketree([t.word()] + [[name] for name in expected])
+    path = c.homedir + [t.word()]
     attrlist = [attr.bitnum for attr in env.attr_info if attr.mandatory]
     for i in range(8000,8300):
         ops = c.use_obj(path) + [c.readdir(dircount=8172,maxcount=32768,
@@ -215,8 +215,8 @@ def testWriteOnlyAttributes(t, env):
     CODE: RDDR9
     """
     c = env.c1
-    c.maketree([t.code, ['dir']])
-    baseops = c.use_obj(c.homedir + [t.code])
+    c.maketree([t.word(), ['dir']])
+    baseops = c.use_obj(c.homedir + [t.word()])
     for attr in [attr for attr in env.attr_info if attr.writeonly]:
         ops = baseops + [c.readdir(attr_request=[attr.bitnum])]
         res = c.compound(ops)
@@ -244,11 +244,11 @@ def testUnaccessibleDir(t, env):
     CODE: RDDR11
     """
     c = env.c1
-    path = c.homedir + [t.code]
-    c.maketree([t.code, ['hidden']])
+    path = c.homedir + [t.word()]
+    c.maketree([t.word(), ['hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
-    check(res, msg="Setting mode=0 on directory %s" % t.code)
+    check(res, msg="Setting mode=0 on directory %s" % t.word())
     ops = c.use_obj(path) + [c.readdir()]
     res = c.compound(ops)
     if env.opts.uid == 0:
@@ -264,11 +264,11 @@ def testUnaccessibleDirAttrs(t, env):
     CODE: RDDR12
     """
     c = env.c1
-    path = c.homedir + [t.code]
-    c.maketree([t.code, ['hidden']])
+    path = c.homedir + [t.word()]
+    c.maketree([t.word(), ['hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
-    check(res, msg="Setting mode=0 on directory %s" % t.code)
+    check(res, msg="Setting mode=0 on directory %s" % t.word())
     ops = c.use_obj(path) + \
           [c.readdir(attr_request=[FATTR4_RDATTR_ERROR, FATTR4_TYPE])]
     res = c.compound(ops)

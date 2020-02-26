@@ -8,9 +8,9 @@ def _basictest(t, c, path, error=NFS4_OK):
     d = c.do_getattrdict(path, [FATTR4_NUMLINKS])
     if d:
         oldcount = d[FATTR4_NUMLINKS]
-    res = c.link(path, c.homedir + [t.code])
+    res = c.link(path, c.homedir + [t.word()])
     check(res, error,
-          "Creating hard link %s to /%s" % (t.code, '/'.join(path)))
+          "Creating hard link %s to /%s" % (t.word(), '/'.join(path)))
     if d and res.status==NFS4_OK:
         newcount = c.do_getattrdict(path, [FATTR4_NUMLINKS])[FATTR4_NUMLINKS]
         if newcount - 1 != oldcount:
@@ -101,7 +101,7 @@ def testNoSfh(t, env):
     """
     c = env.c1
     ops = c.go_home()
-    ops += [op.link(t.code)]
+    ops += [op.link(t.word())]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LINK with no <sfh>")
 
@@ -113,7 +113,7 @@ def testNoCfh(t, env):
     CODE: LINK3
     """
     c = env.c1
-    ops = [op.link(t.code)]
+    ops = [op.link(t.word())]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "LINK with no <cfh>")
 
@@ -124,7 +124,7 @@ def testCfhFile(t, env):
     DEPEND: LINKS LOOKFILE
     CODE: LINK4r
     """
-    res = env.c1.link(env.opts.usefile, env.opts.usefile + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.usefile + [t.word()])
     check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
 
 def testCfhFifo(t, env):
@@ -134,7 +134,7 @@ def testCfhFifo(t, env):
     DEPEND: LINKS LOOKFILE LOOKFIFO
     CODE: LINK4f
     """
-    res = env.c1.link(env.opts.usefile, env.opts.usefifo + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.usefifo + [t.word()])
     check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
 
 def testCfhLink(t, env):
@@ -144,7 +144,7 @@ def testCfhLink(t, env):
     DEPEND: LINKS LOOKFILE LOOKLINK
     CODE: LINK4a
     """
-    res = env.c1.link(env.opts.usefile, env.opts.uselink + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.uselink + [t.word()])
     check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK],
                 "LINK with <cfh> not a directory")
 
@@ -155,7 +155,7 @@ def testCfhBlock(t, env):
     DEPEND: LINKS LOOKFILE LOOKBLK
     CODE: LINK4b
     """
-    res = env.c1.link(env.opts.usefile, env.opts.useblock + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.useblock + [t.word()])
     check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
 
 def testCfhChar(t, env):
@@ -165,7 +165,7 @@ def testCfhChar(t, env):
     DEPEND: LINKS LOOKFILE LOOKCHAR
     CODE: LINK4c
     """
-    res = env.c1.link(env.opts.usefile, env.opts.usechar + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.usechar + [t.word()])
     check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
 
 def testCfhSocket(t, env):
@@ -175,7 +175,7 @@ def testCfhSocket(t, env):
     DEPEND: LINKS LOOKFILE LOOKSOCK
     CODE: LINK4s
     """
-    res = env.c1.link(env.opts.usefile, env.opts.usesocket + [t.code])
+    res = env.c1.link(env.opts.usefile, env.opts.usesocket + [t.word()])
     check(res, NFS4ERR_NOTDIR, "LINK with <cfh> not a directory")
 
 def testExists(t, env):
@@ -186,9 +186,9 @@ def testExists(t, env):
     CODE: LINK5
     """
     c = env.c1
-    res = c.link(env.opts.usefile, c.homedir + [t.code])
-    check(res, msg="Creating hardlink %s" % t.code)
-    res = c.link(env.opts.usefile, c.homedir + [t.code])
+    res = c.link(env.opts.usefile, c.homedir + [t.word()])
+    check(res, msg="Creating hardlink %s" % t.word())
+    res = c.link(env.opts.usefile, c.homedir + [t.word()])
     check(res, NFS4ERR_EXIST, "LINK target already exists")
 
 def testZeroLenName(t, env):
@@ -221,12 +221,12 @@ def testInvalidUtf8(t, env):
     CODE: LINK8
     """
     c = env.c1
-    res = c.create_obj(c.homedir + [t.code])
+    res = c.create_obj(c.homedir + [t.word()])
     check(res)
     for name in get_invalid_utf8strings():
-        res = c.link(env.opts.usefile, c.homedir + [t.code, name])
+        res = c.link(env.opts.usefile, c.homedir + [t.word(), name])
         check(res, NFS4ERR_INVAL,
-              "LINK with invalid utf8 name %s/%s" % (t.code, repr(name)[1:-1]))
+              "LINK with invalid utf8 name %s/%s" % (t.word(), repr(name)[1:-1]))
 
 def testDots(t, env):
     """LINK with . or .. should succeed or return NFSERR_BADNAME
@@ -236,7 +236,7 @@ def testDots(t, env):
     CODE: LINK9
     """
     c = env.c1
-    dir = c.homedir + [t.code]
+    dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
     res1 = c.link(env.opts.usefile, dir + ['.'])

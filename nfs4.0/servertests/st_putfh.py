@@ -98,10 +98,10 @@ def testStaleHandle(t, env):
     c = env.c1
     c.init_connection()
     # Create a stale fh
-    stale_fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, stale_fh, stateid)
+    stale_fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), stale_fh, stateid)
     check(res)
-    ops = c.use_obj(c.homedir) + [op.remove(t.code)]
+    ops = c.use_obj(c.homedir) + [op.remove(t.word())]
     res = c.compound(ops)
     check(res)
     # Now try to use it; but note a server may still allow use and

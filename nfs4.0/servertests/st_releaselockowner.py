@@ -13,8 +13,8 @@ def testFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, lockowner="lockowner_RLOWN1")
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, lockowner="lockowner_RLOWN1")
     check(res)
     res = c.unlock_file(1, fh, res.lockid)
     check(res)

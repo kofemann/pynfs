@@ -11,10 +11,10 @@ def testDir(t, env):
     CODE: LOOKP1
     """
     c = env.c1
-    res = c.create_obj(c.homedir + [t.code])
+    res = c.create_obj(c.homedir + [t.word()])
     check(res)
     ops = c.use_obj(c.homedir)
-    ops += [op.getfh(), op.lookup(t.code), op.lookupp(), op.getfh()]
+    ops += [op.getfh(), op.lookup(t.word()), op.lookupp(), op.getfh()]
     res = c.compound(ops)
     check(res)
     fh1 = res.resarray[-4].switch.switch.object

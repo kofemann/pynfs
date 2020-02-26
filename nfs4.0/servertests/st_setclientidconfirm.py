@@ -21,7 +21,7 @@ def testBadConfirm(t, env):
     CODE: CIDCF2
     """
     c = env.c1
-    id = "Clientid_for_%s_pid=%i" % (t.code, os.getpid())
+    id = "Clientid_for_%s_pid=%i" % (t.word(), os.getpid())
     clientid, idconfirm = c.init_connection(id)
 
     res = c.compound([c.setclientid(id=id)])
@@ -38,7 +38,7 @@ def testAllCases(t, env):
     CODE: CIDCF3
     """
     c = env.c1
-    id = "Clientid_for_%s_pid=%i" % (t.code, os.getpid())
+    id = "Clientid_for_%s_pid=%i" % (t.word(), os.getpid())
     # no (**c*s), no (**c*s)
     res = c.compound([op.setclientid_confirm(0,'')])
     check(res, NFS4ERR_STALE_CLIENTID, "SETCLIENTID_CONFIRM with unknown id=0")

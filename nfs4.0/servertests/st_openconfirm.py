@@ -6,9 +6,9 @@ op = nfs_ops.NFS4ops()
 
 def _confirm(t, c, file, stateid):
     ops = c.use_obj(file)
-    ops += [op.open_confirm(stateid, c.get_seqid(t.code))]
+    ops += [op.open_confirm(stateid, c.get_seqid(t.word()))]
     res = c.compound(ops)
-    c.advance_seqid(t.code, res)
+    c.advance_seqid(t.word(), res)
     return res
 
 def testConfirmCreate(t, env):
@@ -20,7 +20,7 @@ def testConfirmCreate(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     # Now confirm again
     res = _confirm(t, c, fh, stateid)
     check(res, NFS4ERR_BAD_STATEID, "OPEN_CONFIRM done twice in a row")
@@ -33,7 +33,7 @@ def testNoFh(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     stateid = res.resarray[-2].switch.switch.stateid
     res = _confirm(t, c, None, stateid)
@@ -55,7 +55,7 @@ def testBadSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     stateid = res.resarray[-2].switch.switch.stateid
     fh = res.resarray[-1].switch.switch.object
@@ -71,7 +71,7 @@ def testBadStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     fh = res.resarray[-1].switch.switch.object
     res = _confirm(t, c, fh, stateid4(0, ''))
@@ -85,7 +85,7 @@ def testStaleStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     stateid = res.resarray[-2].switch.switch.stateid
     fh = res.resarray[-1].switch.switch.object

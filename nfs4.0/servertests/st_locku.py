@@ -11,15 +11,15 @@ def testFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
-    check(res1, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
+    check(res1, msg="Locking file %s" % t.word())
     res2 = c.lock_test(fh)
-    check(res2, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res2, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
     res3 = c.unlock_file(1, fh, res1.lockid)
-    check(res3, msg="Unlocking locked file %s" % t.code)
+    check(res3, msg="Unlocking locked file %s" % t.word())
     res2 = c.lock_test(fh)
-    check(res2, msg="Testing file %s was unlocked" % t.code)
+    check(res2, msg="Testing file %s was unlocked" % t.word())
 
 def testUnlocked(t, env):
     """LOCKU on an unlocked area should work or return NFS4ERR_LOCK_RANGE
@@ -30,9 +30,9 @@ def testUnlocked(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 100, 100)
-    check(res1, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 100, 100)
+    check(res1, msg="Locking file %s" % t.word())
     res2 = c.unlock_file(1, fh, res1.lockid, 0, 50)
     check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU on an unlocked area")
     if res2.status == NFS4ERR_LOCK_RANGE:
@@ -47,9 +47,9 @@ def testSplit(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 100, 100)
-    check(res1, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 100, 100)
+    check(res1, msg="Locking file %s" % t.word())
     res2 = c.unlock_file(1, fh, res1.lockid, 125, 50)
     check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "LOCKU inside locked area")
     if res2.status == NFS4ERR_LOCK_RANGE:
@@ -64,9 +64,9 @@ def testOverlap(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 100, 100)
-    check(res1, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 100, 100)
+    check(res1, msg="Locking file %s" % t.word())
     res2 = c.unlock_file(1, fh, res1.lockid, 50, 100)
     check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE],
               "LOCKU overlapping a locked area")
@@ -83,8 +83,8 @@ def test32bitRange(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, res1.lockid, 0, 0xffffffffffff)
     check(res2, [NFS4_OK, NFS4ERR_BAD_RANGE, NFS4ERR_LOCK_RANGE],
@@ -103,8 +103,8 @@ def testZeroLen(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, res1.lockid, 1, 0)
     check(res2, NFS4ERR_INVAL, "LOCKU with len=0")
@@ -118,8 +118,8 @@ def testLenTooLong(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, res1.lockid, 100, 0xfffffffffffffffe)
     check(res2, NFS4ERR_INVAL, "LOCKU with offset+len overflow")
@@ -133,8 +133,8 @@ def testNoFh(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, None, res1.lockid)
     check(res2, NFS4ERR_NOFILEHANDLE, "LOCKU with no <cfh>")
@@ -148,8 +148,8 @@ def testBadLockSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(2, fh, res1.lockid)
     check(res2, NFS4ERR_BAD_SEQID, "LOCKU with a bad lockseqid=2")
@@ -163,8 +163,8 @@ def testBadLockSeqid2(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 0, 50)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 0, 50)
     check(res1)
     res2 = c.relock_file(1, fh, res1.lockid, 100, 50)
     check(res2)
@@ -185,8 +185,8 @@ def testBadLockSeqid3(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 0, 50)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 0, 50)
     check(res1)
     res2 = c.relock_file(1, fh, res1.lockid, 100, 50)
     check(res2)
@@ -202,8 +202,8 @@ def testOldLockStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, res1.lockid)
     check(res2)
@@ -221,8 +221,8 @@ def testBadLockStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, stateid4(0, ''))
     check(res2, NFS4ERR_BAD_STATEID, "LOCKU with a bad stateid")
@@ -236,8 +236,8 @@ def testStaleLockStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     res2 = c.unlock_file(1, fh, makeStaleId(res1.lockid))
     check(res2, NFS4ERR_STALE_STATEID, "LOCKU with stale lockstateid",
@@ -256,14 +256,14 @@ def testTimedoutUnlock(t, env):
     c = env.c1
     sleeptime = c.getLeaseTime() * 3 // 2
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, attrs={FATTR4_MODE: 0o666})
-    res1 = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word(), attrs={FATTR4_MODE: 0o666})
+    res1 = c.lock_file(t.word(), fh, stateid)
     check(res1)
     env.sleep(sleeptime)
     # Conflicting open should force server to drop state
     c2 = env.c2
     c2.init_connection()
-    c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
+    c2.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_WRITE)
     res2 = c.unlock_file(1, fh, res1.lockid)
     check(res2, [NFS4ERR_EXPIRED, NFS4_OK],
               "Try to unlock file after timed out")

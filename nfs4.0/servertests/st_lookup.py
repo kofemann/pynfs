@@ -100,10 +100,10 @@ def testNonExistent(t, env):
     """
     c = env.c1
     ops = c.go_home()
-    ops += [op.lookup(t.code)]
+    ops += [op.lookup(t.word())]
     res = c.compound(ops)
     check(res, NFS4ERR_NOENT,
-          "LOOKUP with no non-existant component '%s'" % t.code)
+          "LOOKUP with no non-existant component '%s'" % t.word())
 
 def testZeroLength(t, env):
     """LOOKUP with zero length name should return NFS4ERR_INVAL
@@ -208,7 +208,7 @@ def testNonAccessable(t, env):
     """
     # Create dir/foo, and set mode of dir to 0o000
     c = env.c1
-    dir = c.homedir + [t.code]
+    dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
     res = c.create_obj(dir + ['foo'])
@@ -249,7 +249,7 @@ def testDots(t, env):
     """
     # Create dir/foo
     c = env.c1
-    dir = c.homedir + [t.code]
+    dir = c.homedir + [t.word()]
     res = c.create_obj(dir)
     check(res)
     res = c.create_obj(dir + ['foo'])
@@ -264,7 +264,7 @@ def testDots(t, env):
     res1 = c.compound(c.use_obj(dir + ['.', 'foo']))
     check(res1, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '.'")
-    res2 = c.compound(c.use_obj(dir + ['..', t.code]))
+    res2 = c.compound(c.use_obj(dir + ['..', t.word()]))
     check(res2, [NFS4ERR_NOENT, NFS4ERR_BADNAME],
               "LOOKUP a nonexistant '..'")
 
@@ -276,11 +276,11 @@ def testUnaccessibleDir(t, env):
     CODE: LOOK9
     """
     c = env.c1
-    path = c.homedir + [t.code]
-    c.maketree([t.code, ['hidden']])
+    path = c.homedir + [t.word()]
+    c.maketree([t.word(), ['hidden']])
     ops = c.use_obj(path) + [c.setattr({FATTR4_MODE:0})]
     res = c.compound(ops)
-    check(res, msg="Setting mode=0 on directory %s" % t.code)
+    check(res, msg="Setting mode=0 on directory %s" % t.word())
     res = c.compound(c.use_obj(path + ['hidden']))
     if env.opts.uid == 0:
         check(res, [NFS4_OK, NFS4ERR_ACCESS], "LOOKUP off of dir with mode=0o000")

@@ -45,7 +45,7 @@ def testOpen(t, env):
     c = env.c1
     c.init_connection()
     ops = c.use_obj(c.homedir)
-    ops += [c.open(t.code, type=OPEN4_CREATE), op.getfh()]
+    ops += [c.open(t.word(), type=OPEN4_CREATE), op.getfh()]
     _replay(env, c, ops)
     # Note that seqid is now off on this and other replay tests
 
@@ -59,9 +59,9 @@ def testReplayState1(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code])
-    ops = c.use_obj(c.homedir + [t.code])
-    ops += [c.open(t.code, 'vapor'), op.getfh()]
+    c.maketree([t.word()])
+    ops = c.use_obj(c.homedir + [t.word()])
+    ops += [c.open(t.word(), 'vapor'), op.getfh()]
     _replay(env, c, ops, NFS4ERR_NOENT)
     
 def testReplayState2(t, env):
@@ -73,9 +73,9 @@ def testReplayState2(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code])
+    c.maketree([t.word()])
     ops = c.use_obj(c.homedir)
-    ops += [c.open(t.code), op.getfh()]
+    ops += [c.open(t.word()), op.getfh()]
     _replay(env, c, ops, NFS4ERR_ISDIR)
 
 def testReplayNonState(t, env):
@@ -86,8 +86,8 @@ def testReplayNonState(t, env):
     CODE: RPLY4
     """
     c = env.c1
-    c.maketree([t.code])
-    ops = c.use_obj(c.homedir + [t.code, 'vapor'])
+    c.maketree([t.word()])
+    ops = c.use_obj(c.homedir + [t.word(), 'vapor'])
     _replay(env, c, ops, NFS4ERR_NOENT)
 
 def testLock(t, env):
@@ -100,9 +100,9 @@ def testLock(t, env):
     c = env.c1
     c.init_connection()
     # Create a file and partially lock it
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 20, 100)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 20, 100)
+    check(res, msg="Locking file %s" % t.word())
     # Create and replay LOCK ops
     ops = c.use_obj(fh)
     lock_owner = exist_lock_owner4(res.lockid, 1)
@@ -120,11 +120,11 @@ def testLockDenied(t, env):
     c = env.c1
     c.init_connection()
     # Create a file and lock it
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 20, 100)
-    check(res1, msg="Locking file %s for first owner" % t.code)
-    res2 = c.lock_file(t.code, fh, stateid, 0, 10)
-    check(res2, msg="Locking file %s for second owner" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 20, 100)
+    check(res1, msg="Locking file %s for first owner" % t.word())
+    res2 = c.lock_file(t.word(), fh, stateid, 0, 10)
+    check(res2, msg="Locking file %s for second owner" % t.word())
     # Create and replay LOCK ops
     ops = c.use_obj(fh)
     lock_owner = exist_lock_owner4(res1.lockid, 1)
@@ -141,9 +141,9 @@ def testUnlock(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 20, 100)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 20, 100)
+    check(res, msg="Locking file %s" % t.word())
     ops = c.use_obj(fh)
     ops += [op.locku(READ_LT, 1, res.lockid, 0, 0xffffffffffffffff)]
     _replay(env, c, ops)
@@ -157,9 +157,9 @@ def testUnlockWait(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 20, 100)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 20, 100)
+    check(res, msg="Locking file %s" % t.word())
     sleeptime = c.getLeaseTime() * 2
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
@@ -175,9 +175,9 @@ def testClose(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
-    ops += [op.close(c.get_seqid(t.code), stateid)]
+    ops += [op.close(c.get_seqid(t.word()), stateid)]
     _replay(env, c, ops)
     
 def testCloseWait(t, env):
@@ -189,11 +189,11 @@ def testCloseWait(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     sleeptime = c.getLeaseTime() * 2
     env.sleep(sleeptime)
     ops = c.use_obj(fh)
-    ops += [op.close(c.get_seqid(t.code), stateid)]
+    ops += [op.close(c.get_seqid(t.word()), stateid)]
     _replay(env, c, ops, [NFS4_OK, NFS4ERR_EXPIRED])
     
 def testCloseFail(t, env):
@@ -205,9 +205,9 @@ def testCloseFail(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
-    ops += [op.close(c.get_seqid(t.code)+1, stateid)]
+    ops += [op.close(c.get_seqid(t.word())+1, stateid)]
     _replay(env, c, ops, NFS4ERR_BAD_SEQID)
     
 def testOpenConfirm(t, env):
@@ -219,7 +219,7 @@ def testOpenConfirm(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     fh = res.resarray[-1].switch.switch.object
     stateid = res.resarray[-2].switch.switch.stateid
@@ -227,7 +227,7 @@ def testOpenConfirm(t, env):
     if not rflags & OPEN4_RESULT_CONFIRM:
         t.pass_warn("OPEN did not require CONFIRM")
     ops = c.use_obj(fh)
-    ops += [op.open_confirm(stateid, c.get_seqid(t.code))]
+    ops += [op.open_confirm(stateid, c.get_seqid(t.word()))]
     _replay(env, c, ops)
     
 def testOpenConfirmFail(t, env):
@@ -239,7 +239,7 @@ def testOpenConfirmFail(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     fh = res.resarray[-1].switch.switch.object
     stateid = res.resarray[-2].switch.switch.stateid
@@ -247,7 +247,7 @@ def testOpenConfirmFail(t, env):
     if not rflags & OPEN4_RESULT_CONFIRM:
         t.pass_warn("OPEN did not require CONFIRM")
     ops = c.use_obj(fh)
-    ops += [op.open_confirm(stateid, c.get_seqid(t.code)+1)]
+    ops += [op.open_confirm(stateid, c.get_seqid(t.word())+1)]
     _replay(env, c, ops, NFS4ERR_BAD_SEQID)
 
 def testMkdirReplay(t, env):
@@ -259,5 +259,5 @@ def testMkdirReplay(t, env):
     """
     c = env.c1
     c.init_connection()
-    ops = c.go_home() + [op.create(createtype4(NF4DIR), t.code, {})]
+    ops = c.go_home() + [op.create(createtype4(NF4DIR), t.word(), {})]
     _replay(env, c, ops)

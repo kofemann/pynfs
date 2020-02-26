@@ -214,6 +214,13 @@ class Test(object):
             return (exctype, excvalue, tb)
         return (exctype, excvalue, newtb)
 
+    def word(self, n=1):
+        # just a series of handy test-specific strings used, for example,
+        # for filenames or state owner strings.
+        word = "%s-%d" % (self.code, n)
+
+        return word.encode('utf8')
+
     def run(self, environment, verbose=False):
         """Run self.runtest, storing result"""
         #print("*********Running test %s (%s)" % (self.name, self.code))

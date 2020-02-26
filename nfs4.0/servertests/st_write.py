@@ -39,7 +39,7 @@ def testSimpleWrite(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, how=UNSTABLE4)
     check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
@@ -56,7 +56,7 @@ def testSimpleWrite2(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, 30)
     check(res, msg="WRITE with stateid=zeros changing size")
@@ -73,7 +73,7 @@ def testStateidOne(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res = c.write_file(fh, _text, 5, env.stateid1, DATA_SYNC4)
     check(res, msg="WRITE with stateid=ones and DATA_SYNC4")
@@ -92,7 +92,7 @@ def testWithOpen(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs)
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs)
     res = c.write_file(fh, _text, 50, stateid, FILE_SYNC4)
     check(res, msg="WRITE with openstateid and FILE_SYNC4")
     if res.committed != FILE_SYNC4:
@@ -110,7 +110,7 @@ def testNoData(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs)
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs)
     time_prior = c.do_getattr(FATTR4_TIME_MODIFY, fh)
     env.sleep(1)
     res = c.write_file(fh, '', 5, stateid)
@@ -135,7 +135,7 @@ def testMaximumData(t, env):
     c.init_connection()
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
     maxio = min(maxread, maxwrite)
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     pattern="abcdefghijklmnop"
     data = pattern * (maxio // len(pattern)) + "q" * (maxio % len(pattern))
     # Write the data
@@ -167,7 +167,7 @@ def testTooLargeData(t, env):
     c = env.c1
     c.init_connection()
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     data = "a" * (maxwrite + 1000000)
     try:
         # We don't care much what the server does, this is just a check
@@ -186,7 +186,7 @@ def testDir(t, env):
     CODE: WRT6d
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     res = c.write_file(path, _text)
@@ -200,7 +200,7 @@ def testLink(t, env):
     CODE: WRT6a
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4LNK)
     check(res)
     res = c.write_file(path, _text)
@@ -214,7 +214,7 @@ def testBlock(t, env):
     CODE: WRT6b
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4BLK)
     check(res)
     res = c.write_file(path, _text)
@@ -228,7 +228,7 @@ def testChar(t, env):
     CODE: WRT6c
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4CHR)
     check(res)
     res = c.write_file(path, _text)
@@ -242,7 +242,7 @@ def testFifo(t, env):
     CODE: WRT6f
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4FIFO)
     check(res)
     res = c.write_file(path, _text)
@@ -256,7 +256,7 @@ def testSocket(t, env):
     CODE: WRT6s
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     res = c.write_file(path, _text)
@@ -282,7 +282,7 @@ def testOpenMode(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                    access=OPEN4_SHARE_ACCESS_READ)
     res = c.write_file(fh, _text, 0, stateid)
     check(res, NFS4ERR_OPENMODE, "WRITE with file opened in READ mode")
@@ -299,7 +299,7 @@ def testShareDeny(t, env):
     c = env.c1
     c.init_connection()
     attrs = {FATTR4_SIZE: 32, FATTR4_MODE: 0o644}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                    deny=OPEN4_SHARE_DENY_WRITE)
     res = c.write_file(fh, _text)
     check(res, NFS4ERR_LOCKED, "WRITE to file with DENY set")
@@ -316,7 +316,7 @@ def testBadStateidGanesha(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.write_file(fh, _text, 0, makeBadIDganesha(stateid))
     check(res, NFS4ERR_BAD_STATEID, "WRITE with bad stateid")
     
@@ -329,7 +329,7 @@ def testStaleStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.write_file(fh, _text, 0, makeStaleId(stateid))
     check(res, NFS4ERR_STALE_STATEID, "WRITE with stale stateid")
 
@@ -342,10 +342,10 @@ def testOldStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
-    check(res, msg="Creating file %s" % t.code)
+    res = c.create_file(t.word())
+    check(res, msg="Creating file %s" % t.word())
     oldstateid = res.resarray[-2].switch.switch.stateid
-    fh, stateid = c.confirm(t.code, res)
+    fh, stateid = c.confirm(t.word(), res)
     res = c.write_file(fh, _text, 0, oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "WRITE with old stateid")
 
@@ -358,7 +358,7 @@ def testDoubleWrite(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     ops = c.use_obj(fh)
     ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, 'one')]
     ops += [op.write(stateid4(0, ''), 3, UNSTABLE4, 'two')]
@@ -384,7 +384,7 @@ def testLargeWrite(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     maxread, maxwrite = _get_iosize(t, c, c.homedir)
     res = c.write_file(fh, 'A'*maxwrite, how=UNSTABLE4)
     check(res, msg="WRITE with stateid=zeros and UNSTABLE4")
@@ -406,7 +406,7 @@ def testSizes(t, env):
         buf += struct.pack('>L', i);
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     for i in range(0, max):
         ops = c.use_obj(fh)
         ops += [op.write(stateid4(0, ''), 0, UNSTABLE4, buf[0:i])]
@@ -429,7 +429,7 @@ def testLargeReadWrite(t, env):
     size = min(maxread/4, maxwrite/4)
     writedata = 'A'*size
     attrs = {FATTR4_SIZE: size}
-    fh, stateid = c.create_confirm(t.code, attrs=attrs,
+    fh, stateid = c.create_confirm(t.word(), attrs=attrs,
                                     deny=OPEN4_SHARE_DENY_NONE)
     ops = c.use_obj(fh)
     ops += [op.read(stateid, 0, size)]
@@ -461,7 +461,7 @@ def testMultipleReadWrites(t,env):
         data += struct.pack('>L', i)
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
     for i in range(0, len(offsets) - 1):
         ops += [op.write(stateid, offsets[i], UNSTABLE4,
@@ -496,7 +496,7 @@ def testChangeGranularityWrite(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
         + [op.write(stateid, 0,  UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
         + [op.write(stateid, 10, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
@@ -520,8 +520,8 @@ def testStolenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code, attrs={FATTR4_MODE: 0o600})
-    fh, stateid = c.confirm(t.code, res)
+    res = c.create_file(t.word(), attrs={FATTR4_MODE: 0o600})
+    fh, stateid = c.confirm(t.word(), res)
     security=c.security
     c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
     res = c.write_file(fh, _text, stateid=stateid)

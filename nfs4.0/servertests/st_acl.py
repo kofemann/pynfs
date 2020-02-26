@@ -31,7 +31,7 @@ def testACL(t, env):
     c = env.c1
     c.init_connection()
 
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
     acl = [nfsace4(0, 0, 0,"123")]
     ops += [c.setattr({FATTR4_ACL: acl})]
@@ -52,7 +52,7 @@ def testLargeACL(t, env):
     c = env.c1
     c.init_connection()
 
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh)
     acl = []
     # using larger id's just to try for a larger reply:

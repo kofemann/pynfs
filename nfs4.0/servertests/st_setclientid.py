@@ -29,10 +29,10 @@ def testClientReboot(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     # This should clean out client state, invalidating stateid
     c.init_connection(verifier='')
-    res = c.close_file(t.code, fh, stateid)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, NFS4ERR_EXPIRED,
           "Trying to use old stateid after SETCLIENTID_CONFIRM purges state")
     
@@ -44,12 +44,12 @@ def testClientUpdateCallback(t, env):
     CODE: CID1b
     """
     c = env.c1
-    id = 'pynfs%i_%s' % (os.getpid(), t.code)
+    id = 'pynfs%i_%s' % (os.getpid(), t.word())
     verf = struct.pack('>d', time.time())
     c.init_connection(id, verf)
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     c.init_connection(id, verf)
-    res = c.close_file(t.code, fh, stateid)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, msg="Close after updating callback info")
     
 def testNotInUse(t, env):
@@ -64,7 +64,7 @@ def testNotInUse(t, env):
     """
     c1 = env.c1
     c2 = env.c2
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
     c1.init_connection(clid, verifier=c1.verifier)
     ops = [c2.setclientid(clid, verifier=c1.verifier)]
     res = c2.compound(ops)
@@ -82,9 +82,9 @@ def testInUse(t, env):
     """
     c1 = env.c1
     c2 = env.c2
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
     c1.init_connection(clid, verifier=c1.verifier)
-    c1.create_confirm(t.code)
+    c1.create_confirm(t.word())
     ops = [c2.setclientid(clid, verifier=c1.verifier)]
     res = c2.compound(ops)
     check(res, NFS4ERR_CLID_INUSE, "SETCLIENTID with same nfs_client_id.id")
@@ -97,7 +97,7 @@ def testLoseAnswer(t, env):
     CODE: CID3
     """
     c = env.c1
-    id = "Clientid_for_%s_pid=%i" % (t.code, os.getpid())
+    id = "Clientid_for_%s_pid=%i" % (t.word(), os.getpid())
     c.init_connection(id)
     res = c.compound([c.setclientid(id=id)])
     check(res)
@@ -118,7 +118,7 @@ def testAllCases(t, env):
     CODE: CID4
     """
     c = env.c1
-    id = "Clientid_for_%s_pid=%i" % (t.code, os.getpid())
+    id = "Clientid_for_%s_pid=%i" % (t.word(), os.getpid())
     # no (*x***), no (*x****)
     res = c.compound([c.setclientid(id=id)])
     check(res)
@@ -146,7 +146,7 @@ def testCallbackInfoUpdate(t, env):
     CODE: CID4a
     """
     c1 = env.c1
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
 
     # confirmed { v, x, c, l, s }
     (cclientid, cconfirm) = c1.init_connection(clid, verifier=c1.verifier)
@@ -180,7 +180,7 @@ def testConfirmedDiffVerifier(t, env):
     CODE: CID4b
     """
     c1 = env.c1
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
 
     # confirmed { u, x, c, l, s }
     (cclientid, cconfirm) = c1.init_connection(clid, verifier=c1.verifier)
@@ -218,7 +218,7 @@ def testConfUnConfDiffVerifier1(t, env):
     CODE: CID4c
     """
     c1 = env.c1
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
 
     # confirmed { u, x, c, l, s }
     (cclientid, cconfirm) = c1.init_connection(clid, verifier=c1.verifier)
@@ -263,7 +263,7 @@ def testConfUnConfDiffVerifier2(t, env):
     CODE: CID4d
     """
     c1 = env.c1
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
 
     # confirmed { u, x, c, l, s }
     (cclientid, cconfirm) = c1.init_connection(clid, verifier=c1.verifier)
@@ -313,7 +313,7 @@ def testUnConfReplaced(t, env):
     CODE: CID4e
     """
     c1 = env.c1
-    clid = "Clid_for_%s_pid=%i" % (t.code, os.getpid())
+    clid = "Clid_for_%s_pid=%i" % (t.word(), os.getpid())
 
     # unconfirmed { w, x, d, m, t }
     ops = [c1.setclientid(clid, verifier="unconf")]
@@ -354,14 +354,14 @@ def testLotsOfClients(t, env):
     CODE: CID5
     """
     c = env.c1
-    basedir = c.homedir + [t.code]
+    basedir = c.homedir + [t.word()]
     res = c.create_obj(basedir)
     check(res)
-    idlist = ["Clientid%i_for_%s_pid%i" % (x, t.code, os.getpid()) \
+    idlist = ["Clientid%i_for_%s_pid%i" % (x, t.word(), os.getpid()) \
               for x in range(1024)]
     for id in idlist:
         c.init_connection(id)
-        c.create_confirm(t.code, basedir + [id])
+        c.create_confirm(t.word(), basedir + [id])
 
 def testNoConfirm(t, env):
     """SETCLIENTID - create a stale clientid, and use it.
@@ -371,14 +371,14 @@ def testNoConfirm(t, env):
     CODE: CID6
     """
     c = env.c1
-    id = "Clientid_for_%s_pid=%i" % (t.code, os.getpid())
+    id = "Clientid_for_%s_pid=%i" % (t.word(), os.getpid())
     res = c.compound([c.setclientid(id)])
     check(res)
     res = c.compound([c.setclientid(id, '')])
     check(res)
     c.clientid = res.resarray[0].switch.switch.clientid
     ops = c.use_obj(c.homedir)
-    ops += [c.open(t.code, t.code, OPEN4_CREATE)]
+    ops += [c.open(t.word(), t.word(), OPEN4_CREATE)]
     res = c.compound(ops)
     check(res, [NFS4ERR_STALE_CLIENTID, NFS4ERR_EXPIRED],
           "OPEN using clientid that was never confirmed")

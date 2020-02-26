@@ -11,7 +11,7 @@ def _commit(t, c, offset=0, count=0, statlist=[NFS4_OK]):
     CODE: CMT1a
     """
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
     res = c.commit_file(fh, offset, count)
@@ -156,7 +156,7 @@ def testCommitOverflow(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
     res = c.commit_file(fh, 0xfffffffffffffff0, 64)

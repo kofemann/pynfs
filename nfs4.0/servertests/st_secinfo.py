@@ -43,13 +43,13 @@ def testVaporFile(t, env):
     CODE: SEC3
     """
     c = env.c1
-    newdir = c.homedir + [t.code]
+    newdir = c.homedir + [t.word()]
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
     ops += [op.secinfo('vapor')]
     res = c.compound(ops)
-    check(res, NFS4ERR_NOENT, "SECINFO on nonexistant file %s/vapor" % t.code)
+    check(res, NFS4ERR_NOENT, "SECINFO on nonexistant file %s/vapor" % t.word())
 
 def testNoFh(t, env):
     """SECINFO should fail with NFS4ERR_NOFILEHANDLE if no cfh
@@ -71,7 +71,7 @@ def testZeroLenName(t, env):
     CODE: SEC5
     """
     c = env.c1
-    newdir = c.homedir + [t.code]
+    newdir = c.homedir + [t.word()]
     res = c.create_obj(newdir)
     check(res)
     ops = c.use_obj(newdir)
@@ -87,7 +87,7 @@ def testInvalidUtf8(t, env):
     CODE: SEC6
     """
     c = env.c1
-    newdir = c.homedir + [t.code]
+    newdir = c.homedir + [t.word()]
     res = c.create_obj(newdir)
     check(res)
     baseops = c.use_obj(newdir)

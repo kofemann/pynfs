@@ -10,7 +10,7 @@ def testUnlockedFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.lock_test(fh)
     check(res, msg="LOCKT on unlocked file")
 
@@ -95,9 +95,9 @@ def testPartialLockedFile1(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 100, 50)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 100, 50)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh, 0, 50)
     check(res, msg="LOCKT on an unlocked portion of a locked file")
     
@@ -110,9 +110,9 @@ def testPartialLockedFile2(t,env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 100, 50)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 100, 50)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh, 125, 50)
     check(res, NFS4ERR_DENIED, "LOCKT on a locked portion of a locked file")
     
@@ -125,7 +125,7 @@ def test32bitRange(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.lock_test(fh, 0, 0xffffffffffff)
     check(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCKT range over 32 bits")
     if res.status == NFS4ERR_BAD_RANGE:
@@ -140,10 +140,10 @@ def testOverlap(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     lockowner = "lockowner_LKTOVER"
-    res = c.lock_file(t.code, fh, stateid, 100, 50, lockowner=lockowner)
-    check(res, msg="Locking file %s" % t.code)
+    res = c.lock_file(t.word(), fh, stateid, 100, 50, lockowner=lockowner)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh, 100, 50, tester=lockowner)
     check(res, msg="LOCKT against own exactly matching lock")
     res = c.lock_test(fh, 75, 50, tester=lockowner)
@@ -161,7 +161,7 @@ def testZeroLen(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.lock_test(fh, 75, 0)
     check(res, NFS4ERR_INVAL, "LOCKT with len=0")
 
@@ -174,7 +174,7 @@ def testLenTooLong(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.lock_test(fh, 100, 0xfffffffffffffffe)
     check(res, NFS4ERR_INVAL, "LOCKT with offset+len overflow")
 
@@ -198,7 +198,7 @@ def testStaleClientid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     orig_clientid = c.clientid
     try:
         c.clientid = get_invalid_clientid()

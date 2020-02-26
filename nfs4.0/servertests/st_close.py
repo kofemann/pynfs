@@ -11,8 +11,8 @@ def testCloseCreate(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res, msg="CLOSE a created file")
 
 def testCloseOpen(t, env):
@@ -24,8 +24,8 @@ def testCloseOpen(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.open_confirm(t.code, env.opts.usefile)
-    res = c.close_file(t.code, fh, stateid)
+    fh, stateid = c.open_confirm(t.word(), env.opts.usefile)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, msg="CLOSE a non-create open")
 
 def testBadSeqid(t, env):
@@ -37,8 +37,8 @@ def testBadSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, fh, stateid, seqid=50)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), fh, stateid, seqid=50)
     check(res, NFS4ERR_BAD_SEQID, "CLOSE with a bad openseqid=50")
 
 def testBadStateid(t, env):
@@ -50,8 +50,8 @@ def testBadStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, fh, env.stateid0)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), fh, env.stateid0)
     check(res, NFS4ERR_BAD_STATEID, "CLOSE with a bad stateid")
     
 def testOldStateid(t, env):
@@ -63,12 +63,12 @@ def testOldStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
+    res = c.create_file(t.word())
     check(res)
     fh = res.resarray[-1].switch.switch.object
     stateid = res.resarray[-2].switch.switch.stateid
-    c.confirm(t.code, res)
-    res = c.close_file(t.code, fh, stateid)
+    c.confirm(t.word(), res)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, NFS4ERR_OLD_STATEID, "CLOSE with an old stateid")
 
 def testStaleStateid(t, env):
@@ -80,8 +80,8 @@ def testStaleStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, fh, makeStaleId(stateid))
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), fh, makeStaleId(stateid))
     check(res, NFS4ERR_STALE_STATEID, "CLOSE with a stale stateid")
     
 def testNoCfh(t, env):
@@ -93,8 +93,8 @@ def testNoCfh(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, None, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), None, stateid)
     check(res, NFS4ERR_NOFILEHANDLE, "CLOSE with no <cfh>")
 
 def testTimedoutClose1(t, env):
@@ -109,14 +109,14 @@ def testTimedoutClose1(t, env):
     c = env.c1
     sleeptime = c.getLeaseTime() * 2
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_WRITE,
                                    attrs={FATTR4_MODE: 0o666})
     env.sleep(sleeptime)
     # Conflicting open should force server to drop state
     c2 = env.c2
     c2.init_connection()
-    c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
-    res = c.close_file(t.code, fh, stateid)
+    c2.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_WRITE)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, NFS4ERR_EXPIRED, "CLOSE after lease timeout")
     
 def testTimedoutClose2(t, env):
@@ -131,16 +131,16 @@ def testTimedoutClose2(t, env):
     c = env.c1
     sleeptime = c.getLeaseTime() * 2
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_WRITE,
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_WRITE,
                                    attrs={FATTR4_MODE: 0o666})
-    res = c.lock_file(t.code, fh, stateid)
+    res = c.lock_file(t.word(), fh, stateid)
     check(res)
     env.sleep(sleeptime)
     # Conflicting open should force server to drop state
     c2 = env.c2
     c2.init_connection()
-    c2.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_WRITE)
-    res = c.close_file(t.code, fh, stateid)
+    c2.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_WRITE)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, NFS4ERR_EXPIRED, "CLOSE after lease timeout with lock held")
 
 def testReplaySeqid1(t, env):
@@ -152,11 +152,11 @@ def testReplaySeqid1(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    seqid = c.get_seqid(t.code)
-    res = c.close_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    seqid = c.get_seqid(t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res)
-    res = c.close_file(t.code, fh, stateid, seqid=seqid)
+    res = c.close_file(t.word(), fh, stateid, seqid=seqid)
     check(res)
 
 def testNextSeqid(t, env):
@@ -168,11 +168,11 @@ def testNextSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    seqid = c.get_seqid(t.code)
-    res = c.close_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    seqid = c.get_seqid(t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res)
-    res = c.close_file(t.code, fh, stateid, seqid=seqid+1)
+    res = c.close_file(t.word(), fh, stateid, seqid=seqid+1)
     # should probably fail somehow, but in any case I'm happy
     # with anything that's not a server crash.
 
@@ -188,13 +188,13 @@ def testReplaySeqid2(t, env):
     """
     c = env.c1
     c.init_connection()
-    path2 = c.homedir + [t.code + '-2']
-    fh, stateid = c.create_confirm(t.code)
-    fh2, stateid2 = c.create_confirm(t.code, path=path2);
-    seqid = c.get_seqid(t.code)
-    res = c.close_file(t.code, fh, stateid)
+    path2 = c.homedir + [t.word() + '-2']
+    fh, stateid = c.create_confirm(t.word())
+    fh2, stateid2 = c.create_confirm(t.word(), path=path2);
+    seqid = c.get_seqid(t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res)
-    res = c.close_file(t.code, fh, stateid, seqid=seqid)
+    res = c.close_file(t.word(), fh, stateid, seqid=seqid)
     check(res)
-    res = c.close_file(t.code, fh2, stateid2)
+    res = c.close_file(t.word(), fh2, stateid2)
 

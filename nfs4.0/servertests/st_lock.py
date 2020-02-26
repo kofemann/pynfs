@@ -14,11 +14,11 @@ def testFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
 
 def testClose(t, env):
     """LOCK - closing should release locks or return NFS4ERR_LOCKS_HELD
@@ -29,19 +29,19 @@ def testClose(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid)
-    check(res, msg="Locking file %s" % t.code)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
-    res = c.close_file(t.code, fh, stateid)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res, [NFS4_OK, NFS4ERR_LOCKS_HELD],
               "Trying to close locked file")
     if res.status == NFS4ERR_LOCKS_HELD:
         t.fail_support("Can not close locked files")
     # Now make sure lock was released
     res = c.lock_test(fh)
-    check(res, msg="Testing that close released locks on file %s" % t.code)
+    check(res, msg="Testing that close released locks on file %s" % t.word())
     
 def testExistingFile(t, env):
     """LOCK a regular file that was opened w/o create
@@ -55,15 +55,15 @@ def testExistingFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.close_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.close_file(t.word(), fh, stateid)
     check(res)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                  deny=OPEN4_SHARE_DENY_NONE)
-    res = c.lock_file(t.code, fh, stateid)
-    check(res, msg="Locking file %s" % t.code)
+    res = c.lock_file(t.word(), fh, stateid)
+    check(res, msg="Locking file %s" % t.word())
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
 
 def test32bitRange(t, env):
     """LOCK ranges over 32 bits should work or return NFS4ERR_BAD_RANGE
@@ -74,8 +74,8 @@ def test32bitRange(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 0, 0xffffffffffff)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 0, 0xffffffffffff)
     check(res, [NFS4_OK, NFS4ERR_BAD_RANGE], "LOCK range over 32 bits")
     if res.status == NFS4ERR_BAD_RANGE:
         t.fail_support("Server does not support 64 bit lock ranges")
@@ -89,8 +89,8 @@ def testOverlap(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 25, 75)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 25, 75)
     check(res1)
     res2 = c.relock_file(1, fh, res1.lockid, 50, 75)
     check(res2, [NFS4_OK, NFS4ERR_LOCK_RANGE], "Overlapping locks")
@@ -98,7 +98,7 @@ def testOverlap(t, env):
         t.fail_support("Server does not support lock consolidation")
     # Test the merged lock
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
     lock = res.resarray[-1].switch.switch
     if (lock.offset, lock.length) != (25, 100):
         t.fail("Merged lock had [offset,length] = [%i,%i], "
@@ -113,8 +113,8 @@ def testDowngrade(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 25, 75)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 25, 75)
     check(res1)
     # Lock again with read lock
     res2 = c.relock_file(1, fh, res1.lockid, 25, 75, READ_LT)
@@ -123,7 +123,7 @@ def testDowngrade(t, env):
         t.fail_support("Server does not support atomic lock downgrades")
     # Test the lock has changed
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
     if res.resarray[-1].switch.switch.locktype != READ_LT:
         t.fail("Attempted lock downgrade to READ_LT, but got %s" %
                nfs_lock_type4[res.resarray[-1].switch.switch.locktype])
@@ -137,8 +137,8 @@ def testUpgrade(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 25, 75, READ_LT)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 25, 75, READ_LT)
     check(res1)
     # Lock again with write lock
     res2 = c.relock_file(1, fh, res1.lockid, 25, 75, WRITE_LT)
@@ -147,7 +147,7 @@ def testUpgrade(t, env):
         t.fail_support("Server does not support atomic lock upgrades")
     # Test the lock has changed
     res = c.lock_test(fh)
-    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.code)
+    check(res, NFS4ERR_DENIED, "Testing file %s is locked" % t.word())
     if res.resarray[-1].switch.switch.locktype != WRITE_LT:
         t.fail("Attempted lock downgrade to WRITE_LT, but got %s" %
                nfs_lock_type4[res.resarray[-1].switch.switch.locktype])
@@ -161,8 +161,8 @@ def testMode(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ)
-    res = c.lock_file(t.code, fh, stateid)
+    fh, stateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ)
+    res = c.lock_file(t.word(), fh, stateid)
     check(res, [NFS4_OK, NFS4ERR_OPENMODE],
               "Write-locking a read-mode file")
     if res.status == NFS4_OK:
@@ -178,8 +178,8 @@ def testZeroLen(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 25, 0)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 25, 0)
     check(res, NFS4ERR_INVAL, "LOCK with len=0")
 
 def testLenTooLong(t, env):
@@ -191,8 +191,8 @@ def testLenTooLong(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, 100, 0xfffffffffffffffe)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, 100, 0xfffffffffffffffe)
     check(res, NFS4ERR_INVAL, "LOCK with offset+len overflow")
 
 def testNoFh(t, env):
@@ -204,8 +204,8 @@ def testNoFh(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, None, stateid)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), None, stateid)
     check(res, NFS4ERR_NOFILEHANDLE, "LOCK with no <cfh>")
 
 def testBadLockSeqid(t, env):
@@ -217,8 +217,8 @@ def testBadLockSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 0, 25)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 0, 25)
     check(res1)
     res2 = c.relock_file(2, fh, res1.lockid, 50, 25)
     check(res2, NFS4ERR_BAD_SEQID, "LOCK with a bad lockseqid=2")
@@ -232,8 +232,8 @@ def testBadOpenSeqid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, openseqid=50)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, openseqid=50)
     check(res, NFS4ERR_BAD_SEQID, "LOCK with a bad openseqid=50")
 
 def testNonzeroLockSeqid(t, env):
@@ -246,8 +246,8 @@ def testNonzeroLockSeqid(t, env):
     # FRED - if it must be 0, why is it an option?
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid, lockseqid=1)
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, lockseqid=1)
     check(res, NFS4ERR_BAD_SEQID, "LOCK with newlockowner's lockseqid=1",
           [NFS4_OK])
 
@@ -260,8 +260,8 @@ def testOldLockStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 0, 25)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 0, 25)
     check(res1)
     res2 = c.relock_file(1, fh, res1.lockid, 50, 25)
     check(res2)
@@ -278,18 +278,18 @@ def testOldOpenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, oldstateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+    fh, oldstateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                       deny=OPEN4_SHARE_DENY_NONE)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res = c.downgrade_file(t.code, fh, stateid,
+    res = c.downgrade_file(t.word(), fh, stateid,
                            access=OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
     check(res)
     stateid = res.resarray[-1].switch.switch.open_stateid
     if oldstateid.seqid == stateid.seqid and oldstateid.other == stateid.other:
         t.fail("Stateid did not change")
-    res2 = c.lock_file(t.code, fh, oldstateid, type=READ_LT)
+    res2 = c.lock_file(t.word(), fh, oldstateid, type=READ_LT)
     check(res2, NFS4ERR_OLD_STATEID, "LOCK with old openstateid")
 
 # FRED - see section 8.1.3
@@ -303,13 +303,13 @@ def testOldOpenStateid2(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, oldstateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+    fh, oldstateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                       deny=OPEN4_SHARE_DENY_NONE)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                  deny=OPEN4_SHARE_DENY_WRITE)
     if oldstateid.seqid == stateid.seqid and oldstateid.other == stateid.other:
         t.fail("Stateid did not change")
-    res2 = c.lock_file(t.code, fh, oldstateid, type=READ_LT)
+    res2 = c.lock_file(t.word(), fh, oldstateid, type=READ_LT)
     check(res2, NFS4ERR_OLD_STATEID, "LOCK with old openstateid",
           [NFS4ERR_BAD_STATEID])
     
@@ -322,11 +322,11 @@ def testStaleClientid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     orig_clientid = c.clientid
     try:
         c.clientid = get_invalid_clientid()
-        res = c.lock_file(t.code, fh, stateid, 0, 25)
+        res = c.lock_file(t.word(), fh, stateid, 0, 25)
         check(res, NFS4ERR_STALE_CLIENTID, "LOCK with a bad clientid")
     finally:
         c.clientid = orig_clientid
@@ -341,8 +341,8 @@ def testBadStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, stateid4(0, ''))
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid4(0, ''))
     check(res, NFS4ERR_BAD_STATEID, "LOCK with a bad stateid")
 
 def testBadStateidganesha(t, env):
@@ -354,8 +354,8 @@ def testBadStateidganesha(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, makeBadIDganesha(stateid))
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, makeBadIDganesha(stateid))
     check(res, NFS4ERR_BAD_STATEID, "LOCK with a bad stateid")
 
 def testStaleLockStateid(t, env):
@@ -367,8 +367,8 @@ def testStaleLockStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res1 = c.lock_file(t.code, fh, stateid, 0, 25)
+    fh, stateid = c.create_confirm(t.word())
+    res1 = c.lock_file(t.word(), fh, stateid, 0, 25)
     check(res1)
     res2 = c.relock_file(1, fh, makeStaleId(res1.lockid), 50, 25)
     check(res2, NFS4ERR_STALE_STATEID, "LOCK with stale lockstateid",
@@ -383,8 +383,8 @@ def testStaleOpenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
-    res = c.lock_file(t.code, fh, makeStaleId(stateid))
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, makeStaleId(stateid))
     check(res, NFS4ERR_STALE_STATEID, "LOCK with stale openstateid",
           [NFS4ERR_BAD_STATEID, NFS4ERR_OLD_STATEID])
 
@@ -398,13 +398,13 @@ def testTimedoutGrabLock(t, env):
     c1 = env.c1
     c1.init_connection()
     # Client 1: create a file and get its fh
-    fh1, stateid1 = c1.create_confirm(t.code)
+    fh1, stateid1 = c1.create_confirm(t.word())
     c2 = env.c2
     c2.init_connection()
     # Client 2: open the file
-    fh2, stateid2 = c2.open_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh2, stateid2 = c2.open_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     # Client 1: lock file
-    res1 = c1.lock_file(t.code, fh1, stateid1)
+    res1 = c1.lock_file(t.word(), fh1, stateid1)
     check(res1)
     # Now wait, let client1 expire while client2 sends RENEWs
     sleeptime = c2.getLeaseTime() // 2
@@ -413,7 +413,7 @@ def testTimedoutGrabLock(t, env):
         res = c2.compound([op.renew(c2.clientid)])
         check(res, [NFS4_OK, NFS4ERR_CB_PATH_DOWN])
     # Client 2: Lock file, should work since Client 1's lock has expired
-    res2 = c2.lock_file(t.code, fh2, stateid2, type=READ_LT)
+    res2 = c2.lock_file(t.word(), fh2, stateid2, type=READ_LT)
     check(res2, msg="Locking file after another client's lock expires")
 
 def testGrabLock1(t, env):
@@ -425,7 +425,7 @@ def testGrabLock1(t, env):
     """
     c = env.c1
     c.init_connection()
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     # owner1 creates a file
     fh1, stateid1 = c.create_confirm('owner1', file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
@@ -460,7 +460,7 @@ def testGrabLock2(t, env):
     c1.init_connection()
     c2 = env.c2
     c2.init_connection()
-    file = c1.homedir + [t.code]
+    file = c1.homedir + [t.word()]
     # Client1 creates a file
     fh1, stateid1 = c1.create_confirm('owner1', file,
                                       access=OPEN4_SHARE_ACCESS_BOTH,
@@ -493,7 +493,7 @@ def testReadLocks1(t, env):
     """
     c = env.c1
     c.init_connection()
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     # owner1 creates a file
     fh1, stateid1 = c.create_confirm('owner1', file,
                                      access=OPEN4_SHARE_ACCESS_BOTH,
@@ -526,7 +526,7 @@ def testReadLocks2(t, env):
     c1.init_connection()
     c2 = env.c2
     c2.init_connection()
-    file = c1.homedir + [t.code]
+    file = c1.homedir + [t.word()]
     # Client1 creates a file
     fh1, stateid1 = c1.create_confirm('owner1', file,
                                       attrs={FATTR4_MODE: 0o666},
@@ -560,22 +560,22 @@ def testFairness(t, env):
     c = env.c1
     c.init_connection()
     # Standard owner opens and locks a file
-    fh1, stateid1 = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
-    res1 = c.lock_file(t.code, fh1, stateid1, type=WRITE_LT)
-    check(res1, msg="Locking file %s" % t.code)
+    fh1, stateid1 = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
+    res1 = c.lock_file(t.word(), fh1, stateid1, type=WRITE_LT)
+    check(res1, msg="Locking file %s" % t.word())
     # Second owner is denied a blocking lock
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh2, stateid2 = c.open_confirm("owner2", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK18")
-    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     # Standard owner releases lock
     res1 = c.unlock_file(1, fh1, res1.lockid)
     check(res1)
     # Third owner tries to butt in and steal lock second owner is waiting for
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh3, stateid3 = c.open_confirm("owner3", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
@@ -583,7 +583,7 @@ def testFairness(t, env):
                        type=WRITEW_LT, lockowner="lockowner3_LOCK18")
     if res3.status == NFS4_OK:
         t.pass_warn("Locking is not fair")
-    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.code)
+    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.word())
     # Second owner goes back and gets his lock
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK18")
@@ -599,17 +599,17 @@ def testBlockPoll(t, env):
     c = env.c1
     c.init_connection()
     # Standard owner opens and locks a file
-    fh1, stateid1 = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
-    res1 = c.lock_file(t.code, fh1, stateid1, type=WRITE_LT)
-    check(res1, msg="Locking file %s" % t.code)
+    fh1, stateid1 = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
+    res1 = c.lock_file(t.word(), fh1, stateid1, type=WRITE_LT)
+    check(res1, msg="Locking file %s" % t.word())
     # Second owner is denied a blocking lock
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh2, stateid2 = c.open_confirm("owner2", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK19")
-    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     sleeptime = c.getLeaseTime() // 2
     # Poll for lock
     for i in range(4):
@@ -617,12 +617,12 @@ def testBlockPoll(t, env):
         env.sleep(sleeptime, "Waiting for lock release")
         res2 = c.lock_file("owner2", fh2, stateid2,
                            type=WRITEW_LT, lockowner="lockowner2_LOCK19")
-        check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+        check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     # Standard owner releases lock
     res1 = c.unlock_file(1, fh1, res1.lockid)
     check(res1)
     # Third owner tries to butt in and steal lock second owner is waiting for
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh3, stateid3 = c.open_confirm("owner3", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
@@ -630,7 +630,7 @@ def testBlockPoll(t, env):
                        type=WRITEW_LT, lockowner="lockowner3_LOCK19")
     if res3.status == NFS4_OK:
         t.pass_warn("Locking is not fair")
-    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.code)
+    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.word())
     # Second owner goes back and gets his lock
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK19")
@@ -646,17 +646,17 @@ def testBlockTimeout(t, env):
     c = env.c1
     c.init_connection()
     # Standard owner opens and locks a file
-    fh1, stateid1 = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
-    res1 = c.lock_file(t.code, fh1, stateid1, type=WRITE_LT)
-    check(res1, msg="Locking file %s" % t.code)
+    fh1, stateid1 = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
+    res1 = c.lock_file(t.word(), fh1, stateid1, type=WRITE_LT)
+    check(res1, msg="Locking file %s" % t.word())
     # Second owner is denied a blocking lock
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh2, stateid2 = c.open_confirm("owner2", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK20")
-    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     sleeptime = c.getLeaseTime() // 2
     # Wait for queued lock to timeout
     for i in range(3):
@@ -668,7 +668,7 @@ def testBlockTimeout(t, env):
     check(res1)
     # Third owner tries to butt in and steal lock second owner is waiting for
     # Should work, since second owner let his turn expire
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     fh3, stateid3 = c.open_confirm("owner3", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
@@ -692,10 +692,10 @@ def testBlockingQueue(t, env):
     c = env.c1
     c.init_connection()
     num_clients = 5
-    file = c.homedir + [t.code]
+    file = c.homedir + [t.word()]
     owner = ["owner%i" % i for i in range(num_clients)]
     # Create the file
-    fh = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)[0]
+    fh = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)[0]
     # Have each client open the file
     stateid = [None for i in range(num_clients)]
     res = stateid[:]
@@ -711,10 +711,10 @@ def testBlockingQueue(t, env):
             res[i] = c.lock_file(own, fh, stateid[i], lockseqid=seqid,
                                  type=WRITEW_LT, lockowner="lock%s_LOCK21"%own)
             if own == owner[0]:
-                check(res[i], msg="Locking file %s" % t.code)
+                check(res[i], msg="Locking file %s" % t.word())
             else:
                 check(res[i], NFS4ERR_DENIED,
-                      "Conflicting lock on %s" % t.code)
+                      "Conflicting lock on %s" % t.word())
         # Release the lock
         #seqid += 1
         own = owner[0]
@@ -728,7 +728,7 @@ def testBlockingQueue(t, env):
             if res[i].status == NFS4_OK:
                 t.pass_warn("Locking is not fair")
             check(res[i], NFS4ERR_DENIED,
-                  "Tried to grab lock on %s while another is waiting" % t.code)
+                  "Tried to grab lock on %s while another is waiting" % t.word())
         #seqid += 1
         # Remove first owner from the fray
         del owner[0]
@@ -743,10 +743,10 @@ def testLongPoll(t, env):
     c = env.c1
     c.init_connection()
     # Standard owner opens and locks a file
-    fh1, stateid1 = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
-    res1 = c.lock_file(t.code, fh1, stateid1, type=WRITE_LT)
-    check(res1, msg="Locking file %s" % t.code)
-    file = c.homedir + [t.code]
+    fh1, stateid1 = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
+    res1 = c.lock_file(t.word(), fh1, stateid1, type=WRITE_LT)
+    check(res1, msg="Locking file %s" % t.word())
+    file = c.homedir + [t.word()]
     fh2, stateid2 = c.open_confirm("owner2", file,
                                    access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
@@ -756,7 +756,7 @@ def testLongPoll(t, env):
     # Second owner is denied a blocking lock
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK22")
-    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+    check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
     sleeptime = c.getLeaseTime() - 5 # Just in time renewal
     badpoll = 0
     timeleft = 2 * sleeptime
@@ -770,11 +770,11 @@ def testLongPoll(t, env):
             if res3.status == NFS4_OK:
                 t.pass_warn("Locking is not fair")
             check(res3, NFS4ERR_DENIED,
-                  "Tried to grab lock on %s while another is waiting" % t.code)
+                  "Tried to grab lock on %s while another is waiting" % t.word())
         if timeleft == sleeptime:
             res2 = c.lock_file("owner2", fh2, stateid2,
                                type=WRITEW_LT, lockowner="lockowner2_LOCK22")
-            check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.code)
+            check(res2, NFS4ERR_DENIED, msg="Conflicting lock on %s" % t.word())
         timeleft -= 1
         badpoll = not badpoll
     # Standard owner releases lock
@@ -785,7 +785,7 @@ def testLongPoll(t, env):
                        type=WRITEW_LT, lockowner="lockowner3_LOCK22")
     if res3.status == NFS4_OK:
         t.pass_warn("Locking is not fair")
-    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.code)
+    check(res3, NFS4ERR_DENIED, msg="Tried to grab lock on %s while another is waiting" % t.word())
     # Second owner goes back and gets his lock
     res2 = c.lock_file("owner2", fh2, stateid2,
                        type=WRITEW_LT, lockowner="lockowner2_LOCK22")
@@ -871,12 +871,12 @@ def testOpenDowngradeLock(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, oldstateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ,
+    fh, oldstateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
                                       deny=OPEN4_SHARE_DENY_NONE)
-    fh, stateid = c.open_confirm(t.code, access=OPEN4_SHARE_ACCESS_BOTH,
+    fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_BOTH,
                                    deny=OPEN4_SHARE_DENY_NONE)
-    res = c.lock_file(t.code, fh, stateid);
-    res = c.downgrade_file(t.code, fh, res.lockid,
+    res = c.lock_file(t.word(), fh, stateid);
+    res = c.downgrade_file(t.word(), fh, res.lockid,
                            access=OPEN4_SHARE_ACCESS_READ,
                            deny=OPEN4_SHARE_DENY_NONE)
 
@@ -916,7 +916,7 @@ def testOpenUpgradeLock(t, env):
     """
     c= env.c1
     c.init_connection()
-    os = open_sequence(c, t.code, lockowner="lockowner_LOCK24")
+    os = open_sequence(c, t.word(), lockowner="lockowner_LOCK24")
     os.open(OPEN4_SHARE_ACCESS_READ)
     os.lock(READ_LT)
     os.open(OPEN4_SHARE_ACCESS_WRITE)

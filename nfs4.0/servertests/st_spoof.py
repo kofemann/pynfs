@@ -13,15 +13,15 @@ def testSpoofUser(t, env):
     c = env.c1
     path = env.opts.usefile
     c.init_connection()
-    fh, stateid = c.open_confirm(t.code, path, access=OPEN4_SHARE_ACCESS_READ)
+    fh, stateid = c.open_confirm(t.word(), path, access=OPEN4_SHARE_ACCESS_READ)
     res = c.read_file(fh, 5, 1000, stateid)
     check(res, msg="Reading file /%s" % '/'.join(path))
-    res = c.close_file(t.code, fh, stateid)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, msg="CLOSE a non-create open")
-    fh, stateid = c.open_confirm(t.code, path, access=OPEN4_SHARE_ACCESS_WRITE)
+    fh, stateid = c.open_confirm(t.word(), path, access=OPEN4_SHARE_ACCESS_WRITE)
     res = c.write_file(fh, "random text to write", 50, stateid, FILE_SYNC4)
     check(res, msg="WRITE with openstateid and FILE_SYNC4")
-    res = c.close_file(t.code, fh, stateid)
+    res = c.close_file(t.word(), fh, stateid)
     check(res, msg="CLOSE a non-create open")
     
 

@@ -59,7 +59,7 @@ def testWithOpen(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.open_confirm(t.code, env.opts.usefile)
+    fh, stateid = c.open_confirm(t.word(), env.opts.usefile)
     res = c.read_file(fh, 5, 1000, stateid)
     check(res, msg="Reading file /%s" % '/'.join(env.opts.usefile))
     _compare(t, res, env.filedata[5:1005], True)
@@ -73,10 +73,10 @@ def testLargeCount(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, attrs={FATTR4_SIZE: 10000000,
+    fh, stateid = c.create_confirm(t.word(), attrs={FATTR4_SIZE: 10000000,
                                                   FATTR4_MODE: 0o644})
     res = c.read_file(fh, 0, 9000000, stateid)
-    check(res, msg="Reading file %s" % t.code)
+    check(res, msg="Reading file %s" % t.word())
     _compare(t, res, '\x00'*9000000, False)
 
 def testLargeOffset(t, env):
@@ -191,7 +191,7 @@ def testBadStateidGanesha(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.read_file(fh, stateid=makeBadIDganesha(stateid))
     check(res, NFS4ERR_BAD_STATEID, "READ with bad stateid")
 
@@ -204,7 +204,7 @@ def testStaleStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     res = c.read_file(fh, stateid=makeStaleId(stateid))
     check(res, NFS4ERR_STALE_STATEID, "READ with stale stateid")
 
@@ -217,10 +217,10 @@ def testOldStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code)
-    check(res, msg="Creating file %s" % t.code)
+    res = c.create_file(t.word())
+    check(res, msg="Creating file %s" % t.word())
     oldstateid = res.resarray[-2].switch.switch.stateid
-    fh, stateid = c.confirm(t.code, res)
+    fh, stateid = c.confirm(t.word(), res)
     res = c.read_file(fh, stateid=oldstateid)
     check(res, NFS4ERR_OLD_STATEID, "READ with old stateid")
 
@@ -234,8 +234,8 @@ def testStolenStateid(t, env):
     """
     c = env.c1
     c.init_connection()
-    res = c.create_file(t.code, attrs={FATTR4_MODE: 0o600})
-    fh, stateid = c.confirm(t.code, res)
+    res = c.create_file(t.word(), attrs={FATTR4_MODE: 0o600})
+    fh, stateid = c.confirm(t.word(), res)
     security=c.security
     c.security=rpc.SecAuthSys(0, "whatever", 3912, 2422, [])
     res = c.read_file(fh, stateid=stateid)

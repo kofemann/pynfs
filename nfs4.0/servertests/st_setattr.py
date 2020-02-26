@@ -104,7 +104,7 @@ def testFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     _set_mode(t, c, fh)
 
 def testDir(t, env):
@@ -115,7 +115,7 @@ def testDir(t, env):
     CODE: SATT1d
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     _set_mode(t, c, path)
 
@@ -127,7 +127,7 @@ def testLink(t, env):
     CODE: SATT1a
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4LNK)
     _set_mode(t, c, path)
 
@@ -139,7 +139,7 @@ def testBlock(t, env):
     CODE: SATT1b
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4BLK)
     _set_mode(t, c, path)
 
@@ -151,7 +151,7 @@ def testChar(t, env):
     CODE: SATT1c
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4CHR)
     _set_mode(t, c, path)
 
@@ -163,7 +163,7 @@ def testFifo(t, env):
     CODE: SATT1f
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4FIFO)
     _set_mode(t, c, path)
 
@@ -175,7 +175,7 @@ def testSocket(t, env):
     CODE: SATT1s
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     _set_mode(t, c, path)
 
@@ -188,7 +188,7 @@ def testUselessStateid1(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     _set_mode(t, c, fh, env.stateid1, " using stateid=1")
 
 def testUselessStateid2(t, env):
@@ -200,7 +200,7 @@ def testUselessStateid2(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     _set_mode(t, c, fh, stateid, " using openstateid")
 
 def testUselessStateid3(t, env):
@@ -212,10 +212,10 @@ def testUselessStateid3(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code, 'file'])
-    path = c.homedir + [t.code, t.code]
-    fh, stateid = c.create_confirm(t.code, path)
-    _set_mode(t, c, c.homedir + [t.code, 'file'], stateid,
+    c.maketree([t.word(), 'file'])
+    path = c.homedir + [t.word(), t.word()]
+    fh, stateid = c.create_confirm(t.word(), path)
+    _set_mode(t, c, c.homedir + [t.word(), 'file'], stateid,
               " using bad openstateid", [NFS4ERR_BAD_STATEID])
 
 # FRED - redo first 2 tests with _DENY_WRITE
@@ -228,7 +228,7 @@ def testResizeFile0(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     _set_size(t, c, fh)
     
 def testResizeFile1(t, env):
@@ -240,7 +240,7 @@ def testResizeFile1(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     _set_size(t, c, fh, env.stateid1, " using stateid=1")
     
 def testResizeFile2(t, env):
@@ -252,7 +252,7 @@ def testResizeFile2(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     _set_size(t, c, fh, stateid, " using openstateid")
     
 def testResizeFile3(t, env):
@@ -264,10 +264,10 @@ def testResizeFile3(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.maketree([t.code, 'file'])
-    path = c.homedir + [t.code, t.code]
-    fh, stateid = c.create_confirm(t.code, path)
-    ops = c.use_obj(c.homedir + [t.code, 'file'])
+    c.maketree([t.word(), 'file'])
+    path = c.homedir + [t.word(), t.word()]
+    fh, stateid = c.create_confirm(t.word(), path)
+    ops = c.use_obj(c.homedir + [t.word(), 'file'])
     ops += [c.setattr({FATTR4_SIZE: 10}, stateid)]
     res = c.compound(ops)
     check(res, NFS4ERR_BAD_STATEID, "SETATTR(_SIZE) with wrong openstateid")
@@ -281,7 +281,7 @@ def testOpenModeResize(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, access=OPEN4_SHARE_ACCESS_READ)
+    fh, stateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ)
     ops = c.use_obj(fh) + [c.setattr({FATTR4_SIZE: 10}, stateid)]
     res = c.compound(ops)
     check(res, NFS4ERR_OPENMODE, "SETATTR(_SIZE) on file with _ACCESS_READ")
@@ -305,8 +305,8 @@ def testReadonlyFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.create_confirm(t.code)
-    _try_readonly(t, env, c.homedir + [t.code])
+    c.create_confirm(t.word())
+    _try_readonly(t, env, c.homedir + [t.word()])
 
 def testReadonlyDir(t, env):
     """SETATTR on read-only attrs should return NFS4ERR_INVAL
@@ -316,7 +316,7 @@ def testReadonlyDir(t, env):
     CODE: SATT6d
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     _try_readonly(t, env, path)
@@ -329,7 +329,7 @@ def testReadonlyLink(t, env):
     CODE: SATT6a
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4LNK)
     check(res)
     _try_readonly(t, env, path)
@@ -342,7 +342,7 @@ def testReadonlyBlock(t, env):
     CODE: SATT6b
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4BLK)
     check(res)
     _try_readonly(t, env, path)
@@ -355,7 +355,7 @@ def testReadonlyChar(t, env):
     CODE: SATT6c
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4CHR)
     check(res)
     _try_readonly(t, env, path)
@@ -368,7 +368,7 @@ def testReadonlyFifo(t, env):
     CODE: SATT6f
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4FIFO)
     check(res)
     _try_readonly(t, env, path)
@@ -381,7 +381,7 @@ def testReadonlySocket(t, env):
     CODE: SATT6s
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     _try_readonly(t, env, path)
@@ -396,7 +396,7 @@ def testInvalidAttr1(t, env):
     CODE: SATT7
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     badattr = dict2fattr({FATTR4_MODE: 0o644})
@@ -415,7 +415,7 @@ def testInvalidAttr2(t, env):
     CODE: SATT8
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     badattr = dict2fattr({FATTR4_MODE: 0o644})
@@ -436,11 +436,11 @@ def testNonUTF8(t, env):
     CODE: SATT9
     """
     c = env.c1
-    c.create_confirm(t.code)
+    c.create_confirm(t.word())
     supported = c.supportedAttrs()
     if not (supported & 2**FATTR4_MIMETYPE):
         t.fail_support("FATTR4_MIMETYPE not supported")
-    baseops = c.use_obj(c.homedir + [t.code])
+    baseops = c.use_obj(c.homedir + [t.word()])
     for name in get_invalid_utf8strings():
         ops = baseops + [c.setattr({FATTR4_MIMETYPE: name})]
         res = c.compound(ops)
@@ -459,7 +459,7 @@ def testInvalidTime(t, env):
     CODE: SATT10
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     supported = c.supportedAttrs()
@@ -481,8 +481,8 @@ def testUnsupportedFile(t, env):
     """
     c = env.c1
     c.init_connection()
-    c.create_confirm(t.code)
-    _try_unsupported(t, env, c.homedir + [t.code])
+    c.create_confirm(t.word())
+    _try_unsupported(t, env, c.homedir + [t.word()])
 
 def testUnsupportedDir(t, env):
     """SETATTR with unsupported attr should return NFS4ERR_ATTRNOTSUPP
@@ -492,7 +492,7 @@ def testUnsupportedDir(t, env):
     CODE: SATT11d
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     _try_unsupported(t, env, path)
@@ -505,7 +505,7 @@ def testUnsupportedLink(t, env):
     CODE: SATT11a
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4LNK)
     check(res)
     _try_unsupported(t, env, path)
@@ -518,7 +518,7 @@ def testUnsupportedBlock(t, env):
     CODE: SATT11b
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4BLK)
     check(res)
     _try_unsupported(t, env, path)
@@ -531,7 +531,7 @@ def testUnsupportedChar(t, env):
     CODE: SATT11c
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4CHR)
     check(res)
     _try_unsupported(t, env, path)
@@ -544,7 +544,7 @@ def testUnsupportedFifo(t, env):
     CODE: SATT11f
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4FIFO)
     check(res)
     _try_unsupported(t, env, path)
@@ -557,7 +557,7 @@ def testUnsupportedSocket(t, env):
     CODE: SATT11s
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     _try_unsupported(t, env, path)
@@ -570,7 +570,7 @@ def testSizeDir(t, env):
     CODE: SATT12d
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -585,7 +585,7 @@ def testSizeLink(t, env):
     CODE: SATT12a
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4LNK)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -601,7 +601,7 @@ def testSizeBlock(t, env):
     CODE: SATT12b
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4BLK)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -616,7 +616,7 @@ def testSizeChar(t, env):
     CODE: SATT12c
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4CHR)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -631,7 +631,7 @@ def testSizeFifo(t, env):
     CODE: SATT12f
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4FIFO)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -646,7 +646,7 @@ def testSizeSocket(t, env):
     CODE: SATT12s
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_SIZE: 0})]
@@ -667,10 +667,10 @@ def testInodeLocking(t, env):
     #       "inode corruption leading to sporadic system crashes.")
     c = env.c1
     c.init_connection()
-    basedir = c.homedir + [t.code]
+    basedir = c.homedir + [t.word()]
     res = c.create_obj(basedir)
     check(res)
-    fh, stateid = c.create_confirm(t.code, basedir + ['file'])
+    fh, stateid = c.create_confirm(t.word(), basedir + ['file'])
     
     # In a single compound statement, setattr on dir and then
     # do a state operation on a file in dir (like write or remove)
@@ -688,7 +688,7 @@ def testChange(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     change = c.do_getattr(FATTR4_CHANGE, fh)
     ops = c.use_obj(fh) + [c.setattr({FATTR4_MODE: 0o740})]
     res = c.compound(ops)
@@ -706,7 +706,7 @@ def testChangeGranularity(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code)
+    fh, stateid = c.create_confirm(t.word())
     ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
         + [c.setattr({FATTR4_MODE: 0o740})] + [c.getattr([FATTR4_CHANGE])] \
         + [c.setattr({FATTR4_MODE: 0o741})] + [c.getattr([FATTR4_CHANGE])] \
@@ -729,7 +729,7 @@ def testEmptyPrincipal(t, env):
     CODE: SATT16
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER: ''})]
@@ -745,7 +745,7 @@ def testEmptyGroupPrincipal(t, env):
     CODE: SATT17
     """
     c = env.c1
-    path = c.homedir + [t.code]
+    path = c.homedir + [t.word()]
     res = c.create_obj(path, NF4SOCK)
     check(res)
     ops = c.use_obj(path) + [c.setattr({FATTR4_OWNER_GROUP: ''})]
@@ -762,5 +762,5 @@ def testMixed(t, env):
     """
     c = env.c1
     c.init_connection()
-    fh, stateid = c.create_confirm(t.code, deny=OPEN4_SHARE_DENY_NONE)
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
     _set_mixed(t, c, fh)

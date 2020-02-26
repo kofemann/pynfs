@@ -15,7 +15,7 @@ def _test_create(t, env, type, name, **keywords):
     c = env.c1
     ops = c.go_home()
     objtype = createtype4(type, **keywords)
-    ops += [op.create(objtype, t.code, getDefaultAttr(c))]
+    ops += [op.create(objtype, t.word(), getDefaultAttr(c))]
     res = c.compound(ops)
     if res.status == NFS4ERR_BADTYPE:
         t.fail_support("CREATE of a %s returns _BADTYPE" % name)
@@ -29,7 +29,7 @@ def _test_create(t, env, type, name, **keywords):
 
 def _test_notdir(t, env, devpath):
     c = env.c1
-    res = c.create_obj(devpath + [t.code])
+    res = c.create_obj(devpath + [t.word()])
     check(res, NFS4ERR_NOTDIR)
 
 def testDir(t, env):
@@ -92,7 +92,7 @@ def testDirOffLink(t, env):
     CODE: CR2
     """
     c = env.c1
-    res = c.create_obj(env.opts.uselink + [t.code])
+    res = c.create_obj(env.opts.uselink + [t.word()])
     check(res, [NFS4ERR_NOTDIR, NFS4ERR_SYMLINK])
      
 def testDirOffBlock(t, env):
@@ -149,7 +149,7 @@ def testNoFh(t, env):
     """
     c = env.c1
     objtype = createtype4(NF4DIR)
-    ops = [op.create(objtype, t.code, getDefaultAttr(c))]
+    ops = [op.create(objtype, t.word(), getDefaultAttr(c))]
     res = c.compound(ops)
     check(res, NFS4ERR_NOFILEHANDLE, "CREATE with no <cfh>")
 
@@ -172,7 +172,7 @@ def testZeroLengthForLNK(t, env):
     c = env.c1
     ops = c.go_home()
     objtype = createtype4(NF4LNK, **{'linkdata':''})
-    ops += [op.create(objtype, t.code, getDefaultAttr(c))]
+    ops += [op.create(objtype, t.word(), getDefaultAttr(c))]
     res = c.compound(ops)
     check(res, [NFS4ERR_INVAL, NFS4ERR_NOENT], "CREATE with zero-length name for SYMLINK")
 
@@ -185,7 +185,7 @@ def testRegularFile(t, env):
     CODE: CR10
     """
     c = env.c1
-    res = c.create_obj(c.homedir + [t.code], NF4REG)
+    res = c.create_obj(c.homedir + [t.word()], NF4REG)
     check(res, NFS4ERR_BADTYPE, "CREATE with a regular file")
 
 def testInvalidAttrmask(t, env):
@@ -198,7 +198,7 @@ def testInvalidAttrmask(t, env):
     CODE: CR11
     """
     c = env.c1
-    res = c.create_obj(c.homedir + [t.code], attrs={FATTR4_LINK_SUPPORT: TRUE})
+    res = c.create_obj(c.homedir + [t.word()], attrs={FATTR4_LINK_SUPPORT: TRUE})
     check(res, NFS4ERR_INVAL, "Using read-only attr in CREATE")
 
 def testUnsupportedAttributes(t, env):
@@ -215,7 +215,7 @@ def testUnsupportedAttributes(t, env):
         if attr.writable and not supported & attr.mask:
             count += 1
             attrs = {attr.bitnum : attr.sample}
-            res = c.create_obj(c.homedir + [t.code], attrs=attrs)
+            res = c.create_obj(c.homedir + [t.word()], attrs=attrs)
             check(res, NFS4ERR_ATTRNOTSUPP,
                       "Using unsupported attr %s in CREATE" % attr.name)
     if count==0:
@@ -252,16 +252,16 @@ def testSlash(t, env):
     """
     # Setup
     c = env.c1
-    res = c.create_obj(c.homedir + [t.code])
+    res = c.create_obj(c.homedir + [t.word()])
     check(res)
-    res = c.create_obj(c.homedir + [t.code, 'foo'])
+    res = c.create_obj(c.homedir + [t.word(), 'foo'])
     check(res)
     # Test
-    res = c.create_obj(c.homedir + [t.code + '/foo'])
+    res = c.create_obj(c.homedir + [t.word() + '/foo'])
     if res.status == NFS4_OK:
-        t.pass_warn("Allowed creation of dir named '%s/foo'" % t.code)
+        t.pass_warn("Allowed creation of dir named '%s/foo'" % t.word())
     check(res, [NFS4ERR_BADNAME, NFS4ERR_BADCHAR],
-                  "Creation of dir named '%s/foo'" % t.code)
+                  "Creation of dir named '%s/foo'" % t.word())
 
 def testLongName(t, env):
     """CREATE should fail with NFS4ERR_NAMETOOLONG with long filenames

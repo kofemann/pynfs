@@ -18,7 +18,7 @@ Recover gracefully if dispatcher dies.
 CID5 run against foreign server can cause pynfs to crash by running out of
 	file descriptors
 Make sure owner names are unique for each test...ie don't use 'owner1' for
-	several tests, instead use something like "%s_own1" % t.code
+	several tests, instead use something like "%s_own1" % t.word()
 When cleanup fails, give name of file it fails on.
 On cleanup, deal with remove unclosed files.
 
