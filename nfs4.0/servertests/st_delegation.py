@@ -625,7 +625,7 @@ def testRenameOver(t, env):
     _verify_cb_occurred(t, c, count)
 
 def _listToPath(components):
-    return '/'+reduce((lambda x,y:x+'/'+y), components)
+    return '/'+'/'.join(components)
 
 def testServerRemove(t, env):
     """DELEGATION test
