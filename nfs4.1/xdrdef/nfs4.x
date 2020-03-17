@@ -900,6 +900,10 @@ typedef change_attr_type4
                 fattr4_change_attr_type;
 typedef sec_label4      fattr4_sec_label;
 typedef uint32_t        fattr4_clone_blksize;
+/*
+ * rfc8276 (xattr)
+ */
+typedef bool            fattr4_xattr_support;
 
 %/*
 % * REQUIRED Attributes
@@ -1001,6 +1005,11 @@ const FATTR4_CLONE_BLKSIZE      = 77;
 const FATTR4_SPACE_FREED        = 78;
 const FATTR4_CHANGE_ATTR_TYPE   = 79;
 const FATTR4_SEC_LABEL          = 80;
+
+%/*
+% * new in rfc 8276 (xattr)
+% */
+const FATTR4_XATTR_SUPPORT      = 82;
 
 /*
  * File attribute container

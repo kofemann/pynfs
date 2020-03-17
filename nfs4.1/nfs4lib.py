@@ -730,5 +730,6 @@ attr_info = { FATTR4_SUPPORTED_ATTRS : A("r", "fs"),
               FATTR4_RETENTION_HOLD : A("rw", "obj"),
               FATTR4_MODE_SET_MASKED : A("w", "obj"),
               FATTR4_FS_CHARSET_CAP : A("r", "fs"),
+              FATTR4_XATTR_SUPPORT : A("r", "obj"),
               }
 del A
