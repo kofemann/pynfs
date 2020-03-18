@@ -693,8 +693,11 @@ class ConnectionHandler(object):
                 status, result, notify = tuple
             if result is None:
                 result = b''
+            if isinstance(result, str):
+                result = bytes(result, encoding='UTF-8')
+
             if not isinstance(result, bytes):
-                raise TypeError("Expected string")
+                raise TypeError("Expected bytes, got %s" % type(result))
             # status, result = method(msg_data, call_info)
             log_t.debug("Called method, got %r, %r" % (status, result))
         except rpclib.RPCDrop:
