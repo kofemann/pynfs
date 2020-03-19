@@ -259,7 +259,12 @@ enum nfsstat4 {
  NFS4ERR_OFFLOAD_DENIED = 10091,/* dest not allowing copy  */
  NFS4ERR_WRONG_LFS      = 10092,/* LFS not supported       */
  NFS4ERR_BADLABEL       = 10093,/* incorrect label         */
- NFS4ERR_OFFLOAD_NO_REQS= 10094 /* dest not meeting reqs   */
+ NFS4ERR_OFFLOAD_NO_REQS= 10094, /* dest not meeting reqs   */
+
+ /* rfc8276 (xattr) */
+
+NFS4ERR_NOXATTR         = 10095, /* xattr does not exist    */
+NFS4ERR_XATTR2BIG       = 10096  /* xattr value is too big  */
 };
 
 /*
@@ -809,6 +814,11 @@ struct write_response4 {
         verifier4       wr_writeverf;
 };
 
+/*
+ * rfc8276 (xattr)
+ */
+ typedef component4     xattrkey4;
+ typedef opaque         xattrvalue4<>;
 
 /*
  * NFSv4.1 attributes
@@ -900,6 +910,10 @@ typedef change_attr_type4
                 fattr4_change_attr_type;
 typedef sec_label4      fattr4_sec_label;
 typedef uint32_t        fattr4_clone_blksize;
+/*
+ * rfc8276 (xattr)
+ */
+typedef bool            fattr4_xattr_support;
 
 %/*
 % * REQUIRED Attributes
@@ -1001,6 +1015,11 @@ const FATTR4_CLONE_BLKSIZE      = 77;
 const FATTR4_SPACE_FREED        = 78;
 const FATTR4_CHANGE_ATTR_TYPE   = 79;
 const FATTR4_SEC_LABEL          = 80;
+
+%/*
+% * new in rfc 8276 (xattr)
+% */
+const FATTR4_XATTR_SUPPORT      = 82;
 
 /*
  * File attribute container
@@ -1335,6 +1354,16 @@ enum nfs_opnum4 {
  OP_SEEK                = 69,
  OP_WRITE_SAME          = 70,
  OP_CLONE               = 71,
+
+ %
+ % /* new in rfc8276 (xattr) */
+ %
+ OP_GETXATTR            = 72,
+ OP_SETXATTR            = 73,
+ OP_LISTXATTRS          = 74,
+ OP_REMOVEXATTR         = 75,
+
+
  OP_ILLEGAL             = 10044
 };
 
@@ -3136,6 +3165,74 @@ enum ff_cb_recall_any_mask {
     FF_RCA4_TYPE_MASK_RW   = -1
 };
 
+
+/*
+ * rfc8276(xattr)
+ */
+
+struct GETXATTR4args {
+     /* CURRENT_FH: file */
+     xattrkey4     gxa_name;
+};
+
+union GETXATTR4res switch (nfsstat4 gxr_status) {
+case NFS4_OK:
+        xattrvalue4   gxr_value;
+default:
+        void;
+};
+
+enum setxattr_option4 {
+        SETXATTR4_EITHER      = 0,
+        SETXATTR4_CREATE      = 1,
+        SETXATTR4_REPLACE     = 2
+};
+
+struct SETXATTR4args {
+        /* CURRENT_FH: file */
+        setxattr_option4 sxa_option;
+        xattrkey4        sxa_key;
+        xattrvalue4      sxa_value;
+};
+
+union SETXATTR4res switch (nfsstat4 sxr_status) {
+ case NFS4_OK:
+        change_info4      sxr_info;
+ default:
+        void;
+};
+
+struct LISTXATTRS4args {
+        /* CURRENT_FH: file */
+        nfs_cookie4    lxa_cookie;
+        count4         lxa_maxcount;
+};
+
+struct LISTXATTRS4resok {
+        nfs_cookie4    lxr_cookie;
+        xattrkey4      lxr_names<>;
+        bool           lxr_eof;
+};
+
+union LISTXATTRS4res switch (nfsstat4 lxr_status) {
+ case NFS4_OK:
+        LISTXATTRS4resok  lxr_value;
+ default:
+        void;
+};
+
+struct REMOVEXATTR4args {
+        /* CURRENT_FH: file */
+        xattrkey4      rxa_name;
+};
+
+union REMOVEXATTR4res switch (nfsstat4 rxr_status) {
+ case NFS4_OK:
+        change_info4      rxr_info;
+ default:
+        void;
+};
+
 /*
  * Operation arrays (the rest)
  */
@@ -3256,6 +3353,12 @@ union nfs_argop4 switch (nfs_opnum4 argop) {
  case OP_SEEK:          SEEK4args opseek;
  case OP_WRITE_SAME:    WRITE_SAME4args opwrite_same;
  case OP_CLONE:         CLONE4args opclone;
+
+/* Operations new in rfc8276 (xattr) */
+case OP_GETXATTR:      GETXATTR4args opgetxattr;
+case OP_SETXATTR:      SETXATTR4args opsetxattr;
+case OP_LISTXATTRS:    LISTXATTRS4args oplistxattrs;
+case OP_REMOVEXATTR:   REMOVEXATTR4args opremovexattr;
 
  /* Operations not new to NFSv4.1 */
  case OP_ILLEGAL:       void;
@@ -3385,6 +3488,12 @@ union nfs_resop4 switch (nfs_opnum4 resop) {
  case OP_SEEK:          SEEK4res opseek;
  case OP_WRITE_SAME:    WRITE_SAME4res opwrite_same;
  case OP_CLONE:         CLONE4res opclone;
+
+/* Operations new in rfc8276 (xattr) */
+case OP_GETXATTR:      GETXATTR4res opgetxattr;
+case OP_SETXATTR:      SETXATTR4res opsetxattr;
+case OP_LISTXATTRS:    LISTXATTRS4res oplistxattrs;
+case OP_REMOVEXATTR:   REMOVEXATTR4res opremovexattr;
 
  /* Operations not new to NFSv4.1 */
  case OP_ILLEGAL:       ILLEGAL4res opillegal;
