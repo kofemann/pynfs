@@ -200,17 +200,8 @@ def doTestRebootWithNClients(t, env, n=10, double_reboot=False,
 
         # The server may have lifted the grace period early.  Test it.
         doTestAllClientsNoGrace(t, env, states)
-
-    # If the test went normally, then the grace period should have already
-    # ended.  If we got some unexpected error, then wait a bit for the server
-    # to expire the clients so cleanup can proceed more smoothly.
-    except:
-        grace_end_time = boot_time + lease_time + 5
-        now = int(time.time())
-        if now < grace_end_time:
-            sleep_time = grace_end_time - now
-            env.sleep(sleep_time, "Waiting for grace period to end")
-        raise
+    finally:
+        env.sleep(lease_time + 5, "Waiting for grace period to end")
 
 def testRebootWithManyClients(t, env):
     """Reboot with many clients
@@ -332,10 +323,5 @@ def testRebootWithLateReclaim(t, env):
         reclaim_complete(sess)
         for i in range(N):
             close_file(sess, fh[i], stateid[i])
-    except:
-        grace_end_time = boot_time + lease_time + 5
-        now = int(time.time())
-        if now < grace_end_time:
-            sleep_time = grace_end_time - now
-            env.sleep(sleep_time, "Waiting for grace period to end")
-        raise
+        finally:
+            env.sleep(lease_time + 5, "Waiting for grace period to end")
