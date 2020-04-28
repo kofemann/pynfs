@@ -323,5 +323,5 @@ def testRebootWithLateReclaim(t, env):
         reclaim_complete(sess)
         for i in range(N):
             close_file(sess, fh[i], stateid[i])
-        finally:
-            env.sleep(lease_time + 5, "Waiting for grace period to end")
+    finally:
+        env.sleep(lease_time + 5, "Waiting for grace period to end")
