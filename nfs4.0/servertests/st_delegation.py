@@ -741,7 +741,7 @@ def testServerSelfConflict(t, env):
         if res.status == NFS4_OK: break
         check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
-    return c.confirm(b'newowner', res)
+    c.confirm(b'newowner', res)
     newcount = c.cb_server.opcounts[OP_CB_RECALL]
     if newcount > count:
-        t.fail("Unnecessary delegation recall" % c.cbid)
+        t.fail("Unnecessary delegation recall")
