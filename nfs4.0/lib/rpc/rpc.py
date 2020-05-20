@@ -1,6 +1,6 @@
 # rpc.py - based on RFC 1831
 #
-# Requires python 2.7
+# Requires python 3.2
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>
 # Copyright (C) 2004 University of Michigan, Center for 
