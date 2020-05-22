@@ -353,6 +353,9 @@ def main():
         print("Initialization failed, no tests run.")
         if not opt.maketree:
             print("Perhaps you need to use the --maketree option")
+        if not opt.secure:
+            print("Perhaps you need to use the --secure option or "
+                  "configure server to allow connections from high ports")
         raise
         print(sys.exc_info()[1])
         sys.exit(1)
