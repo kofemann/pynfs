@@ -745,3 +745,32 @@ def testServerSelfConflict(t, env):
     newcount = c.cb_server.opcounts[OP_CB_RECALL]
     if newcount > count:
         t.fail("Unnecessary delegation recall")
+
+def testServerSelfConflict2(t,env):
+    """DELEGATION test
+
+    Test that we can still get a delegation even when we have the
+    file open for write from the same client.
+
+    FLAGS: delegations
+    CODE: DELEG22
+    """
+    c = env.c1
+    c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
+    time.sleep(0.5)
+    res = c.create_file(t.word(), c.homedir+[t.word()],
+                        access = OPEN4_SHARE_ACCESS_BOTH,
+                        deny = OPEN4_SHARE_DENY_NONE)
+    check(res)
+    fh, stateid = c.confirm(t.word(), res)
+    deleg_info = res.resarray[-2].switch.switch.delegation
+    if deleg_info.delegation_type != OPEN_DELEGATE_NONE:
+        return
+    res = c.open_file(t.word(), c.homedir+[t.word()],
+                        access=OPEN4_SHARE_ACCESS_BOTH,
+                        deny = OPEN4_SHARE_DENY_NONE)
+    check(res)
+    fh, stateid = c.confirm(t.word(), res)
+    deleg_info = res.resarray[-2].switch.switch.delegation
+    if deleg_info.delegation_type == OPEN_DELEGATE_NONE:
+        t.fail("Could not get delegation")
