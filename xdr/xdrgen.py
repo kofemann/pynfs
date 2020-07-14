@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # rpcgen.py - A Python RPC protocol compiler
 # 
 # Written by Fred Isaman <iisaman@citi.umich.edu>

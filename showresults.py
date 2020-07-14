@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # showresults.py - redisplay results from nfsv4 server tester output file
 #
 # Requires python 3.2

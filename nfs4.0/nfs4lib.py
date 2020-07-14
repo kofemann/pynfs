@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # nfs4lib.py - NFS4 library for Python
 #
 # Requires python 3.2

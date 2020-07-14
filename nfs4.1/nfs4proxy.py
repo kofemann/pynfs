@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import with_statement
 import use_local # HACK so don't have to rebuild constantly
 import nfs4lib

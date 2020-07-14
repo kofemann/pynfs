@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # nfs4stest.py - nfsv4 server tester
 #
 # Requires python 3.2
