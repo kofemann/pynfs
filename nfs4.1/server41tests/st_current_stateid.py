@@ -164,7 +164,7 @@ def testOpenSetattr(t, env):
     CODE: CSID8
     """
     size = 8
-    sess = env.c1.new_pnfs_client_session(env.testname(t))
+    sess = env.c1.new_client_session(env.testname(t))
 
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
     res = sess.compound( open_op +
