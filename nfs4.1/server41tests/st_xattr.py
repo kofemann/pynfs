@@ -17,6 +17,7 @@ def testGetXattrAttribute(t, env):
 
     FLAGS: xattr
     CODE: XATT1
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     res = sess.compound([op.putrootfh(), op.getattr(1 << FATTR4_SUPPORTED_ATTRS|1 <<FATTR4_XATTR_SUPPORT)])
@@ -38,6 +39,7 @@ def testGetMissingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT2
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -53,6 +55,7 @@ def testCreateNewAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT3
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -75,6 +78,7 @@ def testCreateNewIfMissingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT4
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -97,6 +101,7 @@ def testUpdateOfMissingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT5
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -114,6 +119,7 @@ def testExclusiveCreateAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT6
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -134,6 +140,7 @@ def testUpdateExistingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT7
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -160,6 +167,7 @@ def testRemoveNonExistingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT8
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -177,6 +185,7 @@ def testRemoveExistingAttr(t, env):
 
     FLAGS: xattr
     CODE: XATT9
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -197,6 +206,7 @@ def testListNoAttrs(t, env):
 
     FLAGS: xattr
     CODE: XATT10
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
@@ -219,6 +229,7 @@ def testListAttrs(t, env):
 
     FLAGS: xattr
     CODE: XATT11
+    VERS: 2-
     """
     sess = env.c1.new_client_session(env.testname(t))
     open_op = open_create_file_op(sess, env.testname(t), open_create=OPEN4_CREATE)
