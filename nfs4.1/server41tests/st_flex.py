@@ -592,3 +592,420 @@ def testFlexLayoutStatsOverflow(t, env):
           [15, 392027464946, 0, 0, 0, 0, 0, 0, 0, 10852364288, 0, 10853937152, 90820, 90564, 391147321463, 1129113173731145],
           [15, 407034683097, 0, 0, 0, 0, 0, 0, 0, 10864914432, 0, 10866487296, 93884, 93628, 406154554429, 1131023767183211]]
     _LayoutStats(t, env, ls)
+
+def layoutget_return(sess, fh, open_stateid, layout_iomode=LAYOUTIOMODE4_RW,
+                     layout_error=None, layout_error_op=OP_WRITE):
+    """
+    Perform LAYOUTGET and LAYOUTRETURN
+    """
+
+    # Get layout
+    ops = [op.putfh(fh),
+           op.layoutget(False, LAYOUT4_FLEX_FILES, layout_iomode,
+                        0, NFS4_UINT64_MAX, 4196, open_stateid, 0xffff)]
+    res = sess.compound(ops)
+    check(res)
+    layout_stateid = res.resarray[-1].logr_stateid
+
+    # Return layout
+    if not layout_error:  # Return regular layout
+        ops = [op.putfh(fh),
+               op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                               layoutreturn4(LAYOUTRETURN4_FILE,
+                                             layoutreturn_file4(0, NFS4_UINT64_MAX,
+                                                                layout_stateid, "")))]
+    else:  # Return layout with error
+        # Get device id
+        locb = res.resarray[-1].logr_layout[0].lo_content.loc_body
+        p = FlexUnpacker(locb)
+        layout = p.unpack_ff_layout4()
+        p.done()
+
+        deviceid = layout.ffl_mirrors[0].ffm_data_servers[0].ffds_deviceid
+        deverr = device_error4(deviceid, layout_error, layout_error_op)
+        ffioerr = ff_ioerr4(0, NFS4_UINT64_MAX, layout_stateid, [deverr])
+        fflr = ff_layoutreturn4([ffioerr], [])
+
+        p = FlexPacker()
+        p.pack_ff_layoutreturn4(fflr)
+
+        ops = [op.putfh(fh),
+               op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                               layoutreturn4(LAYOUTRETURN4_FILE,
+                                             layoutreturn_file4(0, NFS4_UINT64_MAX,
+                                                                layout_stateid,
+                                                                p.get_buffer())))]
+
+    res2 = sess.compound(ops)
+    check(res2)
+    return [res, res2]
+
+def get_layout_cred(logr):
+    """
+    :summary: Returns credentials contained in LAYOUTGET reply
+    :param logr: LAYOUTGET reply result
+    :return: List with uid and gid
+    """
+    locb = logr.logr_layout[0].lo_content.loc_body
+    p = FlexUnpacker(locb)
+    layout = p.unpack_ff_layout4()
+    p.done()
+    uid = layout.ffl_mirrors[0].ffm_data_servers[0].ffds_user
+    gid = layout.ffl_mirrors[0].ffm_data_servers[0].ffds_group
+    return [uid, gid]
+
+def testFlexLayoutReturnNxioRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_NXIO for READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORNXIOREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_NXIO, OP_READ)
+
+    # Obtain another layout
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnNxioWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_NXIO for WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORNXIOWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_NXIO, OP_WRITE)
+
+    # Obtain another layout
+    layoutget_return(sess, fh, open_stateid)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnStaleRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_STALE for READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORSTALEREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_STALE, OP_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnStaleWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_STALE for WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORSTALEWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_STALE, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnIoRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_IO for READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORIOREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_IO, OP_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnIoWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_IO for WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORIOWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_IO, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnServerFaultRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_SERVERFAULT on READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORSERVERFAULTREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_SERVERFAULT, OP_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnServerFaultWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_SERVERFAULT on WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORSERVERFAULTWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_SERVERFAULT, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnNospc(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_NOSPC
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORNOSPC
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_NOSPC, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnFbig(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_FBIG
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORFBIG
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_FBIG, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnAccessRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_ACCESS on READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORACCESSREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ,
+                     NFS4ERR_ACCESS, OP_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnAccessWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_ACCESS on WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORACCESSWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW,
+                     NFS4ERR_ACCESS, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnDelayRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_DELAY on READ
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORDELAYREAD
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_DELAY, OP_READ)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnDelayWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_DELAY on WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORDELAYWRITE
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_DELAY, OP_WRITE)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturn1K(t, env):
+    """
+    Perform LAYOUTGET and LAYOUTRETURN 1K times with error being returned periodically
+
+    FLAGS: flex layoutreturn
+    CODE: FFLOR1K
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+    count = 1000  # Repeat LAYOUTGET/LAYOUTRETURN count times
+    layout_error_ratio = 10  # Send an error every layout_error_ratio layout returns
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    for i in xrange(count):
+        layout_error = None if i % layout_error_ratio else NFS4ERR_ACCESS
+        layoutget_return(sess, fh, open_stateid, layout_error=layout_error)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
