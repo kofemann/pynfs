@@ -502,7 +502,7 @@ def testFlexLayoutStatsReset(t, env):
     """These layoutstats are from when the client effectively resets them
     by having one field be less than the cumulative ancestor
 
-    FLAGS: flex layoustats
+    FLAGS: flex layoutstats
     CODE: FFLS2
     """
 
@@ -533,7 +533,7 @@ def testFlexLayoutStatsStraight(t, env):
     to keep the server from detecting the reset. I.e., the client
     has not lost it all!
 
-    FLAGS: flex layoustats
+    FLAGS: flex layoutstats
     CODE: FFLS3
     """
 
@@ -562,7 +562,7 @@ def testFlexLayoutStatsOverflow(t, env):
     """These layoutstats are a write intensive work load in which eventually one stat takes
     twice longer than the collection period.
 
-    FLAGS: flex layoustats
+    FLAGS: flex layoutstats
     CODE: FFLS4
     """
 
