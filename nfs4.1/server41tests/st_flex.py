@@ -169,7 +169,7 @@ def testFlexLayoutOldSeqid(t, env):
                            layoutreturn4(LAYOUTRETURN4_FILE,
                                          layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
     res = sess.compound(ops)
-    check(res)
+    check(res, NFS4ERR_OLD_STATEID, "LAYOUTRETURN with an old stateid")
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
