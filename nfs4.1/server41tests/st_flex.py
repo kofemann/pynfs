@@ -593,8 +593,9 @@ def testFlexLayoutStatsOverflow(t, env):
           [15, 407034683097, 0, 0, 0, 0, 0, 0, 0, 10864914432, 0, 10866487296, 93884, 93628, 406154554429, 1131023767183211]]
     _LayoutStats(t, env, ls)
 
-def layoutget_return(sess, fh, open_stateid, layout_iomode=LAYOUTIOMODE4_RW,
-                     layout_error=None, layout_error_op=OP_WRITE):
+def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
+                     layout_iomode=LAYOUTIOMODE4_RW, layout_error=None,
+                     layout_error_op=OP_WRITE):
     """
     Perform LAYOUTGET and LAYOUTRETURN
     """
@@ -604,7 +605,7 @@ def layoutget_return(sess, fh, open_stateid, layout_iomode=LAYOUTIOMODE4_RW,
            op.layoutget(False, LAYOUT4_FLEX_FILES, layout_iomode,
                         0, NFS4_UINT64_MAX, 4196, open_stateid, 0xffff)]
     res = sess.compound(ops)
-    check(res)
+    check(res, allowed_errors)
     layout_stateid = res.resarray[-1].logr_stateid
 
     # Return layout
@@ -671,10 +672,10 @@ def testFlexLayoutReturnNxioRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_NXIO, OP_READ)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ, NFS4ERR_NXIO, OP_READ)
 
-    # Obtain another layout
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ)
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_NXIO], LAYOUTIOMODE4_READ)
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -697,10 +698,10 @@ def testFlexLayoutReturnNxioWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_NXIO, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_NXIO, OP_WRITE)
 
-    # Obtain another layout
-    layoutget_return(sess, fh, open_stateid)
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_NXIO])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -723,7 +724,10 @@ def testFlexLayoutReturnStaleRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_STALE, OP_READ)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ, NFS4ERR_STALE, OP_READ)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_STALE])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -746,7 +750,10 @@ def testFlexLayoutReturnStaleWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_STALE, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_STALE, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_STALE])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -769,7 +776,10 @@ def testFlexLayoutReturnIoRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_IO, OP_READ)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ, NFS4ERR_IO, OP_READ)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_IO])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -792,7 +802,10 @@ def testFlexLayoutReturnIoWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_IO, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_IO, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_IO])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -815,7 +828,10 @@ def testFlexLayoutReturnServerFaultRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_SERVERFAULT, OP_READ)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ, NFS4ERR_SERVERFAULT, OP_READ)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_SERVERFAULT])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -838,15 +854,18 @@ def testFlexLayoutReturnServerFaultWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_SERVERFAULT, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_SERVERFAULT, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_SERVERFAULT])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
-def testFlexLayoutReturnNospc(t, env):
+def testFlexLayoutReturnNospcRead(t, env):
     """
-    Send LAYOUTRETURN with NFS4ERR_NOSPC
+    Send LAYOUTRETURN with NFS4ERR_NOSPC on READ
 
     FLAGS: flex layoutreturn
     CODE: FFLORNOSPC
@@ -861,15 +880,45 @@ def testFlexLayoutReturnNospc(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_NOSPC, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_NOSPC, OP_WRITE)
+
+    # Verify error code propagation
+    # Unlike with a WRITE, we should see no error
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ)
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
-def testFlexLayoutReturnFbig(t, env):
+def testFlexLayoutReturnNospcWrite(t, env):
     """
-    Send LAYOUTRETURN with NFS4ERR_FBIG
+    Send LAYOUTRETURN with NFS4ERR_NOSPC on WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORNOSPC
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_NOSPC, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_NOSPC], LAYOUTIOMODE4_RW)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnFbigRead(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_FBIG on READ
 
     FLAGS: flex layoutreturn
     CODE: FFLORFBIG
@@ -884,7 +933,37 @@ def testFlexLayoutReturnFbig(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_FBIG, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_FBIG, OP_WRITE)
+
+    # Verify error code propagation
+    # Unlike with a WRITE, we should see no error
+    layoutget_return(sess, fh, open_stateid, NFS4_OK)
+
+    # Close file
+    res = close_file(sess, fh, stateid=open_stateid)
+    check(res)
+
+def testFlexLayoutReturnFbigWrite(t, env):
+    """
+    Send LAYOUTRETURN with NFS4ERR_FBIG on WRITE
+
+    FLAGS: flex layoutreturn
+    CODE: FFLORFBIG
+    """
+    name = env.testname(t)
+    sess = env.c1.new_pnfs_client_session(env.testname(t))
+
+    # Create the file
+    res = create_file(sess, name)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+
+    # Return layout with error
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_FBIG, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_FBIG])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -907,8 +986,11 @@ def testFlexLayoutReturnAccessRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ,
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ,
                      NFS4ERR_ACCESS, OP_READ)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_ACCESS])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -931,8 +1013,11 @@ def testFlexLayoutReturnAccessWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW,
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW,
                      NFS4ERR_ACCESS, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, NFS4ERR_ACCESS])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -955,7 +1040,10 @@ def testFlexLayoutReturnDelayRead(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_READ, NFS4ERR_DELAY, OP_READ)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_READ, NFS4ERR_DELAY, OP_READ)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -978,7 +1066,10 @@ def testFlexLayoutReturnDelayWrite(t, env):
     open_stateid = res.resarray[-2].stateid
 
     # Return layout with error
-    layoutget_return(sess, fh, open_stateid, LAYOUTIOMODE4_RW, NFS4ERR_DELAY, OP_WRITE)
+    layoutget_return(sess, fh, open_stateid, NFS4_OK, LAYOUTIOMODE4_RW, NFS4ERR_DELAY, OP_WRITE)
+
+    # Verify error code propagation
+    layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY])
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
@@ -1005,6 +1096,12 @@ def testFlexLayoutReturn1K(t, env):
     for i in xrange(count):
         layout_error = None if i % layout_error_ratio else NFS4ERR_ACCESS
         layoutget_return(sess, fh, open_stateid, layout_error=layout_error)
+
+        # Verify error code propagation
+        if layout_error:
+            layoutget_return(sess, fh, open_stateid, [NFS4_OK, NFS4ERR_DELAY, layout_error])
+        else:
+            layoutget_return(sess, fh, open_stateid, NFS4_OK)
 
     # Close file
     res = close_file(sess, fh, stateid=open_stateid)
