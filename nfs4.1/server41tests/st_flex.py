@@ -1074,16 +1074,16 @@ def testFlexLayoutReturnDelayWrite(t, env):
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
-def testFlexLayoutReturn1K(t, env):
+def testFlexLayoutReturn100(t, env):
     """
-    Perform LAYOUTGET and LAYOUTRETURN 1K times with error being returned periodically
+    Perform LAYOUTGET and LAYOUTRETURN 100 times with error being returned periodically
 
     FLAGS: flex layoutreturn
-    CODE: FFLOR1K
+    CODE: FFLOR100
     """
     name = env.testname(t)
     sess = env.c1.new_pnfs_client_session(env.testname(t))
-    count = 1000  # Repeat LAYOUTGET/LAYOUTRETURN count times
+    count = 100  # Repeat LAYOUTGET/LAYOUTRETURN count times
     layout_error_ratio = 10  # Send an error every layout_error_ratio layout returns
 
     # Create the file
