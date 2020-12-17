@@ -894,7 +894,7 @@ def testFlexLayoutReturnNospcWrite(t, env):
     Send LAYOUTRETURN with NFS4ERR_NOSPC on WRITE
 
     FLAGS: flex layoutreturn
-    CODE: FFLORNOSPC
+    CODE: FFLORNOSPCWRITE
     """
     name = env.testname(t)
     sess = env.c1.new_pnfs_client_session(env.testname(t))
@@ -947,7 +947,7 @@ def testFlexLayoutReturnFbigWrite(t, env):
     Send LAYOUTRETURN with NFS4ERR_FBIG on WRITE
 
     FLAGS: flex layoutreturn
-    CODE: FFLORFBIG
+    CODE: FFLORFBIGWRITE
     """
     name = env.testname(t)
     sess = env.c1.new_pnfs_client_session(env.testname(t))
