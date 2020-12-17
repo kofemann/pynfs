@@ -605,7 +605,7 @@ def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
                         0, NFS4_UINT64_MAX, 4196, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res, allowed_errors)
-    if nfsstat4[res.status] is not NFS4_OK:
+    if nfsstat4[res.status] is not 'NFS4_OK':
         return [res] # We can't return the layout without a stateid!
     layout_stateid = res.resarray[-1].logr_stateid
 
