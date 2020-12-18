@@ -225,7 +225,6 @@ def testReplayCache007(t, env):
     check(res)
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
-
     ops = env.home + [op.savefh(),\
           op.rename(b"%s_1" % env.testname(t), b"%s_2" % env.testname(t))]
     res1 = sess1.compound(ops, cache_this=False)
@@ -233,10 +232,6 @@ def testReplayCache007(t, env):
     res2 = sess1.compound(ops, seq_delta=0, cache_this=False)
     check(res2, [NFS4_OK, NFS4ERR_RETRY_UNCACHED_REP])
     close_file(sess1, fh, stateid=stateid)
-
-    # Cleanup
-    res = sess1.compound([op.putfh(fh), op.close(0, stateid)])
-    check(res)
 
 def testOpNotInSession(t, env):
     """Operations other than SEQUENCE, BIND_CONN_TO_SESSION, EXCHANGE_ID,
