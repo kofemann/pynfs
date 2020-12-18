@@ -327,7 +327,8 @@ def testStaleClientid(t, env):
     try:
         c.clientid = get_invalid_clientid()
         res = c.lock_file(t.word(), fh, stateid, 0, 25)
-        check(res, NFS4ERR_STALE_CLIENTID, "LOCK with a bad clientid")
+        check(res, [NFS4ERR_BAD_STATEID, NFS4ERR_STALE_CLIENTID],
+                "LOCK with a bad clientid")
     finally:
         c.clientid = orig_clientid
 
