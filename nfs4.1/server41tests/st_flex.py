@@ -1106,7 +1106,7 @@ def testFlexLayoutReturn100(t, env):
     fh = res.resarray[-1].object
     open_stateid = res.resarray[-2].stateid
 
-    for i in xrange(count):
+    for i in range(count):
         layout_error = None if i % layout_error_ratio else NFS4ERR_ACCESS
         layoutget_return(sess, fh, open_stateid, layout_error=layout_error)
 
