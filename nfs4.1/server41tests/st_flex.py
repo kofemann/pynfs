@@ -8,7 +8,7 @@ from xdrdef.nfs4_pack import NFS4Packer as FlexPacker, \
     NFS4Unpacker as FlexUnpacker
 from nfs4lib import FancyNFS4Packer, get_nfstime
 
-current_stateid = stateid4(1, '\0' * 12)
+current_stateid = stateid4(1, b'\0' * 12)
 
 empty_fflr = ff_layoutreturn4([], [])
 
@@ -347,8 +347,8 @@ def testFlexLayoutStatsSmall(t, env):
     sess = env.c1.new_pnfs_client_session(env.testname(t))
 
     for i in range(len(lats)):
-        open_op = open_create_file_op(sess, env.testname(t) + str(i), open_create=OPEN4_CREATE)
-        res = sess.compound( open_op +
+        open_op = open_create_file_op(sess, b'%s_%i' % (env.testname(t), i), open_create=OPEN4_CREATE)
+        res = sess.compound(open_op +
                [op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_RW,
                             0, NFS4_MAXFILELEN, 4196, current_stateid, 0xffff)])
         check(res, NFS4_OK)
