@@ -56,6 +56,15 @@ def testStateid1(t, env):
         # the server increments by one the value of the "seqid" in each
         # subsequent LAYOUTGET and LAYOUTRETURN response,
         check_seqid(lo_stateid, i + 2)
+
+    ops = [op.putfh(fh),
+           op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                           layoutreturn4(LAYOUTRETURN4_FILE,
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN,
+                                                            lo_stateid, empty_p.get_buffer())))]
+    res = sess.compound(ops)
+    check(res)
+
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
@@ -79,13 +88,13 @@ def testFlexLayoutReturnFile(t, env):
     res = sess.compound(ops)
     check(res)
     # Return layout
-    layout_stateid = res.resarray[-1].logr_stateid
+    lo_stateid = res.resarray[-1].logr_stateid
 
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
                                          layoutreturn_file4(0, NFS4_MAXFILELEN,
-                                                            layout_stateid, empty_p.get_buffer())))]
+                                                            lo_stateid, empty_p.get_buffer())))]
     res = sess.compound(ops)
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
@@ -150,6 +159,15 @@ def testFlexLayoutOldSeqid(t, env):
                                                             lo_stateid, empty_p.get_buffer())))]
     res = sess.compound(ops)
     check(res, NFS4ERR_OLD_STATEID, "LAYOUTRETURN with an old stateid")
+
+    ops = [op.putfh(fh),
+           op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                           layoutreturn4(LAYOUTRETURN4_FILE,
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN,
+                                                            lo_stateid3, empty_p.get_buffer())))]
+    res = sess.compound(ops)
+    check(res)
+
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
@@ -260,8 +278,8 @@ def testFlexLayoutTestAccess(t, env):
                         0, NFS4_MAXFILELEN, 8192, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
-    lo_stateid = res.resarray[-1].logr_stateid
-    check_seqid(lo_stateid, 1)
+    lo_stateid1 = res.resarray[-1].logr_stateid
+    check_seqid(lo_stateid1, 1)
 
     layout = res.resarray[-1].logr_layout[-1]
     p = FlexUnpacker(layout.loc_body)
@@ -277,11 +295,11 @@ def testFlexLayoutTestAccess(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_READ,
-                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid1, 0xffff)]
     res = sess.compound(ops)
     check(res)
-    lo_stateid = res.resarray[-1].logr_stateid
-    check_seqid(lo_stateid, 2)
+    lo_stateid2 = res.resarray[-1].logr_stateid
+    check_seqid(lo_stateid2, 2)
 
     layout = res.resarray[-1].logr_layout[-1]
     p = FlexUnpacker(layout.loc_body)
@@ -299,6 +317,14 @@ def testFlexLayoutTestAccess(t, env):
 
     if gid_rw != gid_rd:
         fail("Expected gid_rd == %s, got %s" % (gid_rd, gid_rw))
+
+    ops = [op.putfh(fh),
+           op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
+                           layoutreturn4(LAYOUTRETURN4_FILE,
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN,
+                                                            lo_stateid2, empty_p.get_buffer())))]
+    res = sess.compound(ops)
+    check(res)
 
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
