@@ -59,39 +59,11 @@ def testStateid1(t, env):
     res = close_file(sess, fh, stateid=open_stateid)
     check(res)
 
-def testFlexGetLayout(t, env):
-    """Verify layout handling
-
-    FLAGS: flex
-    CODE: FFGLO1
-    """
-    sess = env.c1.new_pnfs_client_session(env.testname(t))
-    # Create the file
-    res = create_file(sess, env.testname(t))
-    check(res)
-    # Get layout
-    fh = res.resarray[-1].object
-    open_stateid = res.resarray[-2].stateid
-    ops = [op.putfh(fh),
-           op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_READ,
-                        0, NFS4_MAXFILELEN, 4196, open_stateid, 0xffff)]
-    res = sess.compound(ops)
-    check(res)
-    # Parse opaque
-    for layout in res.resarray[-1].logr_layout:
-        if layout.loc_type == LAYOUT4_FLEX_FILES:
-            p = FlexUnpacker(layout.loc_body)
-            opaque = p.unpack_ff_layout4()
-            p.done()
-    res = close_file(sess, fh, stateid=open_stateid)
-    check(res)
-
 def testFlexLayoutReturnFile(t, env):
     """
     Return a file's layout
 
     FLAGS: flex
-    DEPEND: FFGLO1
     CODE: FFLOR1
     """
     sess = env.c1.new_pnfs_client_session(env.testname(t))
