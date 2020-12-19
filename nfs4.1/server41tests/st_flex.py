@@ -5,7 +5,7 @@ import nfs_ops
 op = nfs_ops.NFS4ops()
 from .environment import check, fail, create_file, close_file, open_create_file_op
 from xdrdef.nfs4_pack import NFS4Packer as FlexPacker, \
-	NFS4Unpacker as FlexUnpacker
+    NFS4Unpacker as FlexUnpacker
 from nfs4lib import FancyNFS4Packer, get_nfstime
 
 current_stateid = stateid4(1, '\0' * 12)
@@ -69,11 +69,11 @@ def testFlexGetLayout(t, env):
     open_stateid = res.resarray[-2].stateid
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_READ,
-                        0, 0xffffffffffffffff, 4196, open_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 4196, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     # Parse opaque
-    for layout in  res.resarray[-1].logr_layout:
+    for layout in res.resarray[-1].logr_layout:
         if layout.loc_type == LAYOUT4_FLEX_FILES:
             p = FlexUnpacker(layout.loc_body)
             opaque = p.unpack_ff_layout4()
@@ -98,7 +98,7 @@ def testFlexLayoutReturnFile(t, env):
     open_stateid = res.resarray[-2].stateid
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_READ,
-                        0, 0xffffffffffffffff, 4196, open_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 4196, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     # Return layout
@@ -106,7 +106,7 @@ def testFlexLayoutReturnFile(t, env):
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
-                                         layoutreturn_file4(0, 0xffffffffffffffff, layout_stateid, "")))]
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN, layout_stateid, "")))]
     res = sess.compound(ops)
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
@@ -132,7 +132,7 @@ def testFlexLayoutOldSeqid(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, open_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
@@ -144,7 +144,7 @@ def testFlexLayoutOldSeqid(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid2 = res.resarray[-1].logr_stateid
@@ -156,7 +156,7 @@ def testFlexLayoutOldSeqid(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid3 = res.resarray[-1].logr_stateid
@@ -167,7 +167,7 @@ def testFlexLayoutOldSeqid(t, env):
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
-                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN, lo_stateid, "")))]
     res = sess.compound(ops)
     check(res, NFS4ERR_OLD_STATEID, "LAYOUTRETURN with an old stateid")
     res = close_file(sess, fh, stateid=open_stateid)
@@ -192,8 +192,8 @@ def testFlexLayoutStress(t, env):
     for i in range(1000):
         ops = [op.putfh(fh),
                op.layoutget(False, LAYOUT4_FLEX_FILES,
-                            LAYOUTIOMODE4_READ if i%2  else LAYOUTIOMODE4_RW,
-                            0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                            LAYOUTIOMODE4_READ if i%2 else LAYOUTIOMODE4_RW,
+                            0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
         res = sess.compound(ops)
         check(res)
         lo_stateid = res.resarray[-1].logr_stateid
@@ -203,7 +203,7 @@ def testFlexLayoutStress(t, env):
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
-                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN, lo_stateid, "")))]
     res = sess.compound(ops)
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
@@ -227,7 +227,7 @@ def testFlexGetDevInfo(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
@@ -251,7 +251,7 @@ def testFlexGetDevInfo(t, env):
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
-                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN, lo_stateid, "")))]
     res = sess.compound(ops)
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
@@ -275,7 +275,7 @@ def testFlexLayoutTestAccess(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, open_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
@@ -295,7 +295,7 @@ def testFlexLayoutTestAccess(t, env):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_READ,
-                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
@@ -342,7 +342,7 @@ def testFlexLayoutStatsSmall(t, env):
         open_op = open_create_file_op(sess, env.testname(t) + str(i), open_create=OPEN4_CREATE)
         res = sess.compound( open_op +
                [op.layoutget(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_RW,
-                            0, 0xffffffffffffffff, 4196, current_stateid, 0xffff)])
+                            0, NFS4_MAXFILELEN, 4196, current_stateid, 0xffff)])
         check(res, NFS4_OK)
         lo_stateid = res.resarray[-1].logr_stateid
         fh = res.resarray[-2].object
@@ -395,7 +395,7 @@ def testFlexLayoutStatsSmall(t, env):
         ops = [op.putfh(fh),
                op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                                layoutreturn4(LAYOUTRETURN4_FILE,
-                                             layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, p.get_buffer()))),
+                                             layoutreturn_file4(0, NFS4_MAXFILELEN, lo_stateid, p.get_buffer()))),
                op.close(0, open_stateid)]
         res = sess.compound(ops)
         check(res)
@@ -415,7 +415,7 @@ def _LayoutStats(t, env, stats):
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES,
                         LAYOUTIOMODE4_RW,
-                        0, 0xffffffffffffffff, 8192, lo_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 8192, lo_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res)
     lo_stateid = res.resarray[-1].logr_stateid
@@ -455,7 +455,7 @@ def _LayoutStats(t, env, stats):
 
         # Did not capture these in the gathered traces
         offset = 0
-        file_length = 0xffffffffffffffff
+        file_length = NFS4_MAXFILELEN
         rd_io.ii_count = 0
         rd_io.ii_bytes = 0
         wr_io.ii_count = 0
@@ -492,7 +492,7 @@ def _LayoutStats(t, env, stats):
     ops = [op.putfh(fh),
            op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                            layoutreturn4(LAYOUTRETURN4_FILE,
-                                         layoutreturn_file4(0, 0xffffffffffffffff, lo_stateid, "")))]
+                                         layoutreturn_file4(0, NFS4_MAXFILELEN, lo_stateid, "")))]
     res = sess.compound(ops)
     check(res)
     res = close_file(sess, fh, stateid=open_stateid)
@@ -602,7 +602,7 @@ def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
     # Get layout
     ops = [op.putfh(fh),
            op.layoutget(False, LAYOUT4_FLEX_FILES, layout_iomode,
-                        0, NFS4_UINT64_MAX, 4196, open_stateid, 0xffff)]
+                        0, NFS4_MAXFILELEN, 4196, open_stateid, 0xffff)]
     res = sess.compound(ops)
     check(res, allowed_errors)
     if nfsstat4[res.status] is not 'NFS4_OK':
@@ -614,7 +614,7 @@ def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
         ops = [op.putfh(fh),
                op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                                layoutreturn4(LAYOUTRETURN4_FILE,
-                                             layoutreturn_file4(0, NFS4_UINT64_MAX,
+                                             layoutreturn_file4(0, NFS4_MAXFILELEN,
                                                                 layout_stateid, "")))]
     else:  # Return layout with error
         # Get device id
@@ -625,7 +625,7 @@ def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
 
         deviceid = layout.ffl_mirrors[0].ffm_data_servers[0].ffds_deviceid
         deverr = device_error4(deviceid, layout_error, layout_error_op)
-        ffioerr = ff_ioerr4(0, NFS4_UINT64_MAX, layout_stateid, [deverr])
+        ffioerr = ff_ioerr4(0, NFS4_MAXFILELEN, layout_stateid, [deverr])
         fflr = ff_layoutreturn4([ffioerr], [])
 
         p = FlexPacker()
@@ -634,7 +634,7 @@ def layoutget_return(sess, fh, open_stateid, allowed_errors=NFS4_OK,
         ops = [op.putfh(fh),
                op.layoutreturn(False, LAYOUT4_FLEX_FILES, LAYOUTIOMODE4_ANY,
                                layoutreturn4(LAYOUTRETURN4_FILE,
-                                             layoutreturn_file4(0, NFS4_UINT64_MAX,
+                                             layoutreturn_file4(0, NFS4_MAXFILELEN,
                                                                 layout_stateid,
                                                                 p.get_buffer())))]
 
