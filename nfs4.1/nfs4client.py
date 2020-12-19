@@ -296,7 +296,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                       layoutreturn4(LAYOUTRETURN4_FILE,
                                     layoutreturn_file4(rclayout.lor_offset,
                                                        rclayout.lor_length, \
-                                                       rclayout.lor_stateid, "")))]
+                                                       rclayout.lor_stateid, b"")))]
             env.session.compound(ops)
         elif lo_recalltype not in [LAYOUTRECALL4_FSID, LAYOUTRECALL4_ALL]:
             res = NFS4ERR_NOTSUPP
