@@ -198,9 +198,7 @@ class Environment(testmod.Environment):
                 log.warning("could not create /%s" % b'/'.join(path))
         # Make file-object in /tree
         fh, stateid = create_confirm(sess, b'maketree', tree + [b'file'])
-        ops = [op.putfh(fh),
-               op.write(stateid, 0, FILE_SYNC4, self.filedata)]
-        res = sess.compound(ops)
+        res = write_file(sess, fh, self.filedata)
         check(res, msg="Writing data to /%s/file" % b'/'.join(tree))
         res = close_file(sess, fh, stateid)
         check(res)
@@ -591,6 +589,25 @@ def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
     fh, stateid = create_confirm(sess, owner, path, attrs, access, deny, mode)
     close_file(sess, fh, stateid=stateid)
     return fh;
+
+def write_file(sess, file, data, offset=0 stateid=stateid4(0, b''),
+                    how=FILE_SYNC4):
+    ops = self.use_obj(file)
+    ops += [op.write(stateid, offset, how, data)]
+    res = sess.compound(ops)
+    if res.status == NFS_OK:
+        res.count = res.resarray[-1].switch.switch.count
+        res.committed = res.resarray[-1].switch.switch.committed
+    return res
+
+def read_file(sess, file, offset=0, count=2048, stateid=stateid4(0, b'')):
+    ops = self.use_obj(file)
+    ops += [op.read(stateid, offset, count)]
+    res = sess.compound(ops)
+    if res.status == NFS4_OK:
+        res.eof = res.resarray[-1].switch.switch.eof
+        res.data = res.resarray[-1].switch.switch.data
+    return res
 
 def get_blocksize(sess, path, layout_type=LAYOUT4_BLOCK_VOLUME):
     """ Test that fs handles layouts type, and get the blocksize

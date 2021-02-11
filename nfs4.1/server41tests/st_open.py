@@ -79,15 +79,15 @@ def testReadWrite(t, env):
     stateid = res.resarray[-2].stateid
     stateid.seqid = 0
     data = b"write test data"
-    res = sess1.compound([op.putfh(fh), op.write(stateid, 5, FILE_SYNC4, data)])
+    res = write_file(sess1, fh, data, 5, stateid)
     check(res)
-    res = sess1.compound([op.putfh(fh), op.read(stateid, 0, 1000)])
+    res = read_file(sess1, fh, 0, 1000, stateid)
     check(res)
-    if not res.resarray[-1].eof:
+    if not res..eof:
         fail("EOF not set on read")
     desired = b"\0"*5 + data
-    if res.resarray[-1].data != desired:
-        fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
+    if res.data != desired:
+        fail("Expected %r, got %r" % (desired, res.data))
 
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
@@ -108,15 +108,15 @@ def testAnonReadWrite(t, env):
     stateid = res.resarray[-2].stateid
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
-    res = sess1.compound([op.putfh(fh), op.write(nfs4lib.state00, 5, FILE_SYNC4, data)])
+    res = write_file(sess1, fh, data, 5, nfs4lib.state00)
     check(res)
-    res = sess1.compound([op.putfh(fh), op.read(nfs4lib.state00, 0, 1000)])
+    res = read_file(sess1, fh, 0, 1000, nfs4lib.state00)
     check(res)
-    if not res.resarray[-1].eof:
+    if not res.eof:
         fail("EOF not set on read")
     desired = b"\0"*5 + data
-    if res.resarray[-1].data != desired:
-        fail("Expected %r, got %r" % (desired, res.resarray[-1].data))
+    if res.data != desired:
+        fail("Expected %r, got %r" % (desired, res.data))
 
 def testEXCLUSIVE4AtNameAttribute(t, env):
     """If the file does exist,but the stored verifier does not match,
