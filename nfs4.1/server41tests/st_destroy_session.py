@@ -169,3 +169,12 @@ def testDestoryNotSoleOps(t, env):
     sid = sess1.sessionid
     res = c.c.compound([op.destroy_session(sess1.sessionid), op.putrootfh()])
     check(res, NFS4ERR_NOT_ONLY_OP)
+
+def testDestroyLockConfRace(t, env):
+    """ Make sure the server can handle a LOCK call even when the client
+        holding a conflicting lock is in the process of being destroyed.
+
+    FLAGS: destroy_session
+    CODE: DSESS9006
+    """
+    sess1 = env.c1.new_client_session(env.testname(t))

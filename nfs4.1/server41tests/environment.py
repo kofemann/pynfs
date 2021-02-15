@@ -590,18 +590,18 @@ def create_close(sess, owner, path=None, attrs={FATTR4_MODE: 0o644},
     close_file(sess, fh, stateid=stateid)
     return fh;
 
-def write_file(sess, file, data, offset=0 stateid=stateid4(0, b''),
+def write_file(sess, file, data, offset=0, stateid=stateid4(0, b''),
                     how=FILE_SYNC4):
-    ops = self.use_obj(file)
+    ops = use_obj(file)
     ops += [op.write(stateid, offset, how, data)]
     res = sess.compound(ops)
-    if res.status == NFS_OK:
+    if res.status == NFS4_OK:
         res.count = res.resarray[-1].switch.switch.count
         res.committed = res.resarray[-1].switch.switch.committed
     return res
 
 def read_file(sess, file, offset=0, count=2048, stateid=stateid4(0, b'')):
-    ops = self.use_obj(file)
+    ops = use_obj(file)
     ops += [op.read(stateid, offset, count)]
     res = sess.compound(ops)
     if res.status == NFS4_OK:

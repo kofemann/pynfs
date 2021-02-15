@@ -1,7 +1,7 @@
 from .st_create_session import create_session
 from xdrdef.nfs4_const import *
 
-from .environment import check, fail, create_file, open_file, close_file
+from .environment import check, fail, create_file, open_file, close_file, write_file, read_file
 from .environment import open_create_file_op
 from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
 from xdrdef.nfs4_type import creatverfattr, fattr4, stateid4, locker4, lock_owner4
@@ -83,7 +83,7 @@ def testReadWrite(t, env):
     check(res)
     res = read_file(sess1, fh, 0, 1000, stateid)
     check(res)
-    if not res..eof:
+    if not res.eof:
         fail("EOF not set on read")
     desired = b"\0"*5 + data
     if res.data != desired:
