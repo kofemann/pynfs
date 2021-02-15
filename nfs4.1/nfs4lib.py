@@ -627,7 +627,7 @@ def use_obj(file):
     """File is either None, a fh, or a list of path components"""
     if file is None or file == [None]:
         return []
-    elif type(file) is str:
+    elif type(file) is bytes:
         return [op4.putfh(file)]
     else:
         return [op4.putrootfh()] + [op4.lookup(comp) for comp in file]
