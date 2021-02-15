@@ -204,7 +204,7 @@ def printflags(list):
     from xdrdef.nfs4_const import nfs_opnum4
     command_names = [s.lower()[3:].replace('_', '') \
                      for s in nfs_opnum4.values()]
-    list.sort()
+    list = sorted(list)
     # First print(command names)
     print
     for s in list:
@@ -235,15 +235,13 @@ def main():
         sys.exit(0)
 
     if opt.showcodes:
-        codes = cdict.keys()
-        codes.sort()
+        codes = sorted(cdict.keys())
         for c in codes:
             print(c)
         sys.exit(0)
 
     if opt.showcodesflags:
-        codes = cdict.keys()
-        codes.sort()
+        codes = sorted(cdict.keys())
         for c in codes:
             print(c, "FLAGS:", ', '.join(cdict[c].flags_list))
         sys.exit(0)
