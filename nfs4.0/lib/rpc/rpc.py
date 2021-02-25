@@ -189,9 +189,8 @@ class RPCClient(object):
         self.debug = 0
         t = threading.currentThread()
         self.lock = threading.Lock()
-        self.af = socket.AF_INET;
-        if host.find(':') != -1:
-            self.af = socket.AF_INET6;
+        res = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+        self.af, socktype, proto, cannonname, self.sa = res[0]
         self.remotehost = host
         self.remoteport = port
         self.timeout = timeout
@@ -243,7 +242,7 @@ class RPCClient(object):
             out = self._socket[t] = socket.socket(self.af, socket.SOCK_STREAM)
             if self.uselowport:
                 self.bindsocket(out)
-            out.connect((self.remotehost, self.remoteport))
+            out.connect(self.sa)
             out.settimeout(self.timeout)
         self.lock.release()
         return out

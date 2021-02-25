@@ -804,21 +804,30 @@ class ConnectionHandler(object):
         #       if proc==0, handle elsewhere
         #       else return AUTH_BADCRED
         return True
-    
+
     def connect(self, address, secure=False):
         """Connect to given address, returning new pipe
 
         If secure==True, will bind local asocket to a port < 1024.
         """
         log_t.info("Called connect(%r)" % (address,))
-        af = socket.AF_INET
-        if address[0].find(':') != -1:
-            af = socket.AF_INET6
-        s = socket.socket(af, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if secure:
-            self.bindsocket(s)
-        s.connect(address)
+        host, port = address
+        err = None
+        for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+            af, socktype, proto, cannonname, sa = res
+            sock = None
+            try:
+                s = socket.socket(af, socktype, proto)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                if secure:
+                    self.bindsocket(s)
+                s.connect(sa)
+                err = None
+                break
+            except:
+                if s is not None:
+                    s.close()
+
         s.setblocking(0)
         pipe = RpcPipe(s, self._alarm)
         # Tell polling loop about the new socket
