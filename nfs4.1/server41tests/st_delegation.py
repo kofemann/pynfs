@@ -214,3 +214,28 @@ def testDelegRevocation(t, env):
              " FREE_STATEID")
     if flags & ~SEQ4_STATUS_RECALLABLE_STATE_REVOKED:
         print("WARNING: unexpected status flag(s) 0x%x set" % flags)
+
+def testWriteOpenvsReadDeleg(t, env):
+    """Ensure that a write open prevents granting a read delegation
+
+    FLAGS: deleg
+    CODE: DELEG9
+    """
+
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
+    owner = b"owner_%s" % env.testname(t)
+    res = create_file(sess1, owner, access=OPEN4_SHARE_ACCESS_WRITE)
+    check(res)
+
+    sess2 = env.c1.new_client_session(b"%s_2" % env.testname(t))
+    access = OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG;
+    res = open_file(sess2, owner, access = access)
+    check(res)
+
+    deleg = res.resarray[-2].delegation
+    if (not _got_deleg(deleg)):
+        res = open_file(sess2, owner, access = access)
+        fh = res.resarray[-1].object
+        deleg = res.resarray[-2].delegation
+    if (_got_deleg(deleg)):
+        fail("Granted delegation to a file write-opened by another client")
