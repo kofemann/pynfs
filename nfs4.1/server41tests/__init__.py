@@ -1,5 +1,6 @@
 __all__ = ["st_exchange_id.py", # draft 21
            "st_compound.py",
+           "st_copy.py",
            "st_create_session.py",
            "st_destroy_session.py",
            "st_destroy_clientid.py",
