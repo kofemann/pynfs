@@ -15,6 +15,12 @@ def _getleasetime(sess):
     res = sess.compound([op.putrootfh(), op.getattr(1 << FATTR4_LEASE_TIME)])
     return res.resarray[-1].obj_attributes[FATTR4_LEASE_TIME]
 
+def cour_lockargs(fh, stateid):
+    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, b"lock1"))
+    lock_owner = locker4(open_owner=open_to_lock_owner, new_lock_owner=True)
+    lock_ops = [ op.lock(WRITE_LT, False, 0, NFS4_UINT64_MAX, lock_owner) ]
+    return [op.putfh(fh)] + lock_ops
+
 def testLockSleepLockU(t, env):
     """test server courtesy by having LOCK and LOCKU
        in separate compounds, separated by a sleep of twice the lease period
@@ -29,10 +35,7 @@ def testLockSleepLockU(t, env):
 
     fh = res.resarray[-1].object
     stateid = res.resarray[-2].stateid
-    open_to_lock_owner = open_to_lock_owner4( 0, stateid, 0, lock_owner4(0, b"lock1"))
-    lock_owner = locker4(open_owner=open_to_lock_owner, new_lock_owner=True)
-    lock_ops = [ op.lock(WRITE_LT, False, 0, NFS4_UINT64_MAX, lock_owner) ]
-    res = sess1.compound([op.putfh(fh)] + lock_ops)
+    res = sess1.compound(cour_lockargs(fh, stateid))
     check(res, NFS4_OK)
 
     lease_time = _getleasetime(sess1)
