@@ -48,3 +48,36 @@ def testLockSleepLockU(t, env):
 
     res = close_file(sess1, fh, stateid=stateid)
     check(res)
+
+def testLockSleepLock(t, env):
+    """ensure that a courteous server will allow a conflicting lock from
+       a second client, after lease expiry of the first client.
+       A discourteous server should allow this too, of course.
+
+    FLAGS: courteous all
+    CODE: COUR2
+    """
+
+    sess1 = env.c1.new_client_session(env.testname(t))
+
+    res = create_file(sess1, env.testname(t))
+    check(res)
+
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    res = sess1.compound(cour_lockargs(fh, stateid))
+    check(res, NFS4_OK)
+
+    lease_time = _getleasetime(sess1)
+    env.sleep(lease_time * 2, "twice the lease period")
+
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
+    sess2 = c2.create_session()
+
+    res = open_file(sess2, env.testname(t), access=OPEN4_SHARE_ACCESS_WRITE)
+    check(res)
+
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+    res = sess2.compound(cour_lockargs(fh, stateid))
+    check(res, NFS4_OK)
