@@ -51,7 +51,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     open_op = op.open(0, breakaccess, OPEN4_SHARE_DENY_NONE, owner, how, claim)
     slot = sess2.compound_async(env.home + [open_op])
     # Wait for recall, and return delegation
-    recall.wait() # STUB - deal with timeout
+    completed = recall.wait(2)
     # Getting here means CB_RECALL reply is in the send queue.
     # Give it a moment to actually be sent
     env.sleep(.1)
@@ -60,6 +60,8 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
     # Now get OPEN reply
     res = sess2.listen(slot)
     check(res, [NFS4_OK, NFS4ERR_DELAY])
+    if not completed:
+        fail("delegation break not received")
     return recall
 
 def testReadDeleg(t, env):
@@ -239,3 +241,51 @@ def testWriteOpenvsReadDeleg(t, env):
         deleg = res.resarray[-2].delegation
     if (_got_deleg(deleg)):
         fail("Granted delegation to a file write-opened by another client")
+
+def testServerSelfConflict3(t, env):
+    """DELEGATION test
+
+    Get a read delegation, then do a write open from the same client.
+    That should succeed.  Then do a write open from a different client,
+    and verify that it breaks the delegation.
+
+    FLAGS: deleg
+    CODE: DELEG23
+    """
+
+    recall = threading.Event()
+    def pre_hook(arg, env):
+        recall.stateid = arg.stateid
+        recall.cred = env.cred.raw_cred
+        env.notify = recall.set
+    def post_hook(arg, env, res):
+        return res
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
+    sess1.client.cb_pre_hook(OP_CB_RECALL, pre_hook)
+    sess1.client.cb_post_hook(OP_CB_RECALL, post_hook)
+
+    fh, deleg = __create_file_with_deleg(sess1, env.testname(t),
+            OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG)
+    print("__create_file_with_deleg: ", fh, deleg)
+    delegstateid = deleg.read.stateid
+    res = open_file(sess1, env.testname(t), access = OPEN4_SHARE_ACCESS_WRITE)
+    print("open_file res: ", res)
+    check(res)
+
+    # XXX: cut-n-paste from _testDeleg; make helper instead:
+    sess2 = env.c1.new_client_session(b"%s_2" % env.testname(t))
+
+    claim = open_claim4(CLAIM_NULL, env.testname(t))
+    owner = open_owner4(0, b"owner")
+    how = openflag4(OPEN4_NOCREATE)
+    open_op = op.open(0, OPEN4_SHARE_ACCESS_WRITE,
+                      OPEN4_SHARE_DENY_NONE, owner, how, claim)
+    slot = sess2.compound_async(env.home + [open_op])
+    completed = recall.wait(2)
+    env.sleep(.1)
+    res = sess1.compound([op.putfh(fh), op.delegreturn(delegstateid)])
+    check(res)
+    res = sess2.listen(slot)
+    check(res, [NFS4_OK, NFS4ERR_DELAY])
+    if not completed:
+        fail("delegation break not received")
