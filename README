@@ -6,8 +6,7 @@ passes we expect to merge the two code bases.
 Install dependent modules; on Fedora:
 	yum install krb5-devel python3-devel swig python3-gssapi python3-ply
 on Debian:
-	apt-get install libkrb5-dev python3-dev swig python3-pip
-	pip install ply gssapi
+	apt-get install libkrb5-dev python3-dev swig python3-gssapi python3-ply
 
 You can prepare both for use with
 	./setup.py build
