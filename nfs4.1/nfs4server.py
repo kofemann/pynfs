@@ -515,8 +515,8 @@ class SummaryOutput:
 
         summary_line = "  %s" % ', '.join(opnames)
 
-        if status != "NFS4_OK" and status != "NFS3_OK":
-            summary_line += " -> %s" % (status,)
+        if status != NFS4_OK and status != NFS3_OK:
+            summary_line += " -> %s" % nfsstat4[status]
 
         print_summary_line = True
         if summary_line != self._last or role != self._last_role:
@@ -850,7 +850,7 @@ class NFS4Server(rpc.Server):
         log_41.info("Replying.  Status %s (%d)" % (nfsstat4[status], status))
         client_addr = '%s:%s' % cred.connection._s.getpeername()[:2]
         self.summary.show_op('handle v4.1 %s' % client_addr,
-                             opnames, nfsstat4[status])
+                             opnames, status)
         return env
 
     def delete_session(self, session, sessionid):
