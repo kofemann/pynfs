@@ -481,6 +481,7 @@ def json_printresults(tests, file_name, suite='all'):
         data["testcase"] = []
         for t in tests:
             test = {
+                "code": t.code,
                 "name": t.name,
                 "classname": t.suite,
                 "time": str(t.time_taken),
@@ -520,6 +521,7 @@ def xml_printresults(tests, file_name, suite='all'):
         for t in tests:
             testcase = doc.createElement("testcase")
             testsuite.appendChild(testcase)
+            testcase.setAttribute("code", t.code)
             testcase.setAttribute("name", t.name)
             testcase.setAttribute("classname", t.suite)
             testcase.setAttribute("time", t.time_taken)
