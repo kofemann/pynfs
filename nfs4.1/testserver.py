@@ -68,6 +68,8 @@ def scan_options(p):
                  help="Skip final cleanup of test directory")
     p.add_option("--outfile", "--out", default=None, metavar="FILE",
                  help="Store test results in FILE [%default]")
+    p.add_option("--jsonout", "--json", default=None, metavar="FILE",
+                 help="Store test results in JSON format [%default]")
     p.add_option("--xmlout", "--xml", default=None, metavar="FILE",
                  help="Store test results in xml format [%default]")
     p.add_option("--debug_fail", action="store_true", default=False,
@@ -363,7 +365,9 @@ def main():
     if fail:
         print("\nWARNING: could not clean testdir due to:\n%s\n" % err)
 
-    if opt.xmlout is not None:
+    if opt.jsonout is not None:
+        testmod.json_printresults(tests, opt.jsonout)
+    elif opt.xmlout is not None:
         testmod.xml_printresults(tests, opt.xmlout)
 
 if __name__ == "__main__":

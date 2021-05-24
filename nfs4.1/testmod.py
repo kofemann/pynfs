@@ -13,6 +13,7 @@ import re
 import sys
 import time
 from traceback import format_exception, print_exc
+import json
 import xml.dom.minidom
 import datetime
 
@@ -467,6 +468,43 @@ def printresults(tests, opts, file=None):
           (count[SKIP], count[FAIL], count[WARN], count[PASS]), file=file)
     return count[FAIL]
 
+def json_printresults(tests, file_name, suite='all'):
+    with open(file_name, 'w') as fd:
+        failures = 0
+        skipped = 0
+        total_time = 0
+        data = {}
+        data["tests"] = len(tests)
+        data["errors"] = 0
+        data["timestamp"] = str(datetime.datetime.now())
+        data["name"] = suite
+        data["testcase"] = []
+        for t in tests:
+            test = {
+                "name": t.name,
+                "classname": t.suite,
+                "time": str(t.time_taken),
+            }
+
+            total_time += t.time_taken
+            if t.result == TEST_FAIL:
+                failures += 1
+                test["failure"] = {
+                        "message" : t.result.msg,
+                        "err" : ''.join(t.result.tb)
+                }
+            elif t.result == TEST_OMIT:
+                skipped += 1
+                test["skipped"] = 1
+
+            data["testcase"].append(test)
+
+        data["failures"] = failures
+        data["skipped"] = skipped
+        data["time"] = total_time
+
+        fd.write(json.dumps(data, indent=4, sort_keys=True))
+
 def xml_printresults(tests, file_name, suite='all'):
     with open(file_name, 'w') as fd:
         failures = 0
@@ -484,7 +522,7 @@ def xml_printresults(tests, file_name, suite='all'):
             testsuite.appendChild(testcase)
             testcase.setAttribute("name", t.name)
             testcase.setAttribute("classname", t.suite)
-            testcase.setAttribute("time", str(t.time_taken))
+            testcase.setAttribute("time", t.time_taken)
 
             total_time += t.time_taken
             if t.result == TEST_FAIL:
