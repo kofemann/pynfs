@@ -60,7 +60,7 @@ def find_state(env, stateid, allow_0=True, allow_bypass=False):
             raise NFS4Error(NFS4ERR_BAD_STATEID, tag="stateid not known")
         if state.file != env.cfh:
             raise NFS4Error(NFS4ERR_BAD_STATEID,
-                            tag="cfh %r does not match stateid %r" % 
+                            tag="cfh %r does not match stateid %r" %
                             (state.file.fh, env.cfh.fh))
     state.lock.acquire()
     # It is possible that while waiting to get the lock, the state has been
@@ -747,7 +747,7 @@ class DelegEntry(StateTableEntry):
             # BUG deal with this
             raise RuntimeError
         # NOTE that we come in w/o state lock...when should we grab it?
-        # ANSWER - we care about self.status, which can be set to 
+        # ANSWER - we care about self.status, which can be set to
         # INVALID anytime by deleg_return
         slot = session.channel_back.choose_slot()
         seq_op = op4.cb_sequence(session.sessionid, slot.get_seqid(),
@@ -760,9 +760,9 @@ class DelegEntry(StateTableEntry):
             return
         # All sorts of STUBBINESS here
         pipe = session.channel_back.connections[0]
-        xid = dispatcher.cb_compound_async([seq_op, recall_op], 
+        xid = dispatcher.cb_compound_async([seq_op, recall_op],
                                            session.cb_prog, pipe=pipe)
-        # Note it is possible that self.invalid is True, but don't 
+        # Note it is possible that self.invalid is True, but don't
         # want to take the lock
         self.status = CB_SENT
         res = dispatcher.cb_listen(xid, pipe)
@@ -823,13 +823,13 @@ class ByteEntry(StateTableEntry):
 #         list = self.locklist
 #         if not list:
 #             list.append(ByteLock(type, start, end))
-#             return 
+#             return
 #         i = 0
 #         while (list and list[i].end < start):
 #             i += 1
 #         list.insert(i, ByteLock(type, start, end))
 #         # Merge adjacent locks
-#         # Really want range(i+1, i-1, -1), but need to account for list edges 
+#         # Really want range(i+1, i-1, -1), but need to account for list edges
 #         for i in range(min(i+1, len(list)-1), max(1,i)-1, -1):
 #             if i > 0 and list[i].start == list[i-1].end + 1 and \
 #                list[i].type == list[i-1].type:

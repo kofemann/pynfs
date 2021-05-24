@@ -54,11 +54,11 @@ class build_py(_build_py):
 setup(name = "nfs4",
       version = "0.0.0", # import this?
       package_dir = {"nfs4" : ""},
-      packages = ["nfs4", "nfs4.server41tests"], 
+      packages = ["nfs4", "nfs4.server41tests"],
       description = "NFS version 4.1 tools and tests",
       long_description = DESCRIPTION,
       cmdclass = {"build_py": build_py},
-      
+
       # These will be the same
       author = "Fred Isaman",
       author_email = "iisaman@citi.umich.edu",
@@ -66,6 +66,5 @@ setup(name = "nfs4",
       maintainer_email = "iisaman@citi.umich.edu",
       url = "http://www.citi.umich.edu/projects/nfsv4/pynfs/",
       license = "GPL"
-      
       )
 

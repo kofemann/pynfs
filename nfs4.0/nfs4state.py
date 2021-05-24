@@ -233,7 +233,7 @@ class NFSServerState:
                 owner.lastseqid = None
         except KeyError:
             pass
-        
+
     def check_seqid(self, obj, seqid, mustexist=True, open_confirm=False):
         """Check that seqid against stored one for obj.
 
@@ -276,7 +276,7 @@ class NFSServerState:
         if mod32(lastseq + 1) == seqid:
             return
         raise NFS4Error(NFS4ERR_BAD_SEQID)
-    
+
     def advance_seqid(self, owner, op, args, cfh=None):
         """Advance stored seqid for owner, if appropriate. Cache the rest.
 
@@ -416,7 +416,7 @@ class NFSServerState:
             self.next_id += 1
             self.state[id] = self.StateIDInfo(fh, info)
             return id
-            
+
     def __owner2info(self, owner, allownew=False):
         """Returns info for given owner.
 
@@ -476,7 +476,7 @@ class NFSServerState:
     def __getowner(self, id):
         """Returns owner associated with given id"""
         return self.state[id].owner.owner
-        
+
     def __check_clientid(self, clientid):
         """Checks that clientid is not stale"""
         if clientid / 0x100000000 != unpacknumber(self.instance):
@@ -497,7 +497,7 @@ class NFSServerState:
             self.confirmed.renew(clientid)
         except KeyError:
             raise NFS4Error(NFS4ERR_EXPIRED)
-        
+
     def new_lockowner(self, openowner):
         """Use openowner data to create a new lock owner"""
         if openowner.lock_seqid != 0:
@@ -547,8 +547,8 @@ class NFSServerState:
             return True
         else:
             return False
-                
-        
+
+
     def __testlock(self, fh, ids, type, offset, end):
         """Raise NFS4ERR_DENIED if conflicting lock exists"""
         deny = fh.state.testlock(ids, type, offset, end)
@@ -675,7 +675,7 @@ class NFSServerState:
                     del self.state[id]
             del self.openowners[clientid]
 
-        
+
 #########################################################################
 
 
@@ -727,7 +727,7 @@ class NFSFileState:
         """Change 3 bit internal value to 2 bit external"""
         if value & 4: return 3
         else: return value & 3
-        
+
     def downshares(self, id, access, deny):
         """Downgrade shares.  access == deny == 0 removes shares completely"""
         if id not in self.shares:
@@ -879,7 +879,7 @@ class NFSFileState:
         for lock in list[:]:
             if lock.overlaps(start, end):
                 list.remove(lock)
-        
+
 #########################################################################
 
 class NFSFileHandle:
@@ -901,31 +901,31 @@ class NFSFileHandle:
 
     def __repr__(self):
         return "<NFSFileHandle(%s): %s>" % (self.get_fhclass(), str(self))
-    
+
     def __str__(self):
         return self.name
-            
+
     def supported_access(self, client):
         raise "Implement supported_access()"
-        
+
     def evaluate_access(self, client):
         raise "Implement evaluate_access()"
 
     def get_attributes(self, attrlist=None):
         raise "Implement get_attributes"
-                
+
     def get_directory(self):
-        raise "Implement get_directory"                
+        raise "Implement get_directory"
 
     def get_type(self):
         raise "Implement get_type"
-    
+
     def read(self, offset, count):
         raise "Implement read"
 
     def write(self, offset, data):
         raise "Implement write"
-        
+
     def link(self, target):
         raise "Implement link"
 
@@ -1214,7 +1214,7 @@ class VirtualHandle(NFSFileHandle):
             raise "hardlink called with non-directory self"
         if file.fattr4_type == NF4DIR:
             raise "hardlink to a directory"
-        
+
         self.__link(file, newname)
 
     def __link(self, file, newname):
@@ -1243,7 +1243,7 @@ class VirtualHandle(NFSFileHandle):
         if self.fattr4_type == NF4DIR:
             return len(self.dirent) == 0
         raise "is_empty() called on non-dir"
-        
+
     def read(self, offset, count):
         if self.fattr4_type != NF4REG:
             raise "read called on non file!"
@@ -1272,7 +1272,7 @@ class VirtualHandle(NFSFileHandle):
         self.fattr4_size = len(self.dirent)
         self.fattr4_time_modify = converttime()
         self.fattr4_time_metadata = converttime()
-    
+
     def rename(self, oldfh, oldname, newname): # self = newfh
         file = oldfh.dirent[oldname]
         self.__link(file, newname)
@@ -1291,7 +1291,7 @@ class VirtualHandle(NFSFileHandle):
             return self.dirent.verifier
         else:
             raise "getdirverf called on non directory."
-        
+
     def read_link(self):
         if self.fattr4_type != NF4LNK:
             raise "read_link called on non NF4LNK."
@@ -1338,7 +1338,7 @@ class HardHandle(NFSFileHandle):
         self.file = file
         self.dirent = None
         self.mtime = 0
-        
+
     def do_lookupp(self):
         return self.parent
 
@@ -1361,7 +1361,7 @@ class HardHandle(NFSFileHandle):
                     ret_dict[attr] = fsid4(0, 0)
             elif attr == FATTR4_LEASE_TIME:
                     ret_dict[attr] = 1700
-            elif attr == FATTR4_FILEID: 
+            elif attr == FATTR4_FILEID:
                     ret_dict[attr] = stat_struct.st_ino
             elif attr == FATTR4_MAXFILESIZE:
                     ret_dict[attr] = 1000000
@@ -1378,7 +1378,7 @@ class HardHandle(NFSFileHandle):
             elif attr == FATTR4_OWNER_GROUP:
                     ret_dict[attr] = stat_struct.st_gid
             elif attr == FATTR4_RAWDEV:
-                    ret_dict[attr] = specdata4(0, 0) 
+                    ret_dict[attr] = specdata4(0, 0)
             elif attr == FATTR4_TIME_ACCESS:
                     ret_dict[attr] = nfstime4(stat_struct.st_atime, 0);
             elif attr == FATTR4_TIME_MODIFY:
@@ -1387,7 +1387,7 @@ class HardHandle(NFSFileHandle):
 
     def get_fhclass(self):
         return "hard"
-    
+
         def get_link(self):
                 return os.readlink(self.file)
 
@@ -1426,7 +1426,7 @@ class HardHandle(NFSFileHandle):
         for i in self.oldfiles:
             del self.dirent[i]
         return self.dirent.values()
-        
+
     def read_link(self):
         return os.readlink(self.file)
 
@@ -1435,7 +1435,7 @@ class HardHandle(NFSFileHandle):
         fh.seek(offset)
         fh.write(data)
         fh.close()
-        return len(data) 
+        return len(data)
 
 # This seems to be only used now by O_Readdir...can we get rid of it?
 ## class NFSClientHandle:

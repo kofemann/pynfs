@@ -4,7 +4,7 @@
 # nfs4client.py - NFS4 interactive client in python
 #
 # Written by Fred Isaman   <iisaman@citi.umich.edu>
-# Copyright (C) 2006 University of Michigan, Center for 
+# Copyright (C) 2006 University of Michigan, Center for
 #                    Information Technology Integration
 #
 
@@ -126,6 +126,6 @@ def main(server):
     c = PyShell(server)
     c.interact("Try COMPOUND([PUTROOTFH()])")
     print("Goodbye!")
-        
+
 if __name__ == "__main__":
     main(sys.argv[1])

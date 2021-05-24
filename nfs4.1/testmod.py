@@ -1,9 +1,9 @@
 # testmod.py - run tests from a suite
 #
 # Requires python 3.2
-# 
+#
 # Written by Fred Isaman <iisaman@citi.umich.edu>
-# Copyright (C) 2004 University of Michigan, Center for 
+# Copyright (C) 2004 University of Michigan, Center for
 #                    Information Technology Integration
 #
 from __future__ import print_function
@@ -194,7 +194,7 @@ class Test(object):
             out += ' ' + w
             lout += lw + 1
         return out
-            
+
     def fail(self, msg):
         raise FailureException(msg)
 
@@ -275,14 +275,14 @@ class Environment(object):
     def shutDown(self):
         """Run after each test"""
         pass
-        
+
 def _run_filter(test, options):
     """Returns True if test should be run, False if it should be skipped"""
     return True
 
 def runtests(tests, options, environment, runfilter=_run_filter):
     """tests is an array of test objects, to be run in order
-    
+
     (as much as possible)
     """
     for t in tests:
@@ -307,7 +307,7 @@ def _runtree(t, options, environment, runfilter=_run_filter):
     for dep in t.dependencies:
         if dep.result == DEP_FUNCT:
             if (not options.force) and (not dep(t, environment)):
-                t.result = Result(TEST_OMIT, 
+                t.result = Result(TEST_OMIT,
                                   "Dependency function %s failed" %
                                   dep.__name__)
                 return
@@ -322,7 +322,7 @@ def _runtree(t, options, environment, runfilter=_run_filter):
             return
         elif (not options.force) and \
                  (dep.result in [TEST_OMIT, TEST_FAIL, TEST_NOTSUP]):
-            t.result = Result(TEST_OMIT, 
+            t.result = Result(TEST_OMIT,
                               "Dependency %s had status %s." % \
                               (dep, dep.result))
             return
@@ -421,7 +421,6 @@ def createtests(testdir):
                 t.dependencies.append(funct)
     return tests, flag_dict, used_codes
 
-                 
 def printresults(tests, opts, file=None):
     NOTRUN, OMIT, SKIP, FAIL, WARN, PASS = range(6)
     count = [0] * 6

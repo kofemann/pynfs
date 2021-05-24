@@ -176,7 +176,7 @@ class FSObject(object):
         self.lock = RWLock(name=str(id))
         self.seek_lock = Lock("SeekLock")
         self.current_layout = None
-        self.covered_by = None # If this is a mountpoint for fs, equals fs.root 
+        self.covered_by = None # If this is a mountpoint for fs, equals fs.root
         # XXX Need to write to disk here?
         self._init_hook()
 
@@ -760,7 +760,7 @@ class ConfigObj(FSObject):
     def exists(self, name):
         """Returns True if name is in the dir"""
         log_o.log(5, "FSObject.exists(%r)" % name)
-        # HACK - build a fake client 
+        # HACK - build a fake client
         class Fake(object):
             def __init__(self):
                 self.clientid = 0
@@ -911,7 +911,7 @@ class ConfigFS(FileSystem):
         else:
             # Is a directory.  Tree is currently set up like:
             #                       config (1)
-            #        ______________/ /   \  \______________      
+            #        ______________/ /   \  \______________
             #       /               /     \                \
             # actions (8)   serverwide (2)  perclient (3)  ops (4)
             #
@@ -1292,7 +1292,7 @@ class BlockLayoutFS(FileSystem):
 
     def _make_files(self, dev):
         # STUB - hard code some test files with various properties
-        
+
         # These will use test_layout_dict to get id to layout mapping
         princ = nfs4lib.NFS4Principal("root", system=True)
         bs = self.fattr4_layout_blksize

@@ -109,7 +109,7 @@ class Recording(object):
     """Store RPC traffic for client"""
     def __init__(self):
         self.reset()
-        
+
     def add(self, call, reply):
         """Add call and reply strings to records"""
         if self.on:
@@ -121,7 +121,7 @@ class Recording(object):
             queue = collections.deque()
             self.queues[stamp] = queue
         self.queue = queue
-        
+
     def reset(self):
         self.stamp = "default"
         self.on = False
@@ -198,15 +198,15 @@ class StateProtection(object):
                                   handles)
             rv.spr_ssv_info = info
         return rv
-            
-        
-        
+
+
+
 class ClientList(object):
     """Manage mapping of clientids to server data.
 
     Handles the handing out of clientids, the mapping of
     client supplied ownerid to server supplied clientid, and
-    the mapping of either to ClientRecords, where all of the 
+    the mapping of either to ClientRecords, where all of the
     server's state data related to the client can be accessed.
     """
     def __init__(self):
@@ -240,7 +240,7 @@ class ClientList(object):
         """
         c = ClientRecord(self._nextid, arg, principal, security=security)
         if c.ownerid in self._data:
-            raise RuntimeError("ownerid %r already in ClientList" % 
+            raise RuntimeError("ownerid %r already in ClientList" %
                                c.ownerid)
         # STUB - want to limit size of _nextid to < 2**32, to
         # accomodate ConfigFS, which embeds clientid into fileid.
@@ -271,7 +271,7 @@ class VerboseDict(dict):
         if self.config.debug_state:
             log_41.info("+++ Removing client.state[%r]" % key)
         dict.__delitem__(self, key)
-        
+
 class ClientRecord(object):
     """The server's representation of a client and its state"""
     def __init__(self, id, arg, principal, mech=None, security=None):
@@ -289,7 +289,7 @@ class ClientRecord(object):
         self._next = 1 # counter for generating unique stateid 'other'
         self._handle_ctr = Counter(name="ssv_handle_counter")
         self._lock = Lock("Client")
-        
+
     def update(self, arg, principal):
         """Update properties of client based on EXCHANGE_ID arg"""
         if self.confirmed:
@@ -320,7 +320,7 @@ class ClientRecord(object):
         str = "handle_%i:%i" % (self.clientid, self._handle_ctr.next())
         self.security[rpc.RPCSEC_GSS]._add_context(self.protection.context, str)
         return str
-        
+
     def get_new_other(self):
         self._lock.acquire()
         # NOTE we are only using 8 bytes of 12
@@ -332,7 +332,7 @@ class ClientRecord(object):
     def __hash__(self):
         """Guarantee this can be used as dict key"""
         return hash(self.clientid)
-    
+
     def renew_lease(self):
         self.lastused = time.time()
 
@@ -446,15 +446,15 @@ class Channel(object):
         """Bind the connection to the channel"""
         if connection not in self.connections:
             self.connections.append(connection)
-                              
-        
+
+
 class Cache(object):
     def __init__(self, data=None):
         self.data = data
         self.valid = threading.Event() # XXX Is anyone waiting on this?
         if data is not None:
             self.valid.set()
-            
+
 class Slot(object):
     def __init__(self, index, default=default_replay_slot):
         self.id = index
@@ -798,7 +798,7 @@ class NFS4Server(rpc.Server):
             raise NFS4Error(NFS4ERR_INVAL, tag="Empty component")
         if '/' in str:
             raise NFS4Error(NFS4ERR_BADCHAR)
-    
+
     def op_compound(self, args, cred):
         env = CompoundState(args, cred)
         env.is_ds = self.is_ds
@@ -912,8 +912,8 @@ class NFS4Server(rpc.Server):
         res = SEQUENCE4resok(session.sessionid, slot.seqid, arg.sa_slotid,
                              arg.sa_highest_slotid, channel.maxrequests, 0)
         return encode_status(NFS4_OK, res)
-        
-               
+
+
     def op_create_session(self, arg, env):
         # This implements draft22
         check_session(env, unique=True)
@@ -1003,7 +1003,7 @@ class NFS4Server(rpc.Server):
         digest = protect.context.hmac(p.get_buffer(), SSV4_SUBKEY_MIC_T2I)
         res = SET_SSV4resok(digest)
         return encode_status(NFS4_OK, res)
-            
+
     def op_exchange_id(self, arg, env):
         # This implements draft21
         check_session(env, unique=True)
@@ -1041,7 +1041,7 @@ class NFS4Server(rpc.Server):
             elif not c.confirmed:
                 if update:
                     # Case 7
-                    return encode_status(NFS4ERR_NOENT, 
+                    return encode_status(NFS4ERR_NOENT,
                                          msg="Client not confirmed")
                 else:
                     # Case 4
@@ -1271,7 +1271,7 @@ class NFS4Server(rpc.Server):
         env.cfh = env.sfh
         env.cid = env.sid
         return encode_status(NFS4_OK)
-    
+
     def op_create(self, arg, env):
         check_session(env)
         check_cfh(env)
@@ -1360,7 +1360,7 @@ class NFS4Server(rpc.Server):
                                  open_claim_type4[claim_type])
         # emulate switch(claim_type)
         try:
-            func = getattr(self, 
+            func = getattr(self,
                            "open_%s" % open_claim_type4[claim_type].lower())
         except AttributeError:
             return encode_status(NFS4ERR_NOTSUPP, msg="Unsupported claim type")
@@ -1388,7 +1388,7 @@ class NFS4Server(rpc.Server):
         self.check_component(arg.claim.file) # XXX Done as part of lookup?
         # BUG - file locking needs to be fixed
         old_change = env.cfh.fattr4_change
-        existing = env.cfh.lookup(arg.claim.file, env.session.client, 
+        existing = env.cfh.lookup(arg.claim.file, env.session.client,
                                   env.principal)
         if arg.openhow.opentype == OPEN4_CREATE:
             # STUB - all sort of new stuff to add here
@@ -1551,7 +1551,7 @@ class NFS4Server(rpc.Server):
             p = nfs4lib.FancyNFS4Packer()
             p.pack_entry4(e)
             return len(p.get_buffer())
-            
+
         offset = 3 # index offset used to avoid reserved cookies
         check_session(env)
         check_cfh(env)
@@ -1841,7 +1841,7 @@ class NFS4Server(rpc.Server):
         with find_state(env, arg.deleg_stateid, allow_0=False) as state:
             state.delegreturn()
         return encode_status(NFS4_OK)
-    
+
     def op_getdevicelist(self, arg, env): # STUB
         check_session(env)
         check_cfh(env)
@@ -1931,7 +1931,7 @@ class NFS4Server(rpc.Server):
         else:
             state = layoutreturn_stateid(False)
         return encode_status(NFS4_OK, state)
-    
+
     def op_illegal(self, arg, env):
         return encode_status(NFS4ERR_OP_ILLEGAL)
 
@@ -1973,7 +1973,7 @@ class NFS4Server(rpc.Server):
     def ctrl_illegal(self, arg):
         #print("ILLEGAL")
         return xdrdef.sctrl_const.CTRLSTAT_ILLEGAL, xdrdef.sctrl_type.resdata_t(arg.ctrlop)
-        
+
     def op_setclientid(self, arg, env):
         return encode_status(NFS4ERR_NOTSUPP)
 
@@ -1996,7 +1996,7 @@ class NFS4Server(rpc.Server):
 
     def fsid2fs(self, fsid):
         return self._fsids[fsid]
-        
+
     def cb_compound_async(self, args, prog, credinfo=None, pipe=None, tag=None):
         if tag is None:
             tag = "Default callback tag"
@@ -2031,7 +2031,7 @@ class NFS4Server(rpc.Server):
             data = p.unpack_CB_COMPOUND4res()
         log_41.info(data)
         return data
-    
+
     def cb_null_listen(self, xid, pipe, timeout=5.0):
         header, data = pipe.listen(xid, timeout)
         log_41.info("Received CB_NULL reply")

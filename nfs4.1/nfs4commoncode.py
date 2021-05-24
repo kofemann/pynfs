@@ -47,7 +47,7 @@ def %(encode_status)s_by_name(name, status, *args, **kwargs):
         raise
         pass
     raise RuntimeError("Problem with name %%r" %% name)
-        
+
 def %(encode_status)s(status, *args, **kwargs):
     """Called from function op_<name>, encodes the operations response.
 
@@ -63,7 +63,7 @@ def %(encode_status)s(status, *args, **kwargs):
 class %(CompoundArgResults)s(object):
     size = property(lambda s: s._base_len + nfs4lib.xdrlen(s._env.tag))
     tag = property(lambda s: s.prefix + s._env.tag)
-    
+
     def __init__(self, env, prefix=b""):
         self.status = NFS4_OK # Generally == self.results[-1].status
         self.results = [] # Array of nfs_resop4 structures
@@ -106,7 +106,7 @@ class %(PairedResults)s(object):
         #        self.cache = self.reply[0:1] + [NFS4ERR_RETRY_UNCACHED_REP]
         #                        ^
         #                         \should be SEQ
-        
+
         # STUB - do size checking on self.reply
         if self.env.caching or self.env.index == 0:
             self.cache.append(result)
@@ -122,7 +122,7 @@ class %(PairedResults)s(object):
         self.reply.status = self.cache.status = status
         if tag is not None:
             self.env.tag = tag
-        
+
     # Generally make class behave like self.reply
     def __getitem__(self, key):
         return self.reply[key]
@@ -132,7 +132,7 @@ class %(PairedResults)s(object):
 
 class %(CompoundState)s(object):
     """ We hold here all the interim state the server needs to remember
-    
+
     as it handles each operation in turn.
     """
     def __init__(self, args, cred):
@@ -172,7 +172,7 @@ class %(CompoundState)s(object):
         """Pull security triple of (OID, QOP, service) from cred"""
         # STUB
         return 0
-    
+
     def get_connection(self, cred):
         """Pull connection id from credential"""
         return cred.connection

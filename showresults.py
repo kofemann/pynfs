@@ -2,9 +2,9 @@
 # showresults.py - redisplay results from nfsv4 server tester output file
 #
 # Requires python 3.2
-# 
+#
 # Written by Fred Isaman <iisaman@citi.umich.edu>
-# Copyright (C) 2004 University of Michigan, Center for 
+# Copyright (C) 2004 University of Michigan, Center for
 #                    Information Technology Integration
 #
 

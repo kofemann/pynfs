@@ -99,7 +99,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                 [ nfs_opnum4[a.argop].lower()[3:] for a in args[0] ],
                 nfsstat4[res.status])
         return res
-    
+
     def listen(self, xid, pipe=None, timeout=10.0):
         if pipe is None:
             pipe = self.c1
@@ -167,7 +167,7 @@ class NFS4Client(rpc.Client, rpc.Server):
             log_cb.info("Replay...sending data")
             data = e.cache.data
         return rpc.SUCCESS, data, getattr(env, "notify", None)
-        
+
     def check_utf8str_cs(self, str):
         # XXX combine code with server
         # STUB - raises NFS4Error if appropriate.
@@ -234,7 +234,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         if funct is None:
             return
         funct(arg, env)
-        
+
     def posthook(self, arg, env, res=None):
         """Call the function post_<opname>_<clientid> if it exists"""
         if env.session is None:
@@ -246,7 +246,7 @@ class NFS4Client(rpc.Client, rpc.Server):
         if funct is None:
             return res
         return funct(arg, env, res)
-        
+
     def op_cb_sequence(self, arg, env):
         log_cb.info("In CB_SEQUENCE")
         if env.index != 0:
@@ -430,18 +430,18 @@ class ClientRecord(object):
         else:
             # Add hook
             setattr(self.c, hook_name, funct)
-        
+
     def cb_pre_hook(self, op_num, funct=None):
         if op_num == OP_CB_SEQUENCE:
             raise RuntimeError("Hook depends on session info from CB_SEQUENCE")
         self._cb_hook("pre", nfs_cb_opnum4[op_num][3:].lower(), funct)
-        
+
     def cb_post_hook(self, op_num, funct=None):
         self._cb_hook("post", nfs_cb_opnum4[op_num][3:].lower(), funct)
-        
+
 # XXX FIXME - this is for Slot code, put in reuasable spot if this works
-from nfs4server import Slot        
-from nfs4server import Channel as RecvChannel 
+from nfs4server import Slot
+from nfs4server import Channel as RecvChannel
 
 class SendChannel(object):
     def __init__(s, attrs):
@@ -464,7 +464,7 @@ class SendChannel(object):
             raise RuntimeError("Out of slots")
         finally:
             self.lock.release()
-                
+
 class SessionRecord(object):
     def __init__(self, csr, client):
         self.sessionid = csr.csr_sessionid
@@ -515,7 +515,7 @@ class SessionRecord(object):
                              kwargs.pop("cache_this", False))
         slot = self.fore_channel.slots[seq_op.sa_slotid]
         return slot, seq_op
- 
+
     def compound_async(self, ops, **kwargs):
         slot, seq_op = self._prepare_compound(kwargs)
         slot.xid = self.c.compound_async([seq_op] + ops, **kwargs)

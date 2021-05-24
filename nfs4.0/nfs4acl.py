@@ -2,7 +2,7 @@
 # nfs4acl.py - some useful acl code
 #
 # Written by Fred Isaman <iisaman@citi.umich.edu>
-# Copyright (C) 2004 University of Michigan, Center for 
+# Copyright (C) 2004 University of Michigan, Center for
 #                    Information Technology Integration
 #
 
@@ -87,7 +87,7 @@ def acl2mode(acl):
     for ace in short:
         if perms[ace.who] is not None: continue
         if ace.type == ALLOWED:
-            bits = 0 
+            bits = 0
             for mode, bit in modes:
                 if mode & ace.access_mask == mode:
                     bits |= bit
@@ -103,7 +103,7 @@ def acl2mode(acl):
         if perms[key] is None:
             perm[keys] = 0
     return perms["OWNER@"]*0o100 + perms["GROUP@"]*0o10 + perms["EVERYONE@"]
-        
+
 def maps_to_posix(acl):
     """Raises ACLError if acl does not map to posix """
 
@@ -147,7 +147,7 @@ def chk_triple(mask, allow, deny, flags, not_mask):
         raise ACLError("Triple mask does not have required flags  %x" % flags)
     if not_mask != mask.access_mask:
         raise ACLError("Triple mask is not same as a previous mask")
-    
+
 def chk_everyone(acl, flags):
     if len(acl) != 2:
         raise ACLError("Had %i ACEs left when called chk_everyone" % len(acl))
@@ -216,4 +216,3 @@ def printableacl(acl):
                (type_str[ace.type], ace.flag, ace.access_mask, ace.who)
     #print("leaving printableacl with out = %s" % out)
     return out
-    

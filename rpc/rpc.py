@@ -122,7 +122,7 @@ class FancyRPCPacker(rpc_pack.RPCPacker):
                          py_data.proc,
                          self._filter_opaque_auth(py_data.cred),
                          py_data.verf)
-        
+
 ###################################################
 
 class DeferredData(object):
@@ -144,7 +144,7 @@ class DeferredData(object):
         self.data = None
         self._exception = None
         self.msg = msg # Data that thread calling fill might need
-        
+
     def wait(self, timeout=10):
         """Wait for data to be filled in"""
         self._filled.wait(timeout)
@@ -458,7 +458,7 @@ class ConnectionHandler(object):
 
         # Create internal server for alarm system to connect to
         self.s = self.expose((LOOPBACK, 0), socket.AF_INET, False)
-        
+
         # Set up alarm system, which is how other threads inform the polling
         # thread that data is ready to be sent out
         # NOTE that there are TWO sockets associated with alarm, one
@@ -643,7 +643,7 @@ class ConnectionHandler(object):
 
     def _event_rpc_call(self, msg, msg_data, pipe):
         """Deal with an incoming RPC CALL.
-        
+
         msg is unpacked header, with length fields added.
         msg_data is raw procedure data.
         """
@@ -785,7 +785,7 @@ class ConnectionHandler(object):
 
         # For AUTH_SYS:
         #    check machinename, mode - again how is accept list set on server?
-        
+
         # For GSS:
         #   illegal enum values should return AUTH_BADCRED
         #      this will be noticed by XDR unpack failing, which means
@@ -877,7 +877,7 @@ class ConnectionHandler(object):
             # A list of all sockets we have open, indexed by fileno
             self.sockets[s.fileno()] = s
         return s
-            
+
     def make_call_function(self, pipe, procedure, prog, vers):
         def call(data, credinfo, proc=None, timeout=15.0):
             if proc is None:
@@ -887,7 +887,7 @@ class ConnectionHandler(object):
             # XXX STUB - do header checking
             return header, data
         return call
-    
+
     def listen(self, pipe, xid):
         # STUB - should be overwritten by subclass
         header, data = pipe.listen(xid)

@@ -2,24 +2,24 @@
 # nfs4lib.py - NFS4 library for Python
 #
 # Requires python 3.2
-# 
+#
 # Written by Fred Isaman <iisaman@citi.umich.edu>
-# Copyright (C) 2004 University of Michigan, Center for 
+# Copyright (C) 2004 University of Michigan, Center for
 #                    Information Technology Integration
 #
 # Based on version
 # Written by Peter Astrand <peter@cendio.se>
 # Copyright (C) 2001 Cendio Systems AB (http://www.cendio.se)
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License. 
-# 
+# the Free Software Foundation; version 2 of the License.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -72,7 +72,7 @@ class UnexpectedCompoundRes(NFSException):
     """The COMPOUND procedure returned OK, but had unexpected data"""
     def __init__(self, msg=""):
         self.msg = msg
-    
+
     def __str__(self):
         if self.msg:
             return "Unexpected COMPOUND result: %s" % self.msg
@@ -83,7 +83,7 @@ class InvalidCompoundRes(NFSException):
     """The COMPOUND return is invalid, ie response is not to spec"""
     def __init__(self, msg=""):
         self.msg = msg
-    
+
     def __str__(self):
         if self.msg:
             return "Invalid COMPOUND result: %s" % self.msg
@@ -105,8 +105,8 @@ class FancyNFS4Packer(nfs4_pack.NFS4Packer):
             data = dict2fattr(data)
         return data
 
-    # def pack_dirlist4(self): 
-        
+    # def pack_dirlist4(self):
+
 class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
     def filter_bitmap4(self, data):
         """Put bitmap into single long, instead of array of 32bit chunks"""
@@ -121,7 +121,7 @@ class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
         """Return as dict, instead of opaque attrlist"""
         return fattr2dict(data)
 
-    
+
     def filter_dirlist4(self, data):
         """Return as simple list, instead of strange chain structure"""
         e = data.entries
@@ -133,8 +133,8 @@ class FancyNFS4Unpacker(nfs4_pack.NFS4Unpacker):
             array.append(e[0])
         data.entries = array
         return data
-        
-        
+
+
 # STUB
 class CBServer(rpc.RPCServer):
     def __init__(self, client):
@@ -165,8 +165,8 @@ class CBServer(rpc.RPCServer):
             OP_CB_GETATTR: 0,
             OP_CB_RECALL: 0,
             #OP_CB_ILLEGAL: 0,
-            }            
-        
+            }
+
     def set_cb_recall(self, cbid, funct, ret):
         self.recall_lock.acquire()
         self.recall_funct[cbid] = funct
@@ -209,7 +209,7 @@ class CBServer(rpc.RPCServer):
             return rpc.GARBAGE_ARGS, b''
         else:
             return rpc.SUCCESS, b''
-    
+
     def handle_1(self, data, cred):
         """Deal with CB_COMPOUND"""
         print("*****CB received COMPOUND******")
@@ -223,7 +223,7 @@ class CBServer(rpc.RPCServer):
         self.nfs4packer.reset()
         self.nfs4packer.pack_CB_COMPOUND4res(cmp4res)
         return rpc.SUCCESS, self.nfs4packer.get_buffer()
-            
+
     def O_CB_Compound(self):
         tag = b''
         try:
@@ -247,7 +247,7 @@ class CBServer(rpc.RPCServer):
             if ok != NFS4_OK:
                 break
         return ok, results, tag
-        
+
     # FIXME
     def O_CB_GetAttr(self, op, cbid):
         print("******* CB_Getattr *******")
@@ -272,7 +272,7 @@ class CBServer(rpc.RPCServer):
         self.recall_return[cbid] = NFS4_OK
         self.recall_lock.release()
         return res
-            
+
 # STUB
 AuthSys = rpc.SecAuthSys(0,b'jupiter',103558,100,[])
 
@@ -527,12 +527,12 @@ class NFS4Client(rpc.RPCClient):
         res = self.compound(ops)
         check_result(res)
         return res.resarray[-1].switch.switch.object
-    
+
     def do_readdir(self, file, cookie=0, cookieverf = b'', attr_request=[],
                    dircount=4096, maxcount=4096):
         # Since we may not get whole directory listing in one readdir request,
         # loop until we do. For each request result, create a flat list
-        # with <entry4> objects. 
+        # with <entry4> objects.
         attrs = list2bitmap(attr_request)
         cookie = 0
         cookieverf = b''
@@ -553,7 +553,7 @@ class NFS4Client(rpc.RPCClient):
                 else:
                     break
             entry = reply.entries[0]
-            # Loop over all entries in result. 
+            # Loop over all entries in result.
             while 1:
                 entry.attrdict = entry.attrs
                 entry.count = count
@@ -648,7 +648,7 @@ class NFS4Client(rpc.RPCClient):
             # There was no delegation granted, so clean up recall info
             self.cb_server.clear_cb_recall(self.cbid)
         return res
-        
+
     def open_file(self, owner, path=None,
                   access=OPEN4_SHARE_ACCESS_READ,
                   deny=OPEN4_SHARE_DENY_WRITE,
@@ -706,7 +706,7 @@ class NFS4Client(rpc.RPCClient):
             check_result(res)
             stateid = res.resarray[-1].switch.switch.open_stateid
         return (fhandle, stateid)
-        
+
 
     def create_confirm(self, owner, path=None, attrs={FATTR4_MODE: 0o644},
                        access=OPEN4_SHARE_ACCESS_BOTH,
@@ -726,7 +726,7 @@ class NFS4Client(rpc.RPCClient):
         res = self.open_file(owner, path, access, deny)
         check_result(res, "Opening file %s" % _getname(owner, path))
         return self.confirm(owner, res)
-        
+
 ##     def xxxopen_claim_prev(self, owner, fh, seqid=None,
 ##                        check=None, error=NFS4_OK, msg=''):
 ##         # Set defaults
@@ -778,7 +778,7 @@ class NFS4Client(rpc.RPCClient):
             res.count = res.resarray[-1].switch.switch.count
             res.committed = res.resarray[-1].switch.switch.committed
         return res
-    
+
     def read_file(self, file, offset=0, count=2048, stateid=stateid4(0, b'')):
         ops =  self.use_obj(file)
         ops += [op4.read(stateid, offset, count)]
@@ -794,7 +794,7 @@ class NFS4Client(rpc.RPCClient):
         """Lock the file in fh using owner for the first time
 
         file can be either a fh or a path"""
-        
+
         if lockowner is None:
             lockowner = b"lockowner_%f" % time.time()
         if openseqid is None: openseqid = self.get_seqid(openowner)
@@ -838,7 +838,7 @@ class NFS4Client(rpc.RPCClient):
         test_owner = lock_owner4(self.clientid, tester)
         ops += [op4.lockt(type, offset, len, test_owner)]
         return self.compound(ops)
-                  
+
     def close_file(self, owner, fh, stateid, seqid=None):
         """close the given file"""
         if seqid is None: seqid = self.get_seqid(owner)
@@ -898,22 +898,22 @@ def get_attr_name(bitnum):
     """Return string corresponding to attribute bitnum"""
     return get_bitnumattr_dict().get(bitnum, "Unknown_%r" % bitnum)
 
-_cache_attrbitnum = {} 
+_cache_attrbitnum = {}
 def get_attrbitnum_dict():
     """Get dictionary with attribute bit positions.
 
     Note: This function uses introspection. It assumes an entry
-    in nfs4_const.py is an attribute iff it is named FATTR4_<something>. 
+    in nfs4_const.py is an attribute iff it is named FATTR4_<something>.
 
     Returns {"type": 1, "fh_expire_type": 2,  "change": 3 ...}
     """
-    
+
     if _cache_attrbitnum:
         return _cache_attrbitnum
     for name in dir(nfs4_const):
         if name.startswith("FATTR4_"):
             value = getattr(nfs4_const, name)
-            # Sanity checking. Must be integer. 
+            # Sanity checking. Must be integer.
             assert(type(value) is int)
             attrname = name[7:].lower()
             _cache_attrbitnum[attrname] = value
@@ -922,9 +922,9 @@ def get_attrbitnum_dict():
 _cache_bitnumattr = {}
 def get_bitnumattr_dict():
     """Get dictionary with attribute bit positions.
-    
+
     Note: This function uses introspection. It assumes an entry
-    in nfs4_const.py is an attribute iff it is named FATTR4_<something>. 
+    in nfs4_const.py is an attribute iff it is named FATTR4_<something>.
     Returns { 1: "type", 2: "fh_expire_type", 3: "change", ...}
     """
 
@@ -933,7 +933,7 @@ def get_bitnumattr_dict():
     for name in dir(nfs4_const):
         if name.startswith("FATTR4_"):
             value = getattr(nfs4_const, name)
-            # Sanity checking. Must be integer. 
+            # Sanity checking. Must be integer.
             assert(type(value) is int)
             attrname = name[7:].lower()
             _cache_bitnumattr[value] = attrname
@@ -949,7 +949,7 @@ def get_attrpackers(packer):
     dict = get_attrbitnum_dict()
     for name in dir(nfs4_pack.NFS4Packer):
         if name.startswith("pack_fattr4_"):
-            # pack_fattr4 is 12 chars. 
+            # pack_fattr4 is 12 chars.
             attrname = name[12:]
             out[dict[attrname]] = getattr(packer, name)
     return out
@@ -964,7 +964,7 @@ def get_attrunpacker(unpacker):
     attrunpackers = {}
     for name in dir(FancyNFS4Unpacker):
         if name.startswith("unpack_fattr4_"):
-            # unpack_fattr4_ is 14 chars. 
+            # unpack_fattr4_ is 14 chars.
             attrname = name[14:]
             bitnum = get_attrbitnum_dict()[attrname]
             attrunpackers[bitnum] = getattr(unpacker, name)
@@ -977,7 +977,7 @@ _cache_attrpackers = get_attrpackers(_cache_packer)
 def dict2fattr(dict):
     """Convert a dictionary of form {numb:value} to a fattr4 object.
 
-    Returns a fattr4 object.  
+    Returns a fattr4 object.
     """
 
     attrs = sorted(dict.keys())
@@ -993,7 +993,7 @@ def dict2fattr(dict):
         packerfun(value)
         attr_vals += packer.get_buffer()
     attrmask = list2bitmap(attrs)
-    return fattr4(attrmask, attr_vals); 
+    return fattr4(attrmask, attr_vals);
 
 def fattr2dict(obj):
     """Convert a fattr4 object to a dictionary with attribute name and values.

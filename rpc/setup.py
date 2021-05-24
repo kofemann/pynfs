@@ -46,11 +46,11 @@ class build_py(_build_py):
 setup(name = "rpc",
       version = "0.0.0", # import this?
       package_dir = {"rpc" : ""},
-      packages = ["rpc"], 
+      packages = ["rpc"],
       description = "GSS enabled RPC client and server",
       long_description = DESCRIPTION,
       cmdclass = {"build_py": build_py},
-      
+
       # These will be the same
       author = "Fred Isaman",
       author_email = "iisaman@citi.umich.edu",
@@ -58,6 +58,5 @@ setup(name = "rpc",
       maintainer_email = "iisaman@citi.umich.edu",
       url = "http://www.citi.umich.edu/projects/nfsv4/pynfs/",
       license = "GPL"
-      
       )
 

@@ -100,7 +100,7 @@ def set_attrbit_dicts():
     """Set global dictionaries manipulating attribute bit positions.
 
     Note: This function uses introspection. It assumes an entry
-    in nfs4_const.py is an attribute iff it is named FATTR4_<something>. 
+    in nfs4_const.py is an attribute iff it is named FATTR4_<something>.
 
     Returns {"type": 1, "fh_expire_type": 2,  "change": 3 ...}
             { 1: "type", 2: "fh_expire_type", 3: "change", ...}
@@ -111,7 +111,7 @@ def set_attrbit_dicts():
     for name in dir(xdrdef.nfs4_const):
         if name.startswith("FATTR4_"):
             value = getattr(xdrdef.nfs4_const, name)
-            # Sanity checking. Must be integer. 
+            # Sanity checking. Must be integer.
             assert(type(value) is int)
             attrname = name[7:].lower()
             attr2bitnum[attrname] = value
@@ -172,7 +172,7 @@ class UnexpectedCompoundRes(NFSException):
     """The COMPOUND procedure returned OK, but had unexpected data"""
     def __init__(self, msg=""):
         self.msg = msg
-    
+
     def __str__(self):
         if self.msg:
             return "Unexpected COMPOUND result: %s" % self.msg
@@ -183,7 +183,7 @@ class InvalidCompoundRes(NFSException):
     """The COMPOUND return is invalid, ie response is not to spec"""
     def __init__(self, msg=""):
         self.msg = msg
-    
+
     def __str__(self):
         if self.msg:
             return "Invalid COMPOUND result: %s" % self.msg
@@ -242,11 +242,11 @@ class FancyNFS4Unpacker(NFS4Unpacker):
             list.append(e)
         data.entries = list
         return data
-            
+
 def dict2fattr(dict):
     """Convert a dictionary of form {numb:value} to a fattr4 object.
 
-    Returns a fattr4 object.  
+    Returns a fattr4 object.
     """
 
     attrs = sorted(dict.keys())
@@ -259,7 +259,7 @@ def dict2fattr(dict):
         getattr(packer, bitnum2packer[bitnum])(value)
         attr_vals += packer.get_buffer()
     attrmask = list2bitmap(attrs)
-    return xdrdef.nfs4_type.fattr4(attrmask, attr_vals); 
+    return xdrdef.nfs4_type.fattr4(attrmask, attr_vals);
 
 def fattr2dict(obj):
     """Convert a fattr4 object to a dictionary with attribute name and values.
@@ -648,7 +648,7 @@ class AttrConfig(object):
         self._f = (kind=="obj")
         self._s = (kind=="serv")
         self._fs = (kind=="fs")
-    
+
 from xdrdef.nfs4_const import *
 
 A = AttrConfig

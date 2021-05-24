@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 # rpcgen.py - A Python RPC protocol compiler
-# 
+#
 # Written by Fred Isaman <iisaman@citi.umich.edu>
-# Copyright (C) 2004 University of Michigan, Center for 
+# Copyright (C) 2004 University of Michigan, Center for
 #                    Information Technology Integration
 #
 # Based on version written by Peter Astrand <peter@cendio.se>
 # Copyright (C) 2001 Cendio Systems AB (http://www.cendio.se)
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License. 
-# 
+# the Free Software Foundation; version 2 of the License.
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -25,7 +25,7 @@
 # Note <something>_list means zero or more of <something>.
 #
 # TODO:
-# Code generation for programs and procedures. 
+# Code generation for programs and procedures.
 #
 
 ##########################################################################
@@ -209,7 +209,7 @@
         practice is to wrap arguments into a structure.
 """
 # Spec above allows the following problems:
-# typedef void; 
+# typedef void;
 # typedef enum <enum_body> ID[5];  <---Not a problem
 # typedef enum <enum_body> ID<>;   <---Not a problem
 
@@ -243,7 +243,7 @@ keywords = ("bool", "case", "const", "default", "double", "quadruple",
 # Required by lex.  Each token also allows a function t_<token>.
 tokens = tuple([t.upper() for t in keywords]) + (
     "ID", "CONST10", "CONST8", "CONST16",
-    # ( ) [ ] { } 
+    # ( ) [ ] { }
     "LPAREN", "RPAREN", "LBRACKET", "RBRACKET", "LBRACE", "RBRACE",
     # ; : < > * = ,
     "SEMI", "COLON", "LT", "GT", "STAR", "EQUALS", "COMMA"
@@ -320,7 +320,7 @@ def p_specification(t):
     '''specification : definition_list'''
 
 def p_definition_list(t):
-    '''definition_list : definition definition_list 
+    '''definition_list : definition definition_list
                        | empty'''
 
 def p_definition(t):
@@ -536,17 +536,17 @@ def p_struct_body(t):
     t[0] = t[2]
 
 def p_declaration_list_1(t):
-    '''declaration_list : declaration SEMI''' 
+    '''declaration_list : declaration SEMI'''
     t[0] = [t[1]]
 
 def p_declaration_list_2(t):
-    '''declaration_list : declaration SEMI declaration_list''' 
+    '''declaration_list : declaration SEMI declaration_list'''
     t[0] = [t[1]] + t[3]
 
 def p_enum_body(t):
     '''enum_body : LBRACE enum_constant_list RBRACE'''
     # Returns a list of const_info
-    t[0] = t[2] 
+    t[0] = t[2]
 
 def p_enum_constant(t):
     '''enum_constant : ID EQUALS value'''
@@ -809,7 +809,7 @@ class Info(object):
             newdata = "%s.%s" % (data, self.id)
         if self.array:
             newdata = data
-            subheader = "%sdef pack_one_%s(self, data):\n" % (prefix, self.id) 
+            subheader = "%sdef pack_one_%s(self, data):\n" % (prefix, self.id)
             varindent = indent
             if self.fixed:
                 array = "%sself.pack_farray(%s, data, pack_one_%s)\n" % \
@@ -835,7 +835,7 @@ class Info(object):
             newdata = "%s.%s" % (data, self.id)
         if self.array:
             subheader = "%sdef unpack_one_%s(self, data):\n" % \
-                        (prefix, self.id) 
+                        (prefix, self.id)
             varindent = indent
             array = "%s%sreturn data\n" % (prefix, varindent)
             if self.fixed:
@@ -1385,7 +1385,7 @@ class %sUnpacker(xdrlib.Unpacker):
 """ % ("%s", indent, indent2, indent2, indent2)
 
 known_basics = {"int" : "pack_int",
-                #"enum" : "pack_enum", 
+                #"enum" : "pack_enum",
                 "uint" : "pack_uint",
                 "unsigned" : "pack_uint",
                 "hyper" : "pack_hyper",
@@ -1393,8 +1393,8 @@ known_basics = {"int" : "pack_int",
                 "float" : "pack_float",
                 "double" : "pack_double",
                 # Note: xdrlib.py does not have a
-                # pack_quadruple currently. 
-                "quadruple" : "pack_double", 
+                # pack_quadruple currently.
+                "quadruple" : "pack_double",
                 "bool" : "pack_bool",
                 "opaque": "pack_opaque",
                 "string": "pack_string"}

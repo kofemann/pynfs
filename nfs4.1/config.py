@@ -116,7 +116,7 @@ class MetaConfig(type):
         for i, attr in enumerate(attrs):
             setattr(cls, attr.name, property(make_get(i), make_set(i),
                                              None, attr.comment))
-        
+
 class ServerConfig(object):
     __metaclass__ = MetaConfig
     attrs =  [ConfigLine("allow_null_data", False,

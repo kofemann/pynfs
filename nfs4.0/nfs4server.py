@@ -4,7 +4,7 @@
 #
 # Written by Martin Murray <mmurray@deepthought.org>
 # and        Fred Isaman   <iisaman@citi.umich.edu>
-# Copyright (C) 2001 University of Michigan, Center for 
+# Copyright (C) 2001 University of Michigan, Center for
 #                    Information Technology Integration
 #
 
@@ -62,7 +62,7 @@ def verify_utf8(str):
         return True
     except UnicodeError:
         return False
-            
+
 def access2string(access):
     ret = []
     if access & ACCESS4_READ:
@@ -119,7 +119,7 @@ class NFS4Server(rpc.RPCServer):
             return rpc.GARBAGE_ARGS, ''
         else:
             return rpc.SUCCESS, ''
-    
+
     def handle_1(self, data, cred):
         self.nfs4unpacker.reset(data)
         print
@@ -129,7 +129,7 @@ class NFS4Server(rpc.RPCServer):
             self.nfs4unpacker.done()
         except XDRError:
             print(repr(self.nfs4unpacker.get_buffer()))
-            
+
             raise
             return rpc.GARBAGE_ARGS, ''
         cmp4res = COMPOUND4res(ok, tag, results)
@@ -175,7 +175,7 @@ class NFS4Server(rpc.RPCServer):
             return NFS4ERR_MINOR_VERS_MISMATCH, [], tag
         if not verify_utf8(tag):
             return NFS4ERR_INVAL, [], tag
-        self.prep_client()            
+        self.prep_client()
         results = []
         ok = NFS4_OK
         for op in cmp4args.argarray:
@@ -278,7 +278,7 @@ class NFS4Server(rpc.RPCServer):
     # FIXME: have it actually do something
     def op_delegpurge(self, op):
         return simple_error(NFS4ERR_NOTSUPP)
-    
+
     # FIXME: have it actually do something
     def op_delegreturn(self, op):
         return simple_error(NFS4ERR_NOTSUPP)
@@ -402,7 +402,7 @@ class NFS4Server(rpc.RPCServer):
     def op_lookup(self, op):
         print("  CURRENT FILEHANDLE %s" % repr(self.curr_fh))
         print("  REQUESTED OBJECT %s" % op.oplookup.objname)
-        
+
         if not self.curr_fh:
             return simple_error(NFS4ERR_NOFILEHANDLE)
         if self.curr_fh.get_type() == NF4LNK:
@@ -595,7 +595,7 @@ class NFS4Server(rpc.RPCServer):
         # check access!
         if not op.opputfh.object in self.fhcache:
             return simple_error(NFS4ERR_BADHANDLE)
-        self.curr_fh = self.fhcache[op.opputfh.object] 
+        self.curr_fh = self.fhcache[op.opputfh.object]
         return simple_error(NFS4_OK)
 
     def op_putpubfh(self, op):
@@ -898,7 +898,7 @@ class NFS4Server(rpc.RPCServer):
         self.state.unconfirmed.remove(x=entry2.x)
         self.state.reset_seqid(c)
         return simple_error(NFS4_OK)
-            
+
     def op_verify(self, op):
         print("  CURRENT FILEHANDLE %s" % repr(self.curr_fh))
         if not self.curr_fh:

@@ -235,7 +235,7 @@ class NFS4Proxy(rpc.Server):
         log.debug("Proxy sent:")
         log.debug(repr(args))
         calldata = packer.get_buffer()
-        try:    
+        try:
             ret_data = self.forward_call(calldata, callback)
         except rpc.RPCTimeout:
             log.critical("Error: cannot connect to destination server")

@@ -2,7 +2,7 @@ from __future__ import with_statement
 import threading
 
 
-DEBUG = False # Note this only affects locks at creation 
+DEBUG = False # Note this only affects locks at creation
 
 class Counter(object):
     def __init__(self, first_value=0, name="counter"):
@@ -62,7 +62,7 @@ class _DebugLock(object):
         self.lock = threading.Lock()
         self.name = name
 
-    
+
     @_collect_acq_data()
     def acquire(self):
         self.lock.acquire()
@@ -86,7 +86,7 @@ class _RWLock(object):
     """
     # NOTE - in case of read-only filesystem, want acquire/release to
     # revert to NOPs, while acquire-write should raise error.
-    
+
     def __init__(self):
         self._cond = threading.Condition()
         self._write_lock = threading.Lock()
@@ -171,7 +171,7 @@ class _RWLockVerbose(_RWLock):
     """
     # NOTE - in case of read-only filesystem, want acquire/release to
     # revert to NOPs, while acquire-write should raise error.
-    
+
     def __init__(self, name=""):
         super(_RWLockVerbose, self).__init__()
         self.name = "RWLock_%s" % name

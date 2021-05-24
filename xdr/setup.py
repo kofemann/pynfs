@@ -12,7 +12,7 @@ Add stuff here.
 
 setup(name = "xdrgen",
       version = "0.0.0", # import this?
-      py_modules = ["xdrgen"], 
+      py_modules = ["xdrgen"],
       scripts = ["xdrgen.py"], # FIXME - make small script that calls module
       description = "Generate python code from .x files",
       long_description = DESCRIPTION,
@@ -25,6 +25,5 @@ setup(name = "xdrgen",
       maintainer_email = "iisaman@citi.umich.edu",
       url = "http://www.citi.umich.edu/projects/nfsv4/pynfs/",
       license = "GPL"
-      
       )
 
