@@ -102,7 +102,7 @@ def testRPCSEC_GSS(t, env):
 
     per section 3.2.1.1 of RFC
 
-    FLAGS: secinfo all
+    FLAGS: secinfo gss
     DEPEND: SEC1
     CODE: SEC7
     """
