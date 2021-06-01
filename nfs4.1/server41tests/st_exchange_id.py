@@ -71,7 +71,7 @@ def testSupported2(t, env):
 def testSSV(t, env):
     """Do a simple EXCHANGE_ID
 
-    FLAGS: exchange_id all
+    FLAGS: exchange_id
     CODE: EID50
     """
     # E_ID with SP4_SSV set
