@@ -62,11 +62,11 @@ def testDestroy2(t, env):
     deleg = res.resarray[-2].delegation
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
     sess3 = c2.create_session()
     sess3.compound([op.reclaim_complete(FALSE)])
     claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
+    owner = open_owner4(0, b"My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
@@ -113,11 +113,11 @@ def testDestroy3(t, env):
     if deleg.delegation_type == OPEN_DELEGATE_NONE:
         fail("Could not get delegation")
     recall.happened = False
-    c2 = env.c1.new_client("%s_2" % env.testname(t))
+    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
     sess2 = c2.create_session()
     sess2.compound([op.reclaim_complete(FALSE)])
     claim = open_claim4(CLAIM_NULL, env.testname(t))
-    owner = open_owner4(0, "My Open Owner 2")
+    owner = open_owner4(0, b"My Open Owner 2")
     how = openflag4(OPEN4_NOCREATE)
     open_op = op.open(0, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
                       owner, how, claim)
