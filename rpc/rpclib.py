@@ -1,5 +1,5 @@
-from rpc_const import *
-from rpc_type import *
+from .rpc_const import *
+from .rpc_type import *
 
 import logging
 log = logging.getLogger("rpc.lib")

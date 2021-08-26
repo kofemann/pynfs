@@ -1,13 +1,13 @@
-from rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL, \
+from .rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL, \
     MSG_ACCEPTED
-from rpc_type import opaque_auth, authsys_parms
-from rpc_pack import RPCPacker, RPCUnpacker
-from gss_pack import GSSPacker, GSSUnpacker
+from .rpc_type import opaque_auth, authsys_parms
+from .rpc_pack import RPCPacker, RPCUnpacker
+from .gss_pack import GSSPacker, GSSUnpacker
 from xdrlib import Packer, Unpacker
-import rpclib
-from gss_const import *
-import gss_type
-from gss_type import rpc_gss_init_res
+from . import rpclib
+from .gss_const import *
+from . import gss_type
+from .gss_type import rpc_gss_init_res
 try:
     import gssapi
 except ImportError:

@@ -8,12 +8,12 @@ import logging
 from collections import deque as Deque
 from errno import EINPROGRESS, EWOULDBLOCK
 
-import rpc.rpc_pack as rpc_pack
-from rpc_const import *
-from rpc_type import *
+from . import rpc_pack
+from .rpc_const import *
+from .rpc_type import *
 
-import security
-import rpclib
+from . import security
+from . import rpclib
 import random
 
 log_p = logging.getLogger("rpc.poll") # polling loop thread
