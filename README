@@ -35,19 +35,4 @@ a test that requires incorrect behavior.)
 
 See COPYING for copyright and license information.
 
-Contributing to pynfs
-=====================
-
-Check out the latest source code from
-
-	git://git.linux-nfs.org/projects/bfields/pynfs.git
-
-Commit your changes.  Please make sure each commit is individually
-correct and does only one thing.
-
-When you're done, send the resulting patches to bfields@fieldses.org and
-cc the linux-nfs@vger.kernel.org mailing list, using something like:
-
-	git format-patch origin..
-	git send-email --to="bfields@fieldses.org" \
-			--cc="linux-nfs@vger.kernel.org 0*
+See CONTRIBUTING to learn how to contribute to pynfs development.
