@@ -69,10 +69,9 @@ def testLockSleepLock(t, env):
     check(res, NFS4_OK)
 
     lease_time = _getleasetime(sess1)
-    env.sleep(lease_time * 2, "twice the lease period")
+    env.sleep(lease_time + 10, "the lease period + 10 secs")
 
-    c2 = env.c1.new_client(b"%s_2" % env.testname(t))
-    sess2 = c2.create_session()
+    sess2 = env.c1.new_client_session(b"%s_2" % env.testname(t))
 
     res = open_file(sess2, env.testname(t), access=OPEN4_SHARE_ACCESS_WRITE)
     check(res)
