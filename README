@@ -12,7 +12,7 @@ Install dependent modules:
 	yum install krb5-devel python3-devel swig python3-gssapi python3-ply
 
 * openSUSE
-	zypper in install krb5-devel python3-devel swig python3-gssapi python3-ply
+	zypper install krb5-devel python3-devel swig python3-gssapi python3-ply
 
 You can prepare both for use with
 	./setup.py build
