@@ -524,7 +524,7 @@ def xml_printresults(tests, file_name, suite='all'):
             testcase.setAttribute("code", t.code)
             testcase.setAttribute("name", t.name)
             testcase.setAttribute("classname", t.suite)
-            testcase.setAttribute("time", t.time_taken)
+            testcase.setAttribute("time", str(t.time_taken))
 
             total_time += t.time_taken
             if t.result == TEST_FAIL:
