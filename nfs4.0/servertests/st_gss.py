@@ -78,6 +78,8 @@ def testBadGssSeqnum(t, env):
             res = c.compound([op.putrootfh()])
         except timeout:
             success = True
+        except OSError:
+            success = True
         if not success:
             t.fail("Using old gss_seq_num %i should cause dropped reply" %
                    (orig + 1))
@@ -106,17 +108,19 @@ def testInconsistentGssSeqnum(t, env):
 
     try:
         c.security.secure_data = bad_secure_data
+        err = None
         try:
             res = c.compound([op.putrootfh()])
-            e = "operation erroneously suceeding"
+            err = "operation erroneously suceeding"
         except rpc.RPCAcceptError as e:
             if e.stat == rpc.GARBAGE_ARGS:
                 # This is correct response
                 return
+            err = str(e)
         except Exception as e:
-            pass
+            err = str(e)
         t.fail("Using inconsistent gss_seq_nums in header and body of message "
-               "should return GARBAGE_ARGS, instead got %s" % e)
+               "should return GARBAGE_ARGS, instead got %s" % err)
     finally:
         c.security.secure_data = orig_funct
 
@@ -131,21 +135,23 @@ def testBadVerfChecksum(t, env):
     orig_funct = c.security.make_verf
     def bad_make_verf(data):
         # Mess up verifier
-        return orig_funct(data + "x")
+        return orig_funct(data + b"x")
 
     try:
         c.security.make_verf = bad_make_verf
+        err = None
         try:
             res = c.compound([op.putrootfh()])
-            e = "peration erroneously suceeding"
+            err = "peration erroneously suceeding"
         except rpc.RPCDeniedError as e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CREDPROBLEM:
-                # This is correct response
-                return
+               # This is correct response
+               return
+            err = str(e)
         except Exception as e:
-            pass
+            err = str(e)
         t.fail("Using bad verifier checksum in header "
-               "should return RPCSEC_GSS_CREDPROBLEM, instead got %s" % e)
+               "should return RPCSEC_GSS_CREDPROBLEM, instead got %s" % err)
     finally:
         c.security.make_verf = orig_funct
 
@@ -164,24 +170,26 @@ def testBadDataChecksum(t, env):
         # Mess up checksum
         data = orig_funct(data, seqnum)
         if data[-4]:
-            tail = chr(0) + data[-3:]
+            tail = b'\x00' + data[-3:]
         else:
-            tail = chr(1) + data[-3:]
+            tail = b'\x01' + data[-3:]
         return data[:-4] + tail
 
     try:
         c.security.secure_data = bad_secure_data
+        err = None
         try:
             res = c.compound([op.putrootfh()])
-            e = "operation erroneously suceeding"
+            err = "operation erroneously suceeding"
         except rpc.RPCAcceptError as e:
             if e.stat == rpc.GARBAGE_ARGS:
                 # This is correct response
                 return
+            err = str(e)
         except Exception as e:
-            pass
+            err = str(e)
         t.fail("Using bad data checksum for body of message "
-               "should return GARBAGE_ARGS, instead got %s" % e)
+               "should return GARBAGE_ARGS, instead got %s" % err)
     finally:
         c.security.secure_data = orig_funct
 
@@ -211,19 +219,22 @@ def testBadVersion(t, env):
         c.security = BadGssHeader(orig, bad_version)
         bad_versions = [0, 2, 3, 1024]
         for version in bad_versions:
+            err = None
             try:
                 res = c.compound([op.putrootfh()])
-                e = "operation erroneously suceeding"
+                err = "operation erroneously suceeding"
             except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
-                    e = None
+                    pass
+                else:
+                    err = str(e)
             except Exception as e:
-                pass
-            if e is not None:
+                err = str(e)
+            if err is not None:
                 t.fail("Using bad gss version number %i "
                        "should return AUTH_BADCRED, instead got %s" %
-                       (version, e))
+                       (version, err))
     finally:
         c.security = orig
 
@@ -238,17 +249,18 @@ def testHighSeqNum(t, env):
     orig_seq = c.security.gss_seq_num
     try:
         c.security.gss_seq_num = gss.MAXSEQ + 1
+        err = None
         try:
             res = c.compound([op.putrootfh()])
-            e = "operation erroneously suceeding"
+            err = "operation erroneously suceeding"
         except rpc.RPCDeniedError as e:
             if e.stat == rpc.AUTH_ERROR and e.astat == rpc.RPCSEC_GSS_CTXPROBLEM:
                 # This is correct response
                 return
         except Exception as e:
-            pass
+            err = str(e)
         t.fail("Using gss_seq_num over MAXSEQ "
-               "should return RPCSEC_GSS_CTXPROBLEM, instead got %s" % e)
+               "should return RPCSEC_GSS_CTXPROBLEM, instead got %s" % err)
     finally:
         c.security.gss_seq_num = orig_seq
 
@@ -274,21 +286,24 @@ def testBadProcedure(t, env):
 
     try:
         c.security = BadGssHeader(orig, bad_proc)
+        err = None
         bad_procss = [4, 5, 1024]
         for proc in bad_procss:
             try:
                 res = c.compound([op.putrootfh()])
-                e = "operation erroneously suceeding"
+                err = "operation erroneously suceeding"
             except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
-                    e = None
+                    pass
+                else:
+                    err = str(e)
             except Exception as e:
-                pass
-            if e is not None:
+                err = str(e)
+            if err is not None:
                 t.fail("Using bad gss procedure number %i "
                        "should return AUTH_BADCRED, instead got %s" %
-                       (proc, e))
+                       (proc, err))
     finally:
         c.security = orig
 
@@ -316,20 +331,23 @@ def testBadService(t, env):
 
     try:
         c.security = BadGssHeader(orig, bad_service)
+        err = None
         bad_services = [0, 4, 5, 1024]
         for service in bad_services:
             try:
                 res = c.compound([op.putrootfh()])
-                e = "operation erroneously suceeding"
+                err = "operation erroneously suceeding"
             except rpc.RPCDeniedError as e:
                 if e.stat == rpc.AUTH_ERROR and e.astat == rpc.AUTH_BADCRED:
                     # This is correct response
-                    e = None
+                    pass
+                else:
+                    err = str(e)
             except Exception as e:
-                pass
-            if e is not None:
+                err = str(e)
+            if err is not None:
                 t.fail("Using bad gss service number %i "
                        "should return AUTH_BADCRED, instead got %s" %
-                       (service, e))
+                       (service, err))
     finally:
         c.security = orig
