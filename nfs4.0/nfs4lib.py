@@ -723,8 +723,19 @@ class NFS4Client(rpc.RPCClient):
     def open_confirm(self, owner, path=None,
                      access=OPEN4_SHARE_ACCESS_READ,
                      deny=OPEN4_SHARE_DENY_WRITE):
-        res = self.open_file(owner, path, access, deny)
-        check_result(res, "Opening file %s" % _getname(owner, path))
+        while 1:
+            res = self.open_file(owner, path, access, deny)
+            cnt = 0
+            try:
+                 check_result(res, "Opening file %s" % _getname(owner, path))
+                 break
+            except BadCompoundRes:
+                if res.status != NFS4ERR_DELAY: raise
+                cnt += 1
+                if cnt <= 5:
+                    time.sleep(2)
+                else:
+                    raise UnexpectedCompoundRes("OPEN timed out on NFS4ERR_DELAY")
         return self.confirm(owner, res)
 
 ##     def xxxopen_claim_prev(self, owner, fh, seqid=None,
