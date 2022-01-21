@@ -198,7 +198,7 @@ class Environment(testmod.Environment):
                 log.warning("could not create /%s" % b'/'.join(path))
         # Make file-object in /tree
         fh, stateid = create_confirm(sess, b'maketree', tree + [b'file'])
-        res = write_file(sess, fh, self.filedata)
+        res = write_file(sess, fh, self.filedata, stateid=stateid)
         check(res, msg="Writing data to /%s/file" % b'/'.join(tree))
         res = close_file(sess, fh, stateid)
         check(res)
