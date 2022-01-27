@@ -145,7 +145,7 @@ class DeferredData(object):
         self._exception = None
         self.msg = msg # Data that thread calling fill might need
 
-    def wait(self, timeout=10):
+    def wait(self, timeout=300):
         """Wait for data to be filled in"""
         self._filled.wait(timeout)
         if not self._filled.isSet():
@@ -879,7 +879,7 @@ class ConnectionHandler(object):
         return s
 
     def make_call_function(self, pipe, procedure, prog, vers):
-        def call(data, credinfo, proc=None, timeout=15.0):
+        def call(data, credinfo, proc=None, timeout=300):
             if proc is None:
                 proc = procedure
             xid = self.send_call(pipe, proc, data, credinfo, prog, vers)

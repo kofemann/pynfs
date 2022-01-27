@@ -10,6 +10,7 @@ import nfs_ops
 op = nfs_ops.NFS4ops()
 import threading
 import logging
+import datetime
 
 log = logging.getLogger("test.env")
 
@@ -283,4 +284,37 @@ def testShareReservationDB03(t, env):
     log.info("3rd client open OK - PASSED\n")
 
     res = close_file(sess3, fh, stateid=stateid)
+    check(res)
+
+def testExpiringManyClients(t, env):
+    """ Open a file from lots of clients, wait for those clients to
+    expire, then attempt a conflicting open and see how long it takes
+    the server to purge the courtesy clients.
+
+    FLAGS: courteous
+    CODE: COUR7
+    """
+
+    log.info("%s: opening\n" % str(datetime.datetime.now()))
+    for i in range(1000):
+        s = env.c1.new_client_session(b"%s_Client_%i" % (env.testname(t), i))
+        res = create_file(s, env.testname(t), want_deleg=False,
+                                    mode=UNCHECKED4,
+                                    access=OPEN4_SHARE_ACCESS_WRITE)
+        check(res)
+
+    log.info("%s: waiting for lease\n", str(datetime.datetime.now()))
+    lease_time = _getleasetime(s)
+    env.sleep(lease_time + 10, "the lease period + 10 secs")
+
+    s = env.c1.new_client_session(b"%s_Breaker" % env.testname(t))
+
+    name = env.testname(t)
+    owner = b"owner_%s" % name
+    path = s.c.homedir + [name]
+    log.info("%s: conflicting open\n", str(datetime.datetime.now()))
+    res = open_file(s, owner, path,
+		access=OPEN4_SHARE_ACCESS_READ|OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+		deny=OPEN4_SHARE_DENY_WRITE)
+    log.info("%s: conflicting open done\n", str(datetime.datetime.now()))
     check(res)

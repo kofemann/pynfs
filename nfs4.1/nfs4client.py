@@ -100,7 +100,7 @@ class NFS4Client(rpc.Client, rpc.Server):
                 nfsstat4[res.status])
         return res
 
-    def listen(self, xid, pipe=None, timeout=10.0):
+    def listen(self, xid, pipe=None, timeout=300):
         if pipe is None:
             pipe = self.c1
         header, data = pipe.listen(xid, timeout)
