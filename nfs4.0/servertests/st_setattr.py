@@ -562,6 +562,25 @@ def testUnsupportedSocket(t, env):
     check(res)
     _try_unsupported(t, env, path)
 
+def testMaxSizeFile(t, env):
+    """SETATTR(U64_MAX) of a file should return NFS4_OK or NFS4ERR_FBIG
+
+    FLAGS: setattr all
+    DEPEND: INIT
+    CODE: SATT12x
+    """
+    maxsize = 0xffffffffffffffff
+    c = env.c1
+    fh, stateid = c.create_confirm(t.word(), deny=OPEN4_SHARE_DENY_NONE)
+    dict = {FATTR4_SIZE: maxsize}
+    ops = c.use_obj(fh) + [c.setattr(dict, stateid)]
+    res = c.compound(ops)
+    check(res, [NFS4_OK, NFS4ERR_FBIG], "SETATTR(U64_MAX) of a file")
+    newsize = c.do_getattr(FATTR4_SIZE, fh)
+    if newsize != maxsize:
+        check(res, [NFS4ERR_INVAL, NFS4ERR_FBIG],
+                "File size is %i; SETATTR" % newsize)
+
 def testSizeDir(t, env):
     """SETATTR(_SIZE) of a directory should return NFS4ERR_ISDIR or NFS4ERR_BAD_STATEID
 
