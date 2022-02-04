@@ -160,4 +160,4 @@ def testCommitOverflow(t, env):
     res = c.write_file(fh, _text, 0, stateid, how=UNSTABLE4)
     check(res, msg="WRITE with how=UNSTABLE4")
     res = c.commit_file(fh, 0xfffffffffffffff0, 64)
-    check(res, NFS4ERR_INVAL, "COMMIT with offset + count overflow")
+    check(res, [NFS4_OK, NFS4ERR_INVAL], "COMMIT with offset + count overflow")
