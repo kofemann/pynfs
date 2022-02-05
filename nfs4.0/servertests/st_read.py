@@ -91,6 +91,18 @@ def testLargeOffset(t, env):
     check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
     _compare(t, res, b'', True)
 
+def testVeryLargeOffset(t, env):
+    """READ with offset far outside file
+
+    FLAGS: read all
+    DEPEND: LOOKFILE
+    CODE: RD5a
+    """
+    c = env.c1
+    res = c.read_file(env.opts.usefile, 0x7ffffffffffffffc, 10)
+    check(res, msg="Reading file /%s" % b'/'.join(env.opts.usefile))
+    _compare(t, res, b'', True)
+
 def testZeroCount(t, env):
     """READ with count=0
 
