@@ -147,7 +147,7 @@ def testLink(t, env):
     check(res, NFS4ERR_SYMLINK, "Trying to OPEN symbolic link")
     
 def testBlock(t, env):
-    """OPEN with a block device should return NFS4ERR_INVAL
+    """OPEN with a block device should return NFS4ERR_SYMLINK
 
     FLAGS: open block all
     DEPEND: INIT LOOKBLK
@@ -159,7 +159,7 @@ def testBlock(t, env):
     check(res, NFS4ERR_SYMLINK, "Trying to OPEN block device")
 
 def testChar(t, env):
-    """OPEN with a character device should return NFS4ERR_INVAL
+    """OPEN with a character device should return NFS4ERR_SYMLINK
 
     FLAGS: open char all
     DEPEND: INIT LOOKCHAR
@@ -171,7 +171,7 @@ def testChar(t, env):
     check(res, NFS4ERR_SYMLINK, "Trying to OPEN character device")
 
 def testSocket(t, env):
-    """OPEN with a socket should return NFS4ERR_INVAL
+    """OPEN with a socket should return NFS4ERR_SYMLINK
 
     FLAGS: open socket all
     DEPEND: INIT LOOKSOCK
@@ -183,7 +183,7 @@ def testSocket(t, env):
     check(res, NFS4ERR_SYMLINK, "Trying to OPEN socket")
 
 def testFifo(t, env):
-    """OPEN with a fifo should return NFS4ERR_INVAL
+    """OPEN with a fifo should return NFS4ERR_SYMLINK
 
     FLAGS: open fifo all
     DEPEND: INIT LOOKFIFO
