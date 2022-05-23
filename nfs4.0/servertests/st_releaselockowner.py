@@ -24,3 +24,28 @@ def testFile(t, env):
     owner = lock_owner4(c.clientid, b"lockowner_RLOWN1")
     res = c.compound([op.release_lockowner(owner)])
     check(res)
+
+def testFile2(t, env):
+    """RELEASE_LOCKOWNER 2 - same as basic test but remove
+    file before release lockowner.
+
+    FLAGS: releaselockowner all
+    DEPEND:
+    CODE: RLOWN2
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.word())
+    res = c.lock_file(t.word(), fh, stateid, lockowner=b"lockowner_RLOWN2")
+    check(res)
+    res = c.unlock_file(1, fh, res.lockid)
+    check(res)
+
+    ops = c.use_obj(c.homedir) + [op.remove(t.word())]
+    res = c.compound(ops)
+    check(res)
+
+    # Release lockowner
+    owner = lock_owner4(c.clientid, b"lockowner_RLOWN2")
+    res = c.compound([op.release_lockowner(owner)])
+    check(res)
