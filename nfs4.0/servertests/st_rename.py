@@ -524,6 +524,22 @@ def testLinkRename(t, env):
         t.fail("RENAME of file into its hard link should do nothing, "
                "but cinfo was changed")
 
+def testStaleRename(t, env):
+    """RENAME file over an open file should allow CLOSE
+
+    FLAGS: rename all
+    CODE: RNM21
+    """
+    c = env.c1
+    c.init_connection()
+    basedir = c.homedir + [t.word()]
+    c.maketree([t.word(), b'file'])
+    fh, stateid = c.create_confirm(t.word(), path=basedir + [b'file2'])
+    res = c.rename_obj(basedir + [b'file'], basedir + [b'file2'])
+    check(res)
+    res = c.close_file(t.word(), fh, stateid)
+    check(res, msg="CLOSE after RENAME deletes target returns ESTALE")
+
 ###########################################
 
     def testNamingPolicy(t, env):

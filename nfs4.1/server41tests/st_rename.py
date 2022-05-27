@@ -1,5 +1,5 @@
 from xdrdef.nfs4_const import *
-from .environment import check, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file
+from .environment import check, fail, maketree, rename_obj, get_invalid_utf8strings, create_obj, create_confirm, link, use_obj, create_file, close_file
 import nfs_ops
 op = nfs_ops.NFS4ops()
 from xdrdef.nfs4_type import *
@@ -529,3 +529,20 @@ def testLinkRename(t, env):
     if scinfo.before != scinfo.after or tcinfo.before != tcinfo.after:
         t.fail("RENAME of file into its hard link should do nothing, "
                "but cinfo was changed")
+
+def testStaleRename(t, env):
+    """RENAME file over an open file should allow CLOSE
+
+    FLAGS: rename all
+    CODE: RNM21
+    """
+    name = env.testname(t)
+    owner = b"owner_%s" % name
+    sess = env.c1.new_client_session(name)
+    maketree(sess, [name, b'file'])
+    basedir = env.c1.homedir + [name]
+    fh, stateid = create_confirm(sess, owner, path=basedir + [b'file2'])
+    res = rename_obj(sess, basedir + [b'file'], basedir + [b'file2'])
+    check(res)
+    res = close_file(sess, fh, stateid)
+    check(res, msg="CLOSE after RENAME deletes target returns ESTALE")
