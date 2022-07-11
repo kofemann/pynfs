@@ -1,11 +1,32 @@
 from .st_create_session import create_session
 from xdrdef.nfs4_const import *
-from .environment import check, fail, create_file, open_file
+from .environment import check, fail, create_file, open_file, close_file
 from xdrdef.nfs4_type import open_owner4, openflag4, createhow4, open_claim4
 import nfs_ops
 op = nfs_ops.NFS4ops()
 import threading
 import rpc.rpc as rpc
+
+def testDestroyBasic(t, env):
+    """Operations after DESTROY_SESSION should fail with BADSESSION
+
+    FLAGS: destroy_session all
+    CODE: DSESS1
+    """
+    c = env.c1.new_client(env.testname(t))
+    sess1 = c.create_session()
+    sess1.compound([op.reclaim_complete(FALSE)])
+    res = c.c.compound([op.destroy_session(sess1.sessionid)])
+    res = create_file(sess1, env.testname(t),
+                      access=OPEN4_SHARE_ACCESS_READ)
+    check(res, NFS4ERR_BADSESSION)
+    sess2 = c.create_session()
+    res = create_file(sess2, env.testname(t),
+                      access=OPEN4_SHARE_ACCESS_READ)
+    check(res)
+    fh = res.resarray[-1].object
+    open_stateid = res.resarray[-2].stateid
+    close_file(sess2, fh, stateid=open_stateid)
 
 def testDestroy(t, env):
     """
