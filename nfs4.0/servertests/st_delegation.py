@@ -285,7 +285,7 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
     c = env.c1
     c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     lease = c.getLeaseTime()
-    _get_deleg(t, c, c.homedir + [t.word()], funct, response)
+    deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.word()], funct, response)
     c2 = env.c2
     c2.init_connection()
     try:
@@ -302,6 +302,10 @@ def testRenew(t, env, funct=None, response=NFS4_OK):
                 break
     finally:
         c.cb_command(1) # Turn on callback server
+    res = c.compound([op.putfh(fh), op.delegreturn(deleg_info.read.stateid)])
+    check(res)
+    res = c.close_file(t.word(), fh, stateid)
+    check(res)
     if not noticed:
         t.fail("RENEWs should not have all returned OK")
 
