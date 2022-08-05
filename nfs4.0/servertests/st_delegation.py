@@ -731,7 +731,7 @@ def testServerSelfConflict(t, env):
     c = env.c1
     count = c.cb_server.opcounts[OP_CB_RECALL]
     c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
-    _get_deleg(t, c, c.homedir + [t.word()], None, NFS4_OK)
+    deleg_info, fh, stateid = _get_deleg(t, c, c.homedir + [t.word()], None, NFS4_OK)
 
     sleeptime = 1
     while 1:
@@ -746,6 +746,10 @@ def testServerSelfConflict(t, env):
         check(res, [NFS4_OK, NFS4ERR_DELAY], "Open which causes recall")
         env.sleep(sleeptime, 'Got NFS4ERR_DELAY on open')
     c.confirm(b'newowner', res)
+    res = c.compound([op.putfh(fh), op.delegreturn(deleg_info.read.stateid)])
+    check(res)
+    res = c.close_file(t.word(), fh, stateid)
+    check(res)
     newcount = c.cb_server.opcounts[OP_CB_RECALL]
     if newcount > count:
         t.fail("Unnecessary delegation recall")
