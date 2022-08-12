@@ -244,7 +244,8 @@ def testManyReaddeleg(t, env, funct=_recall, response=NFS4_OK):
     c.init_connection(b'pynfs%i_%s' % (os.getpid(), t.word()), cb_ident=0)
     cbids = []
     fh, stateid = c.create_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
-                                   deny=OPEN4_SHARE_DENY_NONE)
+                                   deny=OPEN4_SHARE_DENY_NONE,
+                                   attrs={FATTR4_MODE: 0o666})
     for i in range(count):
         c.init_connection(b'pynfs%i_%s_%i' % (os.getpid(), t.word(), i), cb_ident=0)
         fh, stateid = c.open_confirm(t.word(), access=OPEN4_SHARE_ACCESS_READ,
