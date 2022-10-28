@@ -458,6 +458,9 @@ class NFS4Client(rpc.RPCClient):
         attrs = list2bitmap(attr_request)
         return op4.readdir(cookie, cookieverf, dircount, maxcount, attrs)
 
+    def read(self, offset=0, count=2048, stateid=stateid4(0, b'')):
+        return op4.read(stateid, offset, count)
+
     def setattr(self, attrdict, stateid=None):
         if stateid is None: stateid = stateid4(0, b"")
         return op4.setattr(stateid, attrdict)
@@ -792,7 +795,7 @@ class NFS4Client(rpc.RPCClient):
 
     def read_file(self, file, offset=0, count=2048, stateid=stateid4(0, b'')):
         ops =  self.use_obj(file)
-        ops += [op4.read(stateid, offset, count)]
+        ops += [self.read(offset, count, stateid)]
         res = self.compound(ops)
         if res.status == NFS4_OK:
             res.eof = res.resarray[-1].switch.switch.eof

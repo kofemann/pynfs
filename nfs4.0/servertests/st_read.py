@@ -253,3 +253,32 @@ def testStolenStateid(t, env):
     res = c.read_file(fh, stateid=stateid)
     c.security=security
     check(res, [NFS4ERR_ACCESS, NFS4ERR_PERM], "READ with stolen stateid")
+
+def testLargeMultipleRead(t, env):
+    """READ a large dataset with multiple reads
+
+    FLAGS: read
+    DEPEND: MKFILE
+    CODE: RD13
+    """
+    c = env.c1
+    c.init_connection()
+    fh, stateid = c.create_confirm(t.word(), attrs={FATTR4_SIZE: 10000000,
+                                                  FATTR4_MODE: 0o644})
+
+    op_count = 2
+    read_size = 384 * 1024
+
+    ops = c.use_obj(fh)
+    for _ in range(op_count):
+        ops.append(c.read(0, read_size, stateid))
+
+    res = c.compound(ops)
+    if res.status != NFS4_OK:
+        t.fail("READ failed with %s" % res.status)
+
+    for x in range(op_count):
+        res.eof = res.resarray[-1 - x].switch.switch.eof
+        res.data = res.resarray[-1 - x].switch.switch.data
+        check(res, msg="Reading file %s" % t.word())
+        _compare(t, res, b'\x00'*read_size, False)
