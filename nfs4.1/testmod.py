@@ -386,6 +386,8 @@ def createtests(testdir):
     for t in tests:
 ##         if not t.flags_list:
 ##             raise RuntimeError("%s has no flags" % t.fullname)
+        if "everything" not in t.flags_list:
+            t.flags_list.append("everything")
         for f in t.flags_list:
             if f not in flag_dict:
                 flag_dict[f] = bit
