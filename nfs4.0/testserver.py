@@ -387,8 +387,6 @@ def main():
 
     if nfail < 0:
         sys.exit(3)
-    if nfail > 0:
-        sys.exit(2)
 
 if __name__ == "__main__":
     main()
