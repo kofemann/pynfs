@@ -338,12 +338,21 @@ class NFS4Client(rpc.RPCClient):
         un_p = self.nfs4unpacker
         p.reset()
         p.pack_COMPOUND4args(compoundargs)
-        res = self.call(NFSPROC4_COMPOUND, p.get_buffer())
-        un_p.reset(res)
-        res = un_p.unpack_COMPOUND4res()
-        if SHOW_TRAFFIC:
-            print(res)
-        un_p.done()
+        res = None
+
+        # NFS servers can return NFS4ERR_DELAY at any time for any reason.
+        # Just delay a second and retry the call again in that event. If
+        # it fails after 10 retries then just give up.
+        for i in range(1, 10):
+            res = self.call(NFSPROC4_COMPOUND, p.get_buffer())
+            un_p.reset(res)
+            res = un_p.unpack_COMPOUND4res()
+            if SHOW_TRAFFIC:
+                print(res)
+            un_p.done()
+            if res.status != NFS4ERR_DELAY:
+                break
+            time.sleep(1)
 
         # Do some error checking
 
