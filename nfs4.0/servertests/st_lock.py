@@ -886,6 +886,7 @@ class open_sequence:
         self.client = client
         self.owner = owner
         self.lockowner = lockowner
+        self.lockseqid = 0
     def open(self, access):
         self.fh, self.stateid = self.client.create_confirm(self.owner,
 						access=access,
@@ -900,14 +901,17 @@ class open_sequence:
         self.client.close_file(self.owner, self.fh, self.stateid)
     def lock(self, type):
         res = self.client.lock_file(self.owner, self.fh, self.stateid,
-                    type=type, lockowner=self.lockowner)
+                                    type=type, lockowner=self.lockowner,
+                                    lockseqid=self.lockseqid)
         check(res)
         if res.status == NFS4_OK:
             self.lockstateid = res.lockid
+            self.lockseqid += 1
     def unlock(self):
         res = self.client.unlock_file(1, self.fh, self.lockstateid)
         if res.status == NFS4_OK:
             self.lockstateid = res.lockid
+            self.lockseqid += 1
 
 def testOpenUpgradeLock(t, env):
     """Try open, lock, open, downgrade, close
