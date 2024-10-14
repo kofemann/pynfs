@@ -108,6 +108,9 @@ class Environment(testmod.Environment):
         AttrInfo('time_modify_set', 'w', settime4(0)),
         AttrInfo('mounted_on_fileid', 'r', 0),
         AttrInfo('xattr_support', 'r', False),
+        AttrInfo('time_deleg_access', 'r', nfstime4(0, 0)),
+        AttrInfo('time_deleg_modify', 'r', nfstime4(0, 0)),
+        AttrInfo('open_arguments', 'r', open_arguments4()),
         ]
 
     home = property(lambda s: use_obj(s.opts.home))

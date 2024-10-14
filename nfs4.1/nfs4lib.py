@@ -731,5 +731,8 @@ attr_info = { FATTR4_SUPPORTED_ATTRS : A("r", "fs"),
               FATTR4_MODE_SET_MASKED : A("w", "obj"),
               FATTR4_FS_CHARSET_CAP : A("r", "fs"),
               FATTR4_XATTR_SUPPORT : A("r", "obj"),
+              FATTR4_TIME_DELEG_ACCESS : A("w", "obj"),
+              FATTR4_TIME_DELEG_MODIFY : A("w", "obj"),
+              FATTR4_OPEN_ARGUMENTS : A("r", "fs"),
               }
 del A
