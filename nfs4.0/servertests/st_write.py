@@ -497,19 +497,27 @@ def testChangeGranularityWrite(t, env):
     c = env.c1
     c.init_connection()
     fh, stateid = c.create_confirm(t.word())
-    ops = c.use_obj(fh) + [c.getattr([FATTR4_CHANGE])] \
-        + [op.write(stateid, 0,  UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [op.write(stateid, 10, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [op.write(stateid, 20, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])] \
-        + [op.write(stateid, 30, UNSTABLE4, _text)] + [c.getattr([FATTR4_CHANGE])]
+    attrlist = [FATTR4_CHANGE, FATTR4_TIME_METADATA]
+    ops = c.use_obj(fh) + [c.getattr(attrlist)] \
+        + [op.write(stateid, 0,  UNSTABLE4, _text)] + [c.getattr(attrlist)] \
+        + [op.write(stateid, 10, UNSTABLE4, _text)] + [c.getattr(attrlist)] \
+        + [op.write(stateid, 20, UNSTABLE4, _text)] + [c.getattr(attrlist)] \
+        + [op.write(stateid, 30, UNSTABLE4, _text)] + [c.getattr(attrlist)]
     res = c.compound(ops)
     check(res)
-    chattr1 = res.resarray[1].obj_attributes
-    chattr2 = res.resarray[3].obj_attributes
-    chattr3 = res.resarray[5].obj_attributes
-    chattr4 = res.resarray[7].obj_attributes
+    chattr1 = res.resarray[1].obj_attributes[FATTR4_CHANGE]
+    chattr2 = res.resarray[3].obj_attributes[FATTR4_CHANGE]
+    chattr3 = res.resarray[5].obj_attributes[FATTR4_CHANGE]
+    chattr4 = res.resarray[7].obj_attributes[FATTR4_CHANGE]
     if chattr1 == chattr2 or chattr2 == chattr3 or chattr3 == chattr4:
-        t.fail("consecutive SETATTR(mode)'s don't all change change attribute")
+        t.fail("consecutive WRITE's don't change change attribute")
+
+    ctime1 = res.resarray[1].obj_attributes[FATTR4_TIME_METADATA]
+    ctime2 = res.resarray[3].obj_attributes[FATTR4_TIME_METADATA]
+    ctime3 = res.resarray[5].obj_attributes[FATTR4_TIME_METADATA]
+    ctime4 = res.resarray[7].obj_attributes[FATTR4_TIME_METADATA]
+    if compareTimes(ctime1, ctime2) == 0 or compareTimes(ctime2, ctime3) == 0 or compareTimes(ctime3, ctime4) == 0:
+        t.pass_warn("consecutive WRITE's don't all change time_metadata")
 
 def testStolenStateid(t, env):
     """WRITE with incorrect permissions and somebody else's stateid
