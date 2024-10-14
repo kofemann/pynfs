@@ -79,7 +79,7 @@ def testWriteDeleg(t, env):
     FLAGS: writedelegations deleg
     CODE: DELEG2
     """
-    _testDeleg(t, env, OPEN4_SHARE_ACCESS_WRITE,
+    _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ|OPEN4_SHARE_ACCESS_WRITE,
        OPEN4_SHARE_ACCESS_WANT_WRITE_DELEG, OPEN4_SHARE_ACCESS_READ)
 
 def testAnyDeleg(t, env):
