@@ -1,15 +1,15 @@
 Check out the latest source code from
 
-	git://git.linux-nfs.org/projects/bfields/pynfs.git
+	git://git.linux-nfs.org/projects/cdmackay/pynfs.git
 
 Commit your changes.  Please make sure each commit is individually
 correct and does only one thing.
 
-When you're done, send the resulting patches to bfields@fieldses.org and
+When you're done, send the resulting patches to calum.mackay@oracle.com and
 cc the linux-nfs@vger.kernel.org mailing list, using something like:
 
 	git format-patch origin..
-	git send-email --to="bfields@fieldses.org" \
+	git send-email --to="calum.mackay@oracle.com" \
 			--cc="linux-nfs@vger.kernel.org 0*
 
 We generally follow similar processes to the Linux kernel, so
