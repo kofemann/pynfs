@@ -271,6 +271,12 @@ class NFS4Client(rpc.Client, rpc.Server):
         res = self.posthook(arg, env, res)
         return encode_status(NFS4_OK, res)
 
+    def op_cb_getattr(self, arg, env):
+        log_cb.info("In CB_GETATTR")
+        self.prehook(arg, env)
+        res = self.posthook(arg, env, res=CB_GETATTR4resok())
+        return encode_status(NFS4_OK, res)
+
     def op_cb_recall(self, arg, env):
         log_cb.info("In CB_RECALL")
         self.prehook(arg, env)
