@@ -111,7 +111,7 @@ def testUndefined(t, env):
             except:
                 # If it fails, try to just pack the opcode with void args
                 self.pack_uint32_t(data.argop)
-    for i in [0, 1, 2, 72, OP_ILLEGAL]:
+    for i in [0, 1, 2, OP_REMOVEXATTR+1, OP_ILLEGAL]:
         a = nfs_argop4(argop = i)
         try:
             res = c.compound([a], packer=CustomPacker)
