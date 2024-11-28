@@ -845,8 +845,8 @@ class ConnectionHandler(object):
             try:
                 s.bind(('', using))
                 return
-            except socket.error as why:
-                if why[0] == errno.EADDRINUSE:
+            except OSError as why:
+                if why.errno == errno.EADDRINUSE:
                     using += 1
                     if port < 1024 <= using:
                         # If we ask for a secure port, make sure we don't
