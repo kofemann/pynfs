@@ -395,7 +395,7 @@ def testMaxreqs(t, env):
     """
     # Assuming this is too large for any server; increase if necessary:
     # but too huge will eat many memory for replay_cache, be careful!
-    TOO_MANY_SLOTS = 500
+    TOO_MANY_SLOTS = 2049
 
     c = env.c1.new_client(env.testname(t))
     # CREATE_SESSION with fore_channel = TOO_MANY_SLOTS
