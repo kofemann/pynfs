@@ -1,7 +1,7 @@
 from .base import SecFlavor, SecError
 from rpc.rpc_const import AUTH_SYS
 from rpc.rpc_type import opaque_auth
-from xdrlib import Packer, Error
+from xdrlib3 import Packer, Error
 
 class SecAuthSys(SecFlavor):
     # XXX need better defaults

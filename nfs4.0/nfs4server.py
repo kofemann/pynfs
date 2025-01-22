@@ -34,7 +34,7 @@ import time, StringIO, random, traceback, codecs
 import StringIO
 import nfs4state
 from nfs4state import NFS4Error, printverf
-from xdrlib import Error as XDRError
+from xdrlib3 import Error as XDRError
 
 unacceptable_names = [ "", ".", ".." ]
 unacceptable_characters = [ "/", "~", "#", ]

@@ -14,8 +14,15 @@ Install dependent modules:
 * openSUSE
 	zypper install krb5-devel python3-devel swig python3-gssapi python3-ply
 
-You can prepare both for use with
+Your distro may provide the xdrlib3 module via a pkg (e.g. Debian
+python3-standard-xdrlib) or you may install it via pip:
+
+	pip install xdrlib3
+
+You can prepare both versions for use with
+
 	./setup.py build
+
 which will create auto-generated files and compile any shared libraries
 in place.
 

@@ -1357,8 +1357,8 @@ pack_header = """\
 import sys,os
 from . import %s as const
 from . import %s as types
-import xdrlib
-from xdrlib import Error as XDRError
+import xdrlib3 as xdrlib
+from xdrlib3 import Error as XDRError
 
 class nullclass(object):
     pass

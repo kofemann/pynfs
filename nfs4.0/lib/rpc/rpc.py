@@ -9,7 +9,7 @@
 
 from __future__ import absolute_import
 import struct
-import xdrlib
+import xdrlib3 as xdrlib
 import socket
 import select
 import threading

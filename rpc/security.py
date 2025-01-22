@@ -3,7 +3,7 @@ from .rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL, \
 from .rpc_type import opaque_auth, authsys_parms
 from .rpc_pack import RPCPacker, RPCUnpacker
 from .gss_pack import GSSPacker, GSSUnpacker
-from xdrlib import Packer, Unpacker
+from xdrlib3 import Packer, Unpacker
 from . import rpclib
 from .gss_const import *
 from . import gss_type

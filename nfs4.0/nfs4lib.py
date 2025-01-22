@@ -41,7 +41,7 @@ import xdrdef.nfs4_const as nfs4_const
 from  xdrdef.nfs4_const import *
 import xdrdef.nfs4_type as nfs4_type
 from xdrdef.nfs4_type import *
-from xdrlib import Error as XDRError
+from xdrlib3 import Error as XDRError
 import xdrdef.nfs4_pack as nfs4_pack
 
 import nfs_ops
