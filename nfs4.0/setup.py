@@ -3,8 +3,12 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import sys
-from distutils.core import setup, Extension
-from distutils.dep_util import newer_group
+from setuptools import setup
+try:
+    from setuptools.modified import newer_group
+except ImportError:
+    # for older (before v69.0.0) versions of setuptools:
+    from setuptools.dep_util import newer_group
 import os
 import glob
 try:

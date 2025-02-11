@@ -1,5 +1,5 @@
 
-from distutils.core import setup
+from setuptools import setup
 
 DESCRIPTION = """
 nfs4
@@ -8,7 +8,7 @@ nfs4
 Add stuff here.
 """
 
-from distutils.command.build_py import build_py as _build_py
+from setuptools.command.build_py import build_py as _build_py
 import os
 from glob import glob
 try:
