@@ -3,7 +3,6 @@ from .rpc_const import AUTH_NONE, AUTH_SYS, RPCSEC_GSS, SUCCESS, CALL, \
 from .rpc_type import opaque_auth, authsys_parms
 from .rpc_pack import RPCPacker, RPCUnpacker
 from .gss_pack import GSSPacker, GSSUnpacker
-from xdrlib3 import Packer, Unpacker
 from . import rpclib
 from .gss_const import *
 from . import gss_type
@@ -16,6 +15,11 @@ except ImportError:
     gssapi = None
 import threading
 import logging
+
+try:
+    from xdrlib3 import Packer, Unpacker
+except:
+    from xdrlib import Packer, Unpacker
 
 log_gss = logging.getLogger("rpc.sec.gss")
 log_gss.setLevel(logging.INFO)

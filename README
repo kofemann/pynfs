@@ -19,6 +19,10 @@ python3-standard-xdrlib) or you may install it via pip:
 
 	pip install xdrlib3
 
+If xdrlib3 is not available, the code will try to fallback to old xdrlib
+(useful for python < 3.13).
+
+
 You can prepare both versions for use with
 
 	./setup.py build

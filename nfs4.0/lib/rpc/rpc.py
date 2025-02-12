@@ -9,11 +9,15 @@
 
 from __future__ import absolute_import
 import struct
-import xdrlib3 as xdrlib
 import socket
 import select
 import threading
 import errno
+
+try:
+    import xdrlib3 as xdrlib
+except:
+    import xdrlib
 
 from rpc.rpc_const import *
 from rpc.rpc_type import *
