@@ -62,9 +62,9 @@ setup(name = "nfs4",
       # These will be the same
       author = "Fred Isaman",
       author_email = "iisaman@citi.umich.edu",
-      maintainer = "Fred Isaman",
-      maintainer_email = "iisaman@citi.umich.edu",
-      url = "http://www.citi.umich.edu/projects/nfsv4/pynfs/",
+      maintainer = "Calum Mackay",
+      maintainer_email = "calum.mackay@oracle.com",
+      url = "https://linux-nfs.org/wiki/index.php/Pynfs",
       license = "GPL"
       )
 
