@@ -67,7 +67,7 @@ def _testDeleg(t, env, openaccess, want, breakaccess, sec = None, sec2 = None):
 def testReadDeleg(t, env):
     """Test read delegation handout and return
 
-    FLAGS: open deleg
+    FLAGS: open deleg all
     CODE: DELEG1
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -76,7 +76,7 @@ def testReadDeleg(t, env):
 def testWriteDeleg(t, env):
     """Test write delegation handout and return
 
-    FLAGS: writedelegations deleg
+    FLAGS: writedelegations deleg all
     CODE: DELEG2
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ|OPEN4_SHARE_ACCESS_WRITE,
@@ -85,7 +85,7 @@ def testWriteDeleg(t, env):
 def testAnyDeleg(t, env):
     """Test any delegation handout and return
 
-    FLAGS: open deleg
+    FLAGS: open deleg all
     CODE: DELEG3
     """
     _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -94,7 +94,7 @@ def testAnyDeleg(t, env):
 def testNoDeleg(t, env):
     """Test no delegation handout
 
-    FLAGS: open deleg
+    FLAGS: open deleg all
     CODE: DELEG4
     """
     sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
@@ -115,7 +115,7 @@ def testNoDeleg(t, env):
 def testCBSecParms(t, env):
     """Test auth_sys callbacks
 
-    FLAGS: create_session open deleg
+    FLAGS: create_session open deleg all
     CODE: DELEG5
     """
     uid = 17
@@ -131,7 +131,7 @@ def testCBSecParms(t, env):
 def testCBSecParmsNull(t, env):
     """Test auth_null callbacks
 
-    FLAGS: create_session open deleg
+    FLAGS: create_session open deleg all
     CODE: DELEG6
     """
     recall = _testDeleg(t, env, OPEN4_SHARE_ACCESS_READ,
@@ -144,7 +144,7 @@ def testCBSecParmsNull(t, env):
 def testCBSecParmsChange(t, env):
     """Test changing of auth_sys callbacks with backchannel_ctl
 
-    FLAGS: create_session open deleg backchannel_ctl
+    FLAGS: create_session open deleg backchannel_ctl all
     CODE: DELEG7
     """
     uid1 = 17
@@ -165,7 +165,7 @@ def testDelegRevocation(t, env):
     """Allow a delegation to be revoked, check that TEST_STATEID and
        FREE_STATEID have the required effect.
 
-    FLAGS: deleg
+    FLAGS: deleg all
     CODE: DELEG8
     """
 
@@ -220,7 +220,7 @@ def testDelegRevocation(t, env):
 def testWriteOpenvsReadDeleg(t, env):
     """Ensure that a write open prevents granting a read delegation
 
-    FLAGS: deleg
+    FLAGS: deleg all
     CODE: DELEG9
     """
 
@@ -249,7 +249,7 @@ def testServerSelfConflict3(t, env):
     That should succeed.  Then do a write open from a different client,
     and verify that it breaks the delegation.
 
-    FLAGS: deleg
+    FLAGS: deleg all
     CODE: DELEG23
     """
 
@@ -357,7 +357,7 @@ def testCbGetattrNoChange(t, env):
     client regurgitate back the same attrs (indicating no changes). Then test
     that the attrs that the second client gets back match the first.
 
-    FLAGS: deleg
+    FLAGS: deleg all
     CODE: DELEG24
     """
     attrs1, attrs2 = _testCbGetattr(t, env)
@@ -376,7 +376,7 @@ def testCbGetattrWithChange(t, env):
     attrs before sending them back to the server. Test that the second client
     sees different attrs than the original one.
 
-    FLAGS: deleg
+    FLAGS: deleg all
     CODE: DELEG25
     """
     attrs1, attrs2 = _testCbGetattr(t, env, change=1, size=5)

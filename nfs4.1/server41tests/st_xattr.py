@@ -15,7 +15,7 @@ current_stateid = stateid4(1, b'\0' * 12)
 def testGetXattrAttribute(t, env):
     """Server with xattr support MUST support.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT1
     VERS: 2-
     """
@@ -37,7 +37,7 @@ def testGetXattrAttribute(t, env):
 def testGetMissingAttr(t, env):
     """Server MUST return NFS4ERR_NOXATTR if value is missing.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT2
     VERS: 2-
     """
@@ -53,7 +53,7 @@ def testGetMissingAttr(t, env):
 def testCreateNewAttr(t, env):
     """Server MUST return NFS4_ON on create.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT3
     VERS: 2-
     """
@@ -76,7 +76,7 @@ def testCreateNewAttr(t, env):
 def testCreateNewIfMissingAttr(t, env):
     """Server MUST update existing attribute with SETXATTR4_EITHER.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT4
     VERS: 2-
     """
@@ -99,7 +99,7 @@ def testCreateNewIfMissingAttr(t, env):
 def testUpdateOfMissingAttr(t, env):
     """Server MUST return NFS4ERR_NOXATTR on update of missing attribute.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT5
     VERS: 2-
     """
@@ -117,7 +117,7 @@ def testUpdateOfMissingAttr(t, env):
 def testExclusiveCreateAttr(t, env):
     """Server MUST return NFS4ERR_EXIST on create of existing attribute.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT6
     VERS: 2-
     """
@@ -138,7 +138,7 @@ def testExclusiveCreateAttr(t, env):
 def testUpdateExistingAttr(t, env):
     """Server MUST return NFS4_ON on update of existing attribute.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT7
     VERS: 2-
     """
@@ -165,7 +165,7 @@ def testUpdateExistingAttr(t, env):
 def testRemoveNonExistingAttr(t, env):
     """Server MUST return NFS4ERR_NOXATTR on remove of non existing attribute.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT8
     VERS: 2-
     """
@@ -183,7 +183,7 @@ def testRemoveNonExistingAttr(t, env):
 def testRemoveExistingAttr(t, env):
     """Server MUST return NFS4_ON on remove of existing attribute.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT9
     VERS: 2-
     """
@@ -204,7 +204,7 @@ def testRemoveExistingAttr(t, env):
 def testListNoAttrs(t, env):
     """Server MUST return NFS4_ON an empty list if no attributes defined.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT10
     VERS: 2-
     """
@@ -227,7 +227,7 @@ def testListNoAttrs(t, env):
 def testListAttrs(t, env):
     """Server MUST return NFS4_ON and list of defined attributes.
 
-    FLAGS: xattr
+    FLAGS: xattr all
     CODE: XATT11
     VERS: 2-
     """
