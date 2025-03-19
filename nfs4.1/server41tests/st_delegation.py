@@ -311,6 +311,9 @@ def _testCbGetattr(t, env, change=0, size=0):
                 OPEN4_SHARE_ACCESS_WRITE |
                 OPEN4_SHARE_ACCESS_WANT_WRITE_DELEG)
 
+    if FATTR4_OPEN_ARGUMENTS not in caps:
+        fail("FATTR4_OPEN_ARGUMENTS not supported")
+
     if caps[FATTR4_SUPPORTED_ATTRS] & FATTR4_OPEN_ARGUMENTS:
         if caps[FATTR4_OPEN_ARGUMENTS].oa_share_access_want & OPEN_ARGS_SHARE_ACCESS_WANT_DELEG_TIMESTAMPS:
             openmask |= 1<<OPEN_ARGS_SHARE_ACCESS_WANT_DELEG_TIMESTAMPS
