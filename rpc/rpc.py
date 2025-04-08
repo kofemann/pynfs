@@ -6,7 +6,7 @@ import struct
 import threading
 import logging
 from collections import deque as Deque
-from errno import EINPROGRESS, EWOULDBLOCK
+from errno import EINPROGRESS, EWOULDBLOCK, EADDRINUSE
 
 from . import rpc_pack
 from .rpc_const import *
@@ -846,7 +846,7 @@ class ConnectionHandler(object):
                 s.bind(('', using))
                 return
             except OSError as why:
-                if why.errno == errno.EADDRINUSE:
+                if why.errno == EADDRINUSE:
                     using += 1
                     if port < 1024 <= using:
                         # If we ask for a secure port, make sure we don't
