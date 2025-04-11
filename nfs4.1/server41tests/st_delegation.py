@@ -2,7 +2,7 @@ from .st_create_session import create_session
 from .st_open import open_claim4
 from xdrdef.nfs4_const import *
 
-from .environment import check, fail, create_file, open_file, close_file, do_getattrdict
+from .environment import check, fail, create_file, open_file, close_file, do_getattrdict, close_file, write_file, read_file
 from xdrdef.nfs4_type import *
 import nfs_ops
 op = nfs_ops.NFS4ops()
@@ -390,3 +390,54 @@ def testCbGetattrWithChange(t, env):
     if FATTR4_TIME_DELEG_MODIFY in attrs2:
         if attrs1[FATTR4_TIME_MODIFY] == attrs2[FATTR4_TIME_DELEG_MODIFY]:
             fail("Bad modify time: ", attrs1[FATTR4_TIME_MODIFY], " == ", attrs2[FATTR4_TIME_DELEG_MODIFY])
+
+def testDelegReadAfterClose(t, env):
+    """Test read with delegation stateid after close
+
+    Create file with some data. Open the file for read, get delegation, close the file.
+    Tesr that reads with delegation stateid still works.
+
+    FLAGS: deleg all
+    CODE: DELEG26
+    """
+    sess1 = env.c1.new_client_session(b"%s_1" % env.testname(t))
+
+    name = env.testname(t)
+    owner = b"owner_%s" % name
+
+    # create file with some data
+    res = create_file(sess1, owner)
+    check(res)
+
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+
+    res = write_file(sess1, fh, b'data', 0, stateid)
+    check(res)
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
+
+
+    # open file, get delegation, close the file
+    access = OPEN4_SHARE_ACCESS_READ | OPEN4_SHARE_ACCESS_WANT_READ_DELEG;
+    res = open_file(sess1, owner, access = access)
+    check(res)
+
+    fh = res.resarray[-1].object
+    stateid = res.resarray[-2].stateid
+
+    if not _got_deleg(res.resarray[-2].delegation):
+        fail("Failed to get delegation")
+    delegstateid = res.resarray[-2].delegation.read.stateid
+
+    res = close_file(sess1, fh, stateid=stateid)
+    check(res)
+
+    # Issue READ with delegation stateid
+    res = read_file(sess1, fh, 0, 10, delegstateid)
+    check(res)
+
+    # cleanup: return delegation
+    res = sess1.compound([op.putfh(fh), op.delegreturn(delegstateid)])
+    check(res)
