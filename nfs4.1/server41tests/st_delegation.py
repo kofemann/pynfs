@@ -181,8 +181,8 @@ def testDelegRevocation(t, env):
                         owner, how, claim)
     while 1:
         res = sess2.compound(env.home + [open_op])
-        if res.status == NFS4_OK:
-            break;
+        if res.status == NFS4_OK or res.status == NFS4ERR_DELAY:
+            break
         check(res, [NFS4_OK, NFS4ERR_DELAY])
         # just to keep sess1 renewed.  This is a bit fragile, as we
         # depend on the above compound waiting no longer than the
