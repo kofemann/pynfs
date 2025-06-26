@@ -551,6 +551,7 @@ class SessionRecord(object):
                 # operation itself receives NFS4ERR_DELAY
                 slot, seq_op = self._prepare_compound(saved_kwargs)
             time.sleep(delay_time)
+        slot.inuse = False
         res = self.remove_seq_op(res)
         return res
 
