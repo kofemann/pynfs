@@ -69,7 +69,7 @@ def testRequestTooBig(t, env):
     # Send a lookup request with a very long filename
     res = sess1.compound([op.putrootfh(), op.lookup(b"12345"*100)])
     # FIXME - NAME_TOO_BIG is valid, don't want it to be
-    check(res, NFS4ERR_REQ_TOO_BIG)
+    check(res, (NFS4ERR_REQ_TOO_BIG, NFS4ERR_NAMETOOLONG))
 
 def testTooManyOps(t, env):
     """Send a request with more ops than the session can handle
